@@ -1,0 +1,142 @@
+{
+  "title": "诊断卷 #1 · 时态 / 语态 / 主谓一致",
+  "skill": "grammar",
+  "topic": "IELTS 写作 Task 1 & 阅读话题语境",
+  "goal": "定位你在时态、语态、主谓一致、非谓语动词上的薄弱点，作为后续针对性练习的起点。预计用时 10 分钟。",
+  "passages": [
+    {
+      "ref": "p1",
+      "title": "Bike-sharing in European cities",
+      "body": "Many cities around the world have introduced bike-sharing schemes to reduce traffic congestion. In Paris, the Vélib' system, launched in 2007, now operates more than 20,000 bicycles. Although the scheme is widely seen as a success, critics point out that it mainly benefits tourists and short-term visitors rather than daily commuters. In London, a similar scheme was introduced in 2010, and by 2015 the number of journeys exceeded 10 million per year."
+    }
+  ],
+  "questions": [
+    {
+      "type": "choice",
+      "prompt": "Air pollution in major cities ___ a serious concern ___ the 1990s.",
+      "options": [
+        "A. became / since",
+        "B. has become / since",
+        "C. has become / for",
+        "D. became / for"
+      ],
+      "answer": "B",
+      "explanation": "since + 时间点（the 1990s）是现在完成时的标志，表示\"从那时起一直到现在\"；for 后面要接时间段（如 for 20 years），接时间点是错的。",
+      "knowledge_point": "现在完成时"
+    },
+    {
+      "type": "choice",
+      "prompt": "By the time the researchers arrived at the site, the volunteers ___ the experiment.",
+      "options": [
+        "A. have completed",
+        "B. completed",
+        "C. had completed",
+        "D. complete"
+      ],
+      "answer": "C",
+      "explanation": "by the time + 过去时间点（arrived），表示\"在那之前已经发生\"，要用过去完成时 had done。",
+      "knowledge_point": "过去完成时"
+    },
+    {
+      "type": "choice",
+      "prompt": "The number of people working from home ___ increased dramatically since the pandemic.",
+      "options": [
+        "A. have",
+        "B. has",
+        "C. are",
+        "D. were"
+      ],
+      "answer": "B",
+      "explanation": "the number of + 名词作主语时中心词是 number（单数），谓语用单数 has；对比 a number of = many，后面谓语用复数。",
+      "knowledge_point": "主谓一致"
+    },
+    {
+      "type": "choice",
+      "prompt": "___ with the same task, the two teams adopted completely different strategies.",
+      "options": [
+        "A. Facing",
+        "B. Faced",
+        "C. To face",
+        "D. Face"
+      ],
+      "answer": "B",
+      "explanation": "be faced with 是固定搭配（\"面对\"），分词作状语时直接说 Faced with...；Facing 后面不能接 with。",
+      "knowledge_point": "非谓语动词"
+    },
+    {
+      "type": "fill",
+      "prompt": "By 2050, global sea levels ____ (rise) by more than 30 centimetres.",
+      "answer": ["will have risen"],
+      "explanation": "by + 将来时间点是将来完成时 will have done 的标志：到 2050 年时\"将已经上升\"。",
+      "knowledge_point": "将来完成时"
+    },
+    {
+      "type": "fill",
+      "prompt": "Single-use plastics ____ (should / ban) in all public venues.",
+      "answer": ["should be banned"],
+      "explanation": "情态动词 + 被动语态：should + be + 过去分词。主语 plastics 是\"被禁止\"的对象，必须用被动。",
+      "knowledge_point": "被动语态"
+    },
+    {
+      "type": "choice",
+      "prompt": "___ number of students who prefer online courses ___ growing every year.",
+      "options": [
+        "A. The / is",
+        "B. A / is",
+        "C. The / are",
+        "D. A / are"
+      ],
+      "answer": "D",
+      "explanation": "a number of = many（许多），谓语用复数 are；the number of 强调\"数量\"本身，谓语用单数 is。注意题干中是 A number of students，所以选 are。",
+      "knowledge_point": "主谓一致"
+    },
+    {
+      "type": "cloze",
+      "prompt": "阅读短文，用括号内单词的正确形式填空（注意时态、非谓语与词形变化）。",
+      "passage": "Over the past decade, the way people work __1__ (change) dramatically. Many employees now prefer __2__ (work) from home, which allows them __3__ (avoid) long commutes. However, working remotely can also make people feel __4__ (isolate), and some studies suggest that face-to-face communication __5__ (be) still essential for teamwork.",
+      "answer": {
+        "1": ["has changed"],
+        "2": ["working", "to work"],
+        "3": ["to avoid"],
+        "4": ["isolated"],
+        "5": ["is"]
+      },
+      "explanation": "①over the past decade + 现在完成时 has changed；②prefer doing / prefer to do 均可；③allow sb to do sth；④feel + 形容词（feel isolated 感到孤立）；⑤主语 communication 不可数，谓语用 is。",
+      "knowledge_point": "综合语法"
+    },
+    {
+      "type": "tfng",
+      "passage_ref": "p1",
+      "prompt": "Vélib' was the first bike-sharing scheme in the world.",
+      "answer": "NOT GIVEN",
+      "explanation": "原文只说巴黎 2007 年推出 Vélib'，没有说它是\"世界上第一个\"——信息不存在，无法判断 → NOT GIVEN。",
+      "knowledge_point": "TFNG 判断"
+    },
+    {
+      "type": "tfng",
+      "passage_ref": "p1",
+      "prompt": "The Paris scheme was launched before the London one.",
+      "answer": "TRUE",
+      "explanation": "巴黎 2007 年推出，伦敦 2010 年推出，巴黎更早，与题干一致 → TRUE。",
+      "knowledge_point": "TFNG 判断"
+    },
+    {
+      "type": "tfng",
+      "passage_ref": "p1",
+      "prompt": "According to critics, the scheme helps daily commuters more than tourists.",
+      "answer": "FALSE",
+      "explanation": "原文 critics 认为它\"benefits tourists rather than daily commuters\"（主要惠及游客而非通勤者），题干说反了 → FALSE。",
+      "knowledge_point": "TFNG 判断"
+    },
+    {
+      "type": "writing",
+      "prompt": "Task 1 迷你练习：用不超过 3 句话描述以下趋势——2000 至 2020 年，城市私家车数量翻倍；同期公共交通使用率稳步上升，但增速放缓。\n要求：① 时态用一般过去时；② 使用趋势词汇（如 double / rise steadily / growth slowed）；③ 用 while 体现对比结构。",
+      "answer": {
+        "rubric": "评分要点：① 时态准确（一般过去时，无现在时串用）② 趋势词汇恰当（doubled / rose steadily / slowed）③ 有 while 对比结构 ④ 不超过 3 句"
+      },
+      "explanation": "",
+      "knowledge_point": "写作 Task 1 趋势描述",
+      "score": 3
+    }
+  ]
+}
