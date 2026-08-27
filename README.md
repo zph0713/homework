@@ -1,63 +1,73 @@
 # 📝 Homework Lab · 作业实验室
 
-**本地试卷系统 + 轻量数据库 + Agent 批改循环**——AI 布置作业 → 你在网页上答卷 → AI 从数据库读取批改 → 错题讲解 + 针对性再出题 → 直到彻底掌握。
+**本地试卷系统 + 轻量数据库 + AI 批改循环**——AI 布置作业 → 你在网页上答卷 → AI 从数据库读取批改 → 错题讲解 + 针对性再出题 → 直到彻底掌握。
 
 - **零依赖**：Python 标准库（sqlite3 + http.server）+ 原生 JS，任何机器开箱即用，不用装任何包
 - **只在本机**：服务器只绑定 `127.0.0.1`，学习数据（`data/`）不入 git
-- **模型无关**：任何 AI / agent（换模型、换工具都行）通过一套 JSON 协议 + CLI 接入，见 [docs/AGENT_PROTOCOL.md](docs/AGENT_PROTOCOL.md)
+- **模型无关**：任何 AI / agent（换模型、换工具都行）通过一套 JSON 协议 + CLI 接入，见 [docs/AGENT_PROTOCOL.md](docs/AGENT_PROTOCOL.md) 与仓库根目录的 [AGENTS.md](AGENTS.md)
 - **当前学科**：英语（语法 + 雅思词汇短语），学科可扩展
 
-## 快速开始
+---
+
+## 使用说明
+
+### 学生端（网页）
+
+```
+http://127.0.0.1:8877
+```
+
+页面三个入口：
+
+| 页面 | 作用 |
+|---|---|
+| **作业** | 待做/已做试卷列表，点「开始答题」进入试卷页；批改完成后点「查看结果」看每道题的得分、老师点评和解析 |
+| **错题本** | 所有批改过的错题按知识点归档，可一键「申请重练」某个知识点 |
+| **知识点** | 每个知识点的掌握度进度条（薄弱⚠ / 学习中 / 已掌握✓），附该知识点错题记录 |
+
+答题 → 交卷（未答题目会弹窗确认）→ 等老师批改 → 结果页看讲解。交卷后在聊天里说一声「交了」，AI 老师开始批改。
+
+### 老师端（AI / Agent 的日常循环）
 
 ```bash
 cd homework-lab
 
-# 1. 初始化数据库（首次）
-python3 agent/cli.py init
+# 1. 发布新试卷
+python3 agent/cli.py create papers/xxx.json
 
-# 2. 发布第一份试卷
-python3 agent/cli.py create papers/diagnostic_001.json
+# 2. 学生交卷后：查待批改 → 自动批改
+python3 agent/cli.py pending
+python3 agent/cli.py autograde
 
-# 3. 启动本地网页
-python3 server/app.py
-# → 打开 http://127.0.0.1:8877
+# 3. AI 批改（写作 + 复核填空）后入库
+python3 agent/cli.py grade <sub_id> --json /tmp/grades.json
+
+# 4. 读完整结果，在聊天里讲解错题
+python3 agent/cli.py report <sub_id>
+
+# 5. 看知识点掌握度，决定下一份卷方向
+python3 agent/cli.py weakpoints
+
+# 6. 周期性：导出错题 → 生成变式重练卷
+python3 agent/cli.py wronglist --json /tmp/wrong.json
+
+# 7. 处理学生的重练申请
+python3 agent/cli.py requests
 ```
 
-之后每天的使用方式：
-1. 打开 http://127.0.0.1:8877 → 看到待做作业 → 答题 → 交卷
-2. 交卷后在聊天里说一声「交了」
-3. Agent（老师）执行批改循环 → 网页上出现成绩 + 每道题的点评解析，聊天里同步讲解错题
-4. Agent 根据薄弱知识点发布针对性验证卷 → 回到第 1 步
-5. 每周 Agent 从错题本导出错题 → 生成变式重练卷
+完整命令参考与试卷/批改 JSON 规范见 [docs/AGENT_PROTOCOL.md](docs/AGENT_PROTOCOL.md)。
 
-## 学习循环（核心理念）
+### 学习循环（核心理念）
 
 ```
 出题(考察知识点) → 答题 → 批改 → 讲解错题 → 出变式题验证 → 全对为止 → 定期错题重练
 ```
 
 - **题目不在多，在于多轮考察**：每个知识点至少答对 3 次且掌握度 ≥85% 才算「已掌握」
-- **错题全部归档**：网页「错题本」页随时可回顾，也可以一键「申请重练」某知识点
-- **知识点追踪**：每道题标注知识点，系统自动统计掌握度（薄弱⚠ / 学习中 / 已掌握✓），Agent 据此调整出题方向
+- **错题全部归档**：错题本随时回顾，可一键申请重练
+- **知识点追踪**：每道题标注知识点，系统自动统计掌握度，老师据此调整出题方向
 
-## 项目结构
-
-```
-homework-lab/
-├── agent/
-│   ├── db.py               # 数据层：表结构、试卷校验、自动批改、知识点统计
-│   └── cli.py              # Agent CLI：发布/批改/错题/知识点管理（模型无关接口）
-├── server/
-│   ├── app.py              # 本地 HTTP 服务器（标准库，只绑 127.0.0.1）
-│   └── static/             # 学生端网页（无框架 SPA）
-├── papers/                 # 试卷库（JSON，随 git 版本管理）
-├── data/                   # SQLite 学习数据（本地，不入 git）
-└── docs/
-    ├── AGENT_PROTOCOL.md   # ★ 任何 AI/agent 的接入协议（试卷 JSON 规范 + CLI 参考）
-    └── QUESTION_TYPES.md   # 题型规范与出题指南
-```
-
-## 批改分层
+### 批改分层
 
 | 题型 | 自动批改 | AI 批改 | 说明 |
 |---|---|---|---|
@@ -67,12 +77,156 @@ homework-lab/
 | 语法填空 cloze | 按空格比例给分 ✅ | 未命中空格复核 | 同上 |
 | 写作 writing | — | ✅ 必批 | AI 按 rubric 打分 + 写点评 |
 
-## 环境变量
+### 环境变量
 
 | 变量 | 默认 | 说明 |
 |---|---|---|
 | `HOMELAB_DB` | `data/homework.db` | 数据库路径（测试时指向临时文件） |
 | `HOMELAB_PORT` | `8877` | 网页端口 |
+
+### 数据与备份
+
+- 所有学习数据在 `data/homework.db`（单文件 SQLite），备份只需复制这一个文件
+- 试卷内容在 `papers/*.json`，随 git 版本管理
+- 迁移到新机器：复制整个目录 + 启动即可（零依赖，无需安装任何东西）
+
+---
+
+## 与不同 AI Agent 的配合
+
+### 接入原理
+
+老师角色只需要两种能力：**执行 shell 命令** + **读写 JSON 文件**。整个系统对 agent 的接口就两个东西：
+
+1. `agent/cli.py` —— 所有操作走这一个命令行工具
+2. `docs/AGENT_PROTOCOL.md` —— 试卷与批改的 JSON 规范（唯一契约）
+
+因此任何模型、任何 agent 框架都能无缝接入，换模型时**学生端、数据库、历史数据全部不变**。
+
+### AGENTS.md —— 仓库自带的教师角色指令
+
+仓库根目录的 [AGENTS.md](AGENTS.md) 写了完整的教师角色设定：职责、批改循环、纪律约定。支持该标准的 agent 工具在**项目目录下启动时会自动加载**它，无需任何手工配置：
+
+| Agent 工具 | 接入方式 |
+|---|---|
+| **Claude Code** | 在项目目录运行 `claude`，AGENTS.md 自动加载；或一次性任务 `claude -p "按 AGENTS.md 检查待批改作业"` |
+| **OpenAI Codex** | 在项目目录运行 `codex`，AGENTS.md 自动加载 |
+| **OpenCode** | 在项目目录运行 `opencode`，AGENTS.md 自动加载 |
+| **Cursor / Windsurf** | 打开项目目录即可，AGENTS.md 会被读取 |
+| **Hermes Agent** | 用下方「Hermes Skill 配置」的 skill（本仓库自带） |
+| **任意 API / 自研 agent** | 把 `AGENTS.md` + `docs/AGENT_PROTOCOL.md` 全文塞进 system prompt，赋予它 shell 权限即可 |
+
+### 各 agent 的角色分工（以多 agent 协作为例）
+
+```
+学生交卷 ──▶ 任意一个「值班」agent 执行：pending → autograde → grade
+                │
+                ▼
+         另一个 agent 读 report → 在聊天里讲解错题
+                │
+                ▼
+         任意 agent 按 weakpoints 出变式卷 → create 发布
+```
+
+因为状态全部落在数据库和 git 里，agent 之间不需要直接通信，谁接手都能从 `pending` / `weakpoints` 拿到全部上下文。
+
+### 触发方式
+
+- **对话触发**：学生说「交了」→ 正在对话的 agent 按流程执行
+- **定时巡检**：仓库自带 `scripts/check_pending.py`（有待批改提交时输出提醒，否则静默），可挂进任何 cron 体系。Hermes 里配置示例见下节
+
+---
+
+## Hermes Skill 配置
+
+本仓库自带 Hermes 技能文件：[skills/homework-lab/SKILL.md](skills/homework-lab/SKILL.md)。它把「布置 → 批改 → 讲解 → 验证 → 重练」的完整循环写成可直接加载的技能。
+
+### 安装
+
+Hermes 技能目录有两种布局，二选一：
+
+```bash
+# A. 单 profile 布局（默认）
+mkdir -p ~/.hermes/skills/education/homework-lab
+cp skills/homework-lab/SKILL.md ~/.hermes/skills/education/homework-lab/SKILL.md
+
+# B. 多 profile 布局（如 profile 名为 genos）
+mkdir -p ~/.hermes/profiles/genos/skills/education/homework-lab
+cp skills/homework-lab/SKILL.md ~/.hermes/profiles/genos/skills/education/homework-lab/SKILL.md
+
+# 想随时同步仓库更新，用软链更省事：
+ln -s "$(pwd)/skills/homework-lab" ~/.hermes/skills/education/homework-lab
+```
+
+重启 Hermes 会话后生效。
+
+### 技能触发条件
+
+- 学生说「交了」「交卷了」，或提到作业、试卷、错题、知识点掌握度
+- 需要布置新作业、批改提交、查看待批改队列、生成重练卷
+- 操作或维护本系统（启动服务、检查数据）
+
+### 技能内容概要
+
+| 环节 | 技能里的动作 |
+|---|---|
+| 收作业 | `pending` → `autograde` |
+| 批改 | 写批改 JSON → `grade <sub_id> --json ...` |
+| 讲解 | `report <sub_id>` → 对话框逐题讲解 |
+| 验证 | 按薄弱点出 3~5 题变式卷 → `create` |
+| 追踪 | `weakpoints` / `requests` / `wronglist` |
+
+### 可选：定时巡检新交卷
+
+把 `scripts/check_pending.py` 配成 Hermes 定时任务（watchdog 模式），有新交卷时自动提醒：
+
+- 任务类型：脚本模式（no_agent），每 30 分钟跑一次
+- 脚本输出为空 = 静默；有待批改提交 = 自动把提醒发到聊天
+- 也可用 agent 模式（让 agent 自己跑完整批改循环，需要批改时它自己执行）
+
+---
+
+## 项目结构
+
+```
+homework-lab/
+├── AGENTS.md              # ★ 教师角色指令（Claude Code / Codex / OpenCode 等自动加载）
+├── agent/
+│   ├── db.py              # 数据层：表结构、试卷校验、自动批改、知识点统计
+│   └── cli.py             # Agent CLI：发布/批改/错题/知识点管理（模型无关接口）
+├── server/
+│   ├── app.py             # 本地 HTTP 服务器（标准库，只绑 127.0.0.1）
+│   └── static/            # 学生端网页（无框架 SPA）
+├── papers/                # 试卷库（JSON，随 git 版本管理）
+├── scripts/
+│   └── check_pending.py   # 定时巡检脚本（待批改提醒，供 cron 使用）
+├── skills/
+│   └── homework-lab/
+│       └── SKILL.md       # Hermes 技能文件（安装方法见上文）
+├── data/                  # SQLite 学习数据（本地，不入 git）
+└── docs/
+    ├── AGENT_PROTOCOL.md  # ★ 任何 AI/agent 的接入协议（试卷 JSON 规范 + CLI 参考）
+    └── QUESTION_TYPES.md  # 题型规范与出题指南
+```
+
+## 快速开始
+
+```bash
+git clone git@github.com:zph0713/homework.git
+cd homework
+
+# 1. 初始化数据库（首次，或直接跳过——CLI 会自动建库）
+python3 agent/cli.py init
+
+# 2. 发布第一份试卷
+python3 agent/cli.py create papers/diagnostic_001.json
+
+# 3. 启动本地网页
+python3 server/app.py
+# → 打开 http://127.0.0.1:8877
+
+# 4. （可选）接入你的 AI 老师：Hermes 装 skill，或让支持 AGENTS.md 的工具在本目录启动
+```
 
 ## 常见问题
 
@@ -83,7 +237,9 @@ cd ~/Documents/GitHub/homework-lab && python3 server/app.py
 
 **想换端口？** `HOMELAB_PORT=8899 python3 server/app.py`
 
-**数据会丢吗？** 所有学习数据在 `data/homework.db`（单文件 SQLite）。备份只需复制这一个文件。
+**换 agent / 换模型会丢数据吗？** 不会。数据在 `data/homework.db`，接口只有 CLI + JSON，agent 之间互不依赖。
+
+**学生能看到答案吗？** 不能。发给网页的试卷数据在服务器层强制剥离答案与解析，批改后答案才出现在结果页。
 
 ## Roadmap
 
