@@ -1,0 +1,58 @@
+{
+  "title": "写作练笔 #1 · 雅思话题短句",
+  "skill": "writing",
+  "topic": "IELTS 话题短句 · 高频语法结构",
+  "goal": "从简单句子开始练写作：用 5 个高频语法结构各写 1-2 句雅思话题短句。每题 2 分，满分 10。",
+  "questions": [
+    {
+      "type": "writing",
+      "prompt": "用现在完成时写 1-2 句，描述近几年在线课程的发展趋势。\n提示词：online courses / gain popularity / transform",
+      "answer": {
+        "rubric": "① 使用现在完成时（have/has done）② 全句时态一致 ③ 用上提示词 ④ 1-2 句"
+      },
+      "explanation": "示范句：Online courses have gained increasing popularity in recent years, and digital learning has transformed the way students access education.",
+      "knowledge_point": "写作短句-现在完成时",
+      "score": 2
+    },
+    {
+      "type": "writing",
+      "prompt": "用比较级结构写 1-2 句，对比城市与乡村生活的某一方面（生活成本、节奏或环境任选其一）。\n提示词：expensive / quiet / pace",
+      "answer": {
+        "rubric": "① 至少一处比较级（-er 或 more...than）② 对比逻辑清晰 ③ 词汇拼写准确"
+      },
+      "explanation": "示范句：Living in cities is usually more expensive than living in the countryside, but rural areas often offer a quieter and slower pace of life.",
+      "knowledge_point": "写作短句-比较级",
+      "score": 2
+    },
+    {
+      "type": "writing",
+      "prompt": "用被动语态写 1-2 句，描述一项环保政策正在被实施（垃圾分类、限塑令等任选）。\n提示词：carry out / introduce / ban",
+      "answer": {
+        "rubric": "① 至少一处被动语态（be + 过去分词）② 被动结构时态正确 ③ 语义通顺"
+      },
+      "explanation": "示范句：A new waste-sorting policy has been introduced in many cities, and strict rules are being carried out in public venues.",
+      "knowledge_point": "写作短句-被动语态",
+      "score": 2
+    },
+    {
+      "type": "writing",
+      "prompt": "用 because 写 1-2 句，解释为什么久坐对健康有害。\n提示词：sedentary / lead to / posture",
+      "answer": {
+        "rubric": "① 使用 because 引导原因状语从句 ② 因果关系逻辑正确 ③ 用上提示词"
+      },
+      "explanation": "示范句：Sitting for long hours is harmful to health because a sedentary lifestyle can lead to back problems and poor posture.",
+      "knowledge_point": "写作短句-原因状语",
+      "score": 2
+    },
+    {
+      "type": "writing",
+      "prompt": "用 although 写 1-2 句，表达远程办公既有好处也有不便。\n提示词：flexible / isolation / commute",
+      "answer": {
+        "rubric": "① 使用 although/while 引导让步状语从句 ② 好坏两面都提到 ③ 主从句时态一致"
+      },
+      "explanation": "示范句：Although working from home offers a more flexible schedule, some employees still suffer from a sense of isolation.",
+      "knowledge_point": "写作短句-让步状语",
+      "score": 2
+    }
+  ]
+}

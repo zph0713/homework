@@ -151,6 +151,8 @@ class Handler(BaseHTTPRequestHandler):
                 "INSERT INTO submissions (homework_id, answers) VALUES (?,?)",
                 (hw_id, json.dumps(clean, ensure_ascii=False)),
             )
+            db.add_log(conn, "submit", summary=f"交卷《{hw['title']}》（{len(clean)} 题已作答）",
+                       ref_type="submission", ref_id=cur.lastrowid)
         return self._send_json(200, {"submission_id": cur.lastrowid,
                                      "message": "已交卷，等待批改"})
 

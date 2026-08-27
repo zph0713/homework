@@ -61,11 +61,34 @@ python3 agent/cli.py requests
 
 ```
 出题(考察知识点) → 答题 → 批改 → 讲解错题 → 出变式题验证 → 全对为止 → 定期错题重练
+                                                              ↓
+                                          每周随机知识点抽查（回顾上周所学）→ 出错转入练习目标
 ```
 
 - **题目不在多，在于多轮考察**：每个知识点至少答对 3 次且掌握度 ≥85% 才算「已掌握」
 - **错题全部归档**：错题本随时回顾，可一键申请重练
 - **知识点追踪**：每道题标注知识点，系统自动统计掌握度，老师据此调整出题方向
+- **对话驱动**：出题、交卷、批改、讲解全部由对话触发，不用定时任务
+
+### 学习路径 / 问题诊断 / 周回顾（跨环境跟踪）
+
+除试卷、提交、错题外，系统还维护三份学习档案，全部在数据库里，换机器、换 AI agent 都能无缝接管：
+
+| 档案 | 内容 | CLI |
+|---|---|---|
+| **学习路径** learning_log | 时间线：出卷/交卷/批改自动记录，讲解/验证等由老师记录 | `cli.py timeline` / `cli.py log` |
+| **问题诊断** diagnoses | 每次批改发现的学生问题：知识点、问题描述、证据、严重度、解决状态 | `cli.py diag add/list/resolve` |
+| **周回顾** weekly_reviews | 每周随机抽查记录：抽查了哪些知识点、哪些出错、后续安排 | `cli.py weekly status/record` |
+
+每周回顾机制：距上次回顾 ≥7 天时，从上周学过的知识点中**随机抽 2-3 个**出抽查卷；抽查出错的知识点记入诊断档案，成为后续练习目标——动态跟随学生情况。
+
+### 写作课程路线（雅思）
+
+写作按 [docs/WRITING_CURRICULUM.md](docs/WRITING_CURRICULUM.md) 三阶段推进，从简单开始：
+
+1. **话题短句**：高频语法结构 × 雅思话题，每题写 1-2 句
+2. **小作文 Task 1**：line / bar / pie / table / process / map 六类图表模板
+3. **大作文 Task 2**：opinion / discussion / advantages-disadvantages / problem-solution / double question 五类题型模板
 
 ### 批改分层
 
@@ -132,8 +155,8 @@ python3 agent/cli.py requests
 
 ### 触发方式
 
-- **对话触发**：学生说「交了」→ 正在对话的 agent 按流程执行
-- **定时巡检**：仓库自带 `scripts/check_pending.py`（有待批改提交时输出提醒，否则静默），可挂进任何 cron 体系。Hermes 里配置示例见下节
+- **对话触发（默认）**：学生在聊天里说「出题吧」→ 老师出题；说「写好了 / 交了」→ 老师批改讲解。**交互全部对话驱动，不使用定时任务**（本用户明确偏好）
+- 仓库自带 `scripts/check_pending.py`（有待批改提交时输出提醒，否则静默），供**其他部署场景**选择使用；本用户不用
 
 ---
 
@@ -170,19 +193,17 @@ ln -s "$(pwd)/skills/homework-lab" ~/.hermes/skills/education/homework-lab
 
 | 环节 | 技能里的动作 |
 |---|---|
+| 出题 | 学生要求才出，方向按「动态出题优先级」（未解决诊断 → 周回顾错题 → 薄弱点 → 写作路线） |
 | 收作业 | `pending` → `autograde` |
 | 批改 | 写批改 JSON → `grade <sub_id> --json ...` |
 | 讲解 | `report <sub_id>` → 对话框逐题讲解 |
-| 验证 | 按薄弱点出 3~5 题变式卷 → `create` |
-| 追踪 | `weakpoints` / `requests` / `wronglist` |
+| 记录 | 问题写入 `diag add`；讲解/验证事件写入 `log` |
+| 验证 | 按薄弱点出 3~5 题变式卷 → `create`；全对后 `diag resolve` |
+| 周回顾 | 每次批改后顺手 `weekly status`，到期随机抽查 + `weekly record` |
 
-### 可选：定时巡检新交卷
+### 定时任务说明（本用户不使用）
 
-把 `scripts/check_pending.py` 配成 Hermes 定时任务（watchdog 模式），有新交卷时自动提醒：
-
-- 任务类型：脚本模式（no_agent），每 30 分钟跑一次
-- 脚本输出为空 = 静默；有待批改提交 = 自动把提醒发到聊天
-- 也可用 agent 模式（让 agent 自己跑完整批改循环，需要批改时它自己执行）
+本用户偏好**纯对话驱动**，不配置定时任务。`scripts/check_pending.py` 保留供其他部署场景（如家长盯作业、批量学生场景）参考。
 
 ---
 
@@ -206,7 +227,8 @@ homework-lab/
 ├── data/                  # SQLite 学习数据（本地，不入 git）
 └── docs/
     ├── AGENT_PROTOCOL.md  # ★ 任何 AI/agent 的接入协议（试卷 JSON 规范 + CLI 参考）
-    └── QUESTION_TYPES.md  # 题型规范与出题指南
+    ├── QUESTION_TYPES.md  # 题型规范与出题指南
+    └── WRITING_CURRICULUM.md  # 雅思写作课程路线（短句 → 图表 → 大作文）
 ```
 
 ## 快速开始

@@ -24,8 +24,11 @@ python3 agent/cli.py autograde      # 自动批客观题
 #    写 /tmp/grades.json：{"grades":[{"question_id":N,"correct":1|0|0.5,"feedback":"..."}],"note":"总评"}
 python3 agent/cli.py grade <sub_id> --json /tmp/grades.json
 
-# 3. 讲解（在对话里逐题讲错题：规则 + 错因 + 避免方法）
+# 3. 讲解 + 记录（在对话里逐题讲错题：规则 + 错因 + 避免方法）
 python3 agent/cli.py report <sub_id>
+python3 agent/cli.py log explain --summary "讲解..." --kp <知识点> --ref submission:<sub_id>
+python3 agent/cli.py diag add --kp "<知识点>" --finding "<问题描述>" --severity high --sub <sub_id>
+#    ↑ 批改发现的每个问题必须写进诊断档案（跨环境跟踪的关键）
 
 # 4. 出变式验证卷（3~5 题，同知识点换语境，禁止原题照搬）
 #    按 docs/AGENT_PROTOCOL.md §4 写 JSON → papers/verify_xxx.json
@@ -37,7 +40,21 @@ python3 agent/cli.py requests       # 学生重练申请，处理后 request don
 
 # 6. 周期性重练
 python3 agent/cli.py wronglist --json /tmp/wrong.json   # 导出错题 → 按知识点出变式卷
+
+# 7. 每周回顾（每次批改后顺手检查 weekly status；距上次 ≥7 天则执行）
+python3 agent/cli.py weekly status  # 候选知识点（上周学过的）
+# 到期：随机抽 2-3 个知识点 → 出 3-5 题抽查卷 → 批改后：
+python3 agent/cli.py weekly record --sampled "kp1,kp2" --wrong "kp1" --hw <id>
+# 抽查错的知识点 → diag add 记录为后续练习目标
 ```
+
+## 动态出题优先级（学生要求出题时）
+
+1. 未解决诊断（`diag list --open`）→ 出对应知识点的验证卷
+2. 周回顾出错知识点 → 重练
+3. 掌握度 <50% 的薄弱点 → 专项练习
+4. 写作路线推进（`docs/WRITING_CURRICULUM.md`：短句 → 图表 → 大作文模板）
+5. 学生口头指定方向（永远最高优先级）
 
 ## 批改原则
 

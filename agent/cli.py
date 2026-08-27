@@ -241,6 +241,109 @@ def cmd_state(args):
     print(json.dumps(snap, ensure_ascii=False, indent=2))
 
 
+# ---------------------------------------------------------------- 学习路径 / 诊断 / 周回顾
+EVENT_LABELS = {
+    "assign": "出卷", "submit": "交卷", "graded": "批改", "explain": "讲解",
+    "verify": "验证卷", "weekly": "周回顾", "diag": "诊断", "request": "重练申请",
+    "other": "其他",
+}
+SEV_LABELS = {"high": "严重⚠", "mid": "中等", "low": "轻微"}
+
+
+def cmd_log(args):
+    ref_type, ref_id = "", None
+    if args.ref:
+        parts = args.ref.split(":", 1)
+        ref_type = parts[0]
+        if len(parts) > 1:
+            ref_id = int(parts[1])
+    with db.connect() as conn:
+        lid = db.add_log(conn, args.type, summary=args.summary,
+                         knowledge_point=args.kp or "", ref_type=ref_type, ref_id=ref_id)
+    print(f"已记录学习事件 #{lid} [{EVENT_LABELS.get(args.type, args.type)}] {args.summary}")
+
+
+def cmd_timeline(args):
+    with db.connect() as conn:
+        logs = db.list_logs(conn, limit=args.limit)
+    if not logs:
+        print("学习路径还是空的（出卷/交卷/批改后会自动记录）")
+        return
+    for r in logs:
+        kp = f" · {r['knowledge_point']}" if r["knowledge_point"] else ""
+        ref = f" · {r['ref_type']}#{r['ref_id']}" if r["ref_type"] else ""
+        print(f"{r['ts'][:16]}  [{EVENT_LABELS.get(r['event_type'], r['event_type'])}]{kp}{ref}")
+        print(f"    {r['summary']}")
+
+
+def cmd_diag_add(args):
+    with db.connect() as conn:
+        did = db.add_diagnosis(conn, args.kp, args.finding,
+                               severity=args.severity, evidence=args.evidence or "",
+                               submission_id=args.sub)
+    print(f"已记录诊断 #{did} [{args.kp}]（{SEV_LABELS.get(args.severity, args.severity)}）{args.finding}")
+
+
+def cmd_diag_list(args):
+    with db.connect() as conn:
+        rows = db.list_diagnoses(conn, only_open=args.open)
+    if not rows:
+        print("没有诊断记录 ✓")
+        return
+    for d in rows:
+        mark = "未解决" if d["status"] == "open" else f"已解决({(d['resolved_ts'] or '')[:10]})"
+        print(f"#{d['id']} [{d['knowledge_point']}] {SEV_LABELS.get(d['severity'], d['severity'])} · {mark} · {d['created_ts'][:10]}")
+        print(f"    问题: {d['finding']}")
+        if d["evidence"]:
+            print(f"    证据: {d['evidence'][:100]}")
+        if d["resolve_note"]:
+            print(f"    解决: {d['resolve_note'][:100]}")
+        print()
+
+
+def cmd_diag_resolve(args):
+    with db.connect() as conn:
+        db.resolve_diagnosis(conn, args.diag_id, note=args.note or "")
+    print(f"诊断 #{args.diag_id} 已标记解决")
+
+
+def cmd_weekly_status(args):
+    from datetime import datetime
+    with db.connect() as conn:
+        last = db.last_weekly_review(conn)
+        cands = db.weekly_candidates(conn)
+        kps = {k["name"]: k["mastery"] for k in db.knowledge_table(conn)}
+    if last:
+        last_ts = last["reviewed_ts"]
+        try:
+            days = (datetime.now() - datetime.strptime(last_ts[:19], "%Y-%m-%d %H:%M:%S")).days
+        except ValueError:
+            days = "?"
+        print(f"上次周回顾: {last_ts}（{days} 天前）· 抽查 {json.loads(last['sampled'])}"
+              f" · 出错 {json.loads(last['wrong'])}")
+        due = isinstance(days, int) and days >= 7
+    else:
+        print("还没有做过周回顾")
+        due = True
+    print(f"状态: {'🔔 到期了，本次会话安排一次抽查' if due else '未到期（≥7 天才回顾）'}")
+    if cands:
+        print("候选知识点（上周学过/近期出现的，随机抽 2-3 个）：")
+        for c in cands[:12]:
+            pct = kps.get(c)
+            print(f"  - {c}" + (f"（掌握度 {pct*100:.0f}%）" if pct is not None else ""))
+
+
+def cmd_weekly_record(args):
+    sampled = [s.strip() for s in args.sampled.split(",") if s.strip()]
+    wrong = [s.strip() for s in (args.wrong or "").split(",") if s.strip()]
+    with db.connect() as conn:
+        wid = db.add_weekly_review(conn, sampled, wrong, homework_id=args.hw,
+                                   note=args.note or "")
+    print(f"周回顾 #{wid} 已记录：抽查 {sampled}，出错 {wrong or '无 ✓'}")
+    if wrong:
+        print("提示：出错知识点记得用 `diag add` 记录为练习目标")
+
+
 def main(argv=None):
     db.ensure_db()
     p = argparse.ArgumentParser(
@@ -292,13 +395,50 @@ def main(argv=None):
 
     sub.add_parser("state", help="总览 JSON（首页数据/供定时任务）")
 
+    pl = sub.add_parser("log", help="记录学习路径事件（讲解/验证等 AI 主动事件）")
+    pl.add_argument("type", choices=["assign", "submit", "graded", "explain", "verify",
+                                     "weekly", "diag", "request", "other"])
+    pl.add_argument("--summary", required=True, help="事件摘要")
+    pl.add_argument("--kp", help="关联知识点")
+    pl.add_argument("--ref", help="关联对象，如 homework:3 / submission:2")
+
+    pt = sub.add_parser("timeline", help="学习路径时间线")
+    pt.add_argument("--limit", type=int, default=30)
+
+    pd_ = sub.add_parser("diag", help="学生问题诊断档案")
+    pds = pd_.add_subparsers(dest="diag_cmd", required=True)
+    pda = pds.add_parser("add", help="记录一条诊断")
+    pda.add_argument("--kp", required=True, help="知识点")
+    pda.add_argument("--finding", required=True, help="问题描述")
+    pda.add_argument("--severity", default="mid", choices=["high", "mid", "low"])
+    pda.add_argument("--sub", type=int, help="关联提交 id")
+    pda.add_argument("--evidence", help="证据（错题引用等）")
+    pdl = pds.add_parser("list", help="列出诊断")
+    pdl.add_argument("--open", action="store_true", help="只显示未解决")
+    pdr = pds.add_parser("resolve", help="标记诊断已解决")
+    pdr.add_argument("diag_id", type=int)
+    pdr.add_argument("--note", help="解决说明（如：验证卷满分）")
+
+    pw_ = sub.add_parser("weekly", help="每周随机知识点回顾")
+    pws = pw_.add_subparsers(dest="weekly_cmd", required=True)
+    pws.add_parser("status", help="查看上次回顾与候选知识点")
+    pwr = pws.add_parser("record", help="记录一次周回顾")
+    pwr.add_argument("--sampled", required=True, help="抽查的知识点，逗号分隔")
+    pwr.add_argument("--wrong", default="", help="出错的知识点，逗号分隔")
+    pwr.add_argument("--hw", type=int, help="关联抽查卷 id")
+    pwr.add_argument("--note", help="备注")
+
     args = p.parse_args(argv)
     handlers = {
         "init": cmd_init, "create": cmd_create, "list": cmd_list, "paper": cmd_paper,
         "pending": cmd_pending, "autograde": cmd_autograde, "grade": cmd_grade,
         "report": cmd_report, "wronglist": cmd_wronglist, "weakpoints": cmd_weakpoints,
         "requests": cmd_requests, "request": cmd_request_done, "archive": cmd_archive,
-        "state": cmd_state,
+        "state": cmd_state, "log": cmd_log, "timeline": cmd_timeline,
+        "diag": lambda a: cmd_diag_add(a) if a.diag_cmd == "add"
+        else cmd_diag_list(a) if a.diag_cmd == "list" else cmd_diag_resolve(a),
+        "weekly": lambda a: cmd_weekly_status(a) if a.weekly_cmd == "status"
+        else cmd_weekly_record(a),
     }
     try:
         handlers[args.cmd](args)

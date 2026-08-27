@@ -100,6 +100,38 @@ CREATE TABLE IF NOT EXISTS requests (
   status          TEXT NOT NULL DEFAULT 'open', -- open|done
   created_at      TEXT NOT NULL DEFAULT (datetime('now','localtime'))
 );
+CREATE TABLE IF NOT EXISTS learning_log (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  ts              TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+  event_type      TEXT NOT NULL,          -- assign|submit|graded|explain|verify|weekly|diag|request|other
+  summary         TEXT NOT NULL DEFAULT '',
+  knowledge_point TEXT NOT NULL DEFAULT '',
+  ref_type        TEXT NOT NULL DEFAULT '',    -- homework|submission|diagnosis|weekly|''
+  ref_id          INTEGER,
+  detail          TEXT NOT NULL DEFAULT ''     -- JSON 扩展
+);
+CREATE TABLE IF NOT EXISTS diagnoses (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  created_ts      TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+  knowledge_point TEXT NOT NULL,
+  finding         TEXT NOT NULL,          -- 问题描述（诊断结论）
+  severity        TEXT NOT NULL DEFAULT 'mid', -- high|mid|low
+  evidence        TEXT NOT NULL DEFAULT '',    -- 证据：错题/提交引用
+  submission_id   INTEGER,
+  status          TEXT NOT NULL DEFAULT 'open', -- open|resolved
+  resolved_ts     TEXT,
+  resolve_note    TEXT NOT NULL DEFAULT ''
+);
+CREATE TABLE IF NOT EXISTS weekly_reviews (
+  id          INTEGER PRIMARY KEY AUTOINCREMENT,
+  reviewed_ts TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+  sampled     TEXT NOT NULL DEFAULT '[]',   -- JSON 数组：抽查的知识点
+  wrong       TEXT NOT NULL DEFAULT '[]',   -- JSON 数组：抽查出错的知识点
+  homework_id INTEGER,                      -- 关联的抽查卷
+  note        TEXT NOT NULL DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS idx_log_ts ON learning_log(ts);
+CREATE INDEX IF NOT EXISTS idx_diag_kp ON diagnoses(knowledge_point);
 CREATE INDEX IF NOT EXISTS idx_q_hw   ON questions(homework_id);
 CREATE INDEX IF NOT EXISTS idx_sub_hw ON submissions(homework_id);
 CREATE INDEX IF NOT EXISTS idx_gr_sub ON grades(submission_id);
@@ -293,6 +325,9 @@ def create_paper(conn, data, status="published"):
              q.get("explanation", ""), q.get("knowledge_point", ""),
              float(q.get("score", 1)), i),
         )
+    add_log(conn, "assign",
+            summary=f"发布《{data['title']}》（{len(data['questions'])} 题，skill={data.get('skill', 'mixed')}）",
+            ref_type="homework", ref_id=hw_id)
     return hw_id
 
 
@@ -335,7 +370,8 @@ def autograde_submission(conn, sub_id):
 
 # ---------------------------------------------------------------- AI 批改
 def apply_grades(conn, sub_id, grades, note=None):
-    """写入 AI 批改结果。grades: [{"question_id", "correct", "feedback", "score"?}]"""
+    """写入 AI 批改结果。grades: [{"question_id", "correct", "feedback", "score"?}]
+    correct 语义：0~1 比例（部分正确用 0.75 等小数），传入分值会被钳制。"""
     sub = conn.execute("SELECT * FROM submissions WHERE id=?", (sub_id,)).fetchone()
     if not sub:
         raise ValueError(f"提交 #{sub_id} 不存在")
@@ -348,7 +384,7 @@ def apply_grades(conn, sub_id, grades, note=None):
         if qid not in qids:
             raise ValueError(f"批改条目引用了不属于该试卷的题 {qid}")
         q = conn.execute("SELECT * FROM questions WHERE id=?", (qid,)).fetchone()
-        correct = float(g["correct"])
+        correct = min(1.0, max(0.0, float(g["correct"])))
         score = float(g.get("score", correct * q["score"]))
         conn.execute(
             """INSERT INTO grades (submission_id, question_id, user_answer, correct, score,
@@ -365,12 +401,37 @@ def apply_grades(conn, sub_id, grades, note=None):
         applied.append(qid)
     if note:
         conn.execute("UPDATE submissions SET overall_feedback=? WHERE id=?", (note, sub_id))
-    finalize_if_ready(conn, sub_id)
+    if sub["status"] == "graded":
+        # 已批改提交的修正批改：重算总分与知识点（不重复记 graded 日志）
+        _recalc_totals(conn, sub_id)
+        recompute_knowledge_points(conn)
+    else:
+        finalize_if_ready(conn, sub_id)
     return applied
 
 
+def _recalc_totals(conn, sub_id):
+    qs = conn.execute(
+        "SELECT id, score FROM questions WHERE homework_id="
+        "(SELECT homework_id FROM submissions WHERE id=?)", (sub_id,)).fetchall()
+    grades = {r["question_id"]: r for r in conn.execute(
+        "SELECT * FROM grades WHERE submission_id=?", (sub_id,))}
+    total = sum(g["score"] or 0 for g in grades.values())
+    max_score = sum(q["score"] for q in qs)
+    correct_count = sum(1 for g in grades.values() if g["correct"] == 1.0)
+    conn.execute(
+        "UPDATE submissions SET total_score=?, max_score=?, correct_count=?, total_count=? WHERE id=?",
+        (total, max_score, correct_count, len(qs), sub_id),
+    )
+    return total, max_score, correct_count, len(qs)
+
+
 def finalize_if_ready(conn, sub_id):
-    """若所有题都已有 grade 且无 needs_review，则把提交置为 graded 并重算统计/知识点。"""
+    """若所有题都已有 grade 且无 needs_review，则把提交置为 graded 并重算统计/知识点。
+    已 graded 的提交直接返回（幂等，避免重复记日志）。"""
+    cur_status = conn.execute("SELECT status FROM submissions WHERE id=?", (sub_id,)).fetchone()
+    if not cur_status or cur_status["status"] == "graded":
+        return
     qs = conn.execute(
         "SELECT id, score FROM questions WHERE homework_id="
         "(SELECT homework_id FROM submissions WHERE id=?)", (sub_id,)).fetchall()
@@ -382,16 +443,14 @@ def finalize_if_ready(conn, sub_id):
     if missing:
         conn.execute("UPDATE submissions SET status='partial' WHERE id=?", (sub_id,))
         return
-    total = sum(g["score"] or 0 for g in grades.values())
-    max_score = sum(q["score"] for q in qs)
-    correct_count = sum(1 for g in grades.values() if g["correct"] == 1.0)
-    conn.execute(
-        """UPDATE submissions
-           SET status='graded', total_score=?, max_score=?, correct_count=?, total_count=?
-           WHERE id=?""",
-        (total, max_score, correct_count, len(qs), sub_id),
-    )
+    total, max_score, correct_count, nq = _recalc_totals(conn, sub_id)
+    conn.execute("UPDATE submissions SET status='graded' WHERE id=?", (sub_id,))
     recompute_knowledge_points(conn)
+    hw = conn.execute("SELECT title FROM homeworks WHERE id="
+                      "(SELECT homework_id FROM submissions WHERE id=?)", (sub_id,)).fetchone()
+    add_log(conn, "graded",
+            summary=f"批改完成《{hw['title']}》提交 #{sub_id}：得分 {total:g}/{max_score:g}，全对 {correct_count}/{nq}",
+            ref_type="submission", ref_id=sub_id)
 
 
 def recompute_knowledge_points(conn):
@@ -614,8 +673,96 @@ def set_homework_status(conn, hw_id, status):
 
 def state_snapshot(conn):
     """首页/总览数据。"""
+    diag = conn.execute("SELECT COUNT(*) c FROM diagnoses WHERE status='open'").fetchone()["c"]
+    wk = conn.execute("SELECT MAX(reviewed_ts) t FROM weekly_reviews").fetchone()["t"]
     return {
         "homeworks": list_homeworks(conn),
         "knowledge": knowledge_table(conn),
         "open_requests": list_requests(conn),
+        "open_diagnoses": diag,
+        "last_weekly_review": wk,
     }
+
+
+# ---------------------------------------------------------------- 学习路径 / 诊断 / 周回顾
+def add_log(conn, event_type, summary="", knowledge_point="", ref_type="", ref_id=None, detail=None):
+    cur = conn.execute(
+        """INSERT INTO learning_log (event_type, summary, knowledge_point, ref_type, ref_id, detail)
+           VALUES (?,?,?,?,?,?)""",
+        (event_type, summary, knowledge_point, ref_type, ref_id,
+         json.dumps(detail, ensure_ascii=False) if detail is not None else ""),
+    )
+    return cur.lastrowid
+
+
+def list_logs(conn, limit=30, event_type=None):
+    sql = "SELECT * FROM learning_log"
+    params = []
+    if event_type:
+        sql += " WHERE event_type=?"
+        params.append(event_type)
+    sql += " ORDER BY id DESC LIMIT ?"
+    params.append(limit)
+    return [dict(r) for r in conn.execute(sql, params)]
+
+
+def add_diagnosis(conn, knowledge_point, finding, severity="mid", evidence="", submission_id=None):
+    cur = conn.execute(
+        """INSERT INTO diagnoses (knowledge_point, finding, severity, evidence, submission_id)
+           VALUES (?,?,?,?,?)""",
+        (knowledge_point, finding, severity, evidence, submission_id),
+    )
+    did = cur.lastrowid
+    add_log(conn, "diag", summary=f"诊断「{knowledge_point}」：{finding[:60]}",
+            knowledge_point=knowledge_point, ref_type="diagnosis", ref_id=did)
+    return did
+
+
+def list_diagnoses(conn, only_open=False):
+    sql = "SELECT * FROM diagnoses"
+    if only_open:
+        sql += " WHERE status='open'"
+    sql += " ORDER BY id DESC"
+    return [dict(r) for r in conn.execute(sql)]
+
+
+def resolve_diagnosis(conn, diag_id, note=""):
+    conn.execute(
+        """UPDATE diagnoses SET status='resolved', resolved_ts=datetime('now','localtime'),
+           resolve_note=? WHERE id=?""",
+        (note, diag_id),
+    )
+    row = conn.execute("SELECT * FROM diagnoses WHERE id=?", (diag_id,)).fetchone()
+    add_log(conn, "diag", summary=f"诊断 #{diag_id}「{row['knowledge_point']}」已解决"
+                                  + (f"（{note[:40]}）" if note else ""),
+            knowledge_point=row["knowledge_point"], ref_type="diagnosis", ref_id=diag_id)
+
+
+def add_weekly_review(conn, sampled, wrong, homework_id=None, note=""):
+    cur = conn.execute(
+        """INSERT INTO weekly_reviews (sampled, wrong, homework_id, note) VALUES (?,?,?,?)""",
+        (json.dumps(sampled, ensure_ascii=False), json.dumps(wrong, ensure_ascii=False),
+         homework_id, note),
+    )
+    wid = cur.lastrowid
+    add_log(conn, "weekly",
+            summary=f"周回顾 #{wid}：抽查 {sampled}" + (f"，出错 {wrong}" if wrong else "，全部通过 ✓"),
+            ref_type="weekly", ref_id=wid)
+    return wid
+
+
+def last_weekly_review(conn):
+    return conn.execute("SELECT * FROM weekly_reviews ORDER BY id DESC LIMIT 1").fetchone()
+
+
+def weekly_candidates(conn):
+    """周回顾候选知识点：近期学习记录出现过的 + 掌握度表里的，按近期优先。"""
+    seen, result = set(), []
+    for r in conn.execute("SELECT knowledge_point FROM learning_log WHERE knowledge_point != '' ORDER BY id DESC"):
+        if r["knowledge_point"] not in seen:
+            seen.add(r["knowledge_point"])
+            result.append(r["knowledge_point"])
+    for r in conn.execute("SELECT name FROM knowledge_points WHERE attempts > 0 ORDER BY attempts DESC"):
+        if r["name"] not in seen:
+            result.append(r["name"])
+    return result

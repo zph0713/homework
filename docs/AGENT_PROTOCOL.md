@@ -152,12 +152,12 @@ CLI 会自动建库，无需手工初始化。
   "grades": [
     {
       "question_id": 5,
-      "correct": 0,                        // 1 对 | 0 错 | 0..1 部分正确
+      "correct": 0,                        // ★ 0~1 比例！1 对 | 0 错 | 0.5/0.75 部分正确
       "feedback": "by + 将来时间点必须用 will have done，不是 will do。回顾：将来完成时 = will have + 过去分词。"
     },
     {
       "question_id": 12,
-      "correct": 0.5,
+      "correct": 0.75,
       "feedback": "趋势词汇用对了，但第二句串用了现在时……"
     }
   ],
@@ -166,8 +166,9 @@ CLI 会自动建库，无需手工初始化。
 ```
 
 - `question_id` 从 `pending` / `report` 输出中读取，**不要自己编**
+- **`correct` 是 0~1 的比例，不是分值**：一道 3 分的写作题得 2.25 分要写 `0.75` 而不是 `2.25`（写分值会被钳制为 1，并弄乱掌握度统计）。分值在 `score` 字段，默认 = correct × 题目分值
 - 覆盖已有自动批改是允许的（AI 判断替代答案可接受时）
-- 写完后提交自动置为 `graded`（前提：所有题都有 grade 且无 needs_review），并自动重算知识点统计
+- 写完后提交自动置为 `graded`（前提：所有题都有 grade 且无 needs_review），并自动重算知识点统计；对已 graded 提交的修正批改会自动重算总分与掌握度
 
 ## 6. CLI 参考
 
@@ -186,6 +187,12 @@ CLI 会自动建库，无需手工初始化。
 | `requests` | 学员的重练申请（`request done <id>` 关闭） |
 | `archive <hw_id> [--unarchive]` | 归档/恢复试卷（归档后首页仍可见但标注） |
 | `state` | 总览 JSON（首页数据 / 供定时任务轮询） |
+| `log <type> --summary ... [--kp X] [--ref homework:N]` | 记录学习路径事件（讲解 explain / 验证卷 verify 等） |
+| `timeline [--limit N]` | 学习路径时间线（出卷/交卷/批改自动记录） |
+| `diag add --kp X --finding ... [--severity h\|m\|l] [--sub N]` | 记录学生问题诊断（批改发现的问题必须记录） |
+| `diag list [--open]` / `diag resolve <id>` | 诊断档案查询 / 验证卷全对后标记解决 |
+| `weekly status` | 周回顾状态：距上次回顾天数 + 候选知识点 |
+| `weekly record --sampled a,b --wrong b [--hw N]` | 记录一次周回顾（出错知识点转入诊断） |
 
 ## 7. 纪律与约定
 
