@@ -540,15 +540,16 @@ async function viewKnowledge() {
   }
   const cards = kps.map((k) => {
     const pct = Math.round((k.mastery || 0) * 100);
+    const counted = k.attempts > 5;
     const wrong = wrongs[k.name] || [];
     return `
       <div class="kp-card">
         <div class="kp-row">
           <div class="kp-head">
             <span class="kp-name">${esc(k.name)}</span>
-            <span class="kp-pct">${pct}% · ${k.attempts} 次作答 · 对 ${k.correct}</span>
+            <span class="kp-pct">${counted ? pct + "%" : "计分中"} · ${k.attempts} 次作答 · 对 ${k.correct}</span>
           </div>
-          <div class="bar ${pct >= 85 && k.attempts >= 3 ? "ok" : pct < 50 ? "bad" : "warn"}"><i style="width:${pct}%"></i></div>
+          <div class="bar ${counted ? (k.mastery >= 0.85 ? "ok" : pct < 50 ? "bad" : "warn") : ""}"><i style="width:${counted ? pct : 0}%"></i></div>
           <div style="margin-top:6px">${statusTag(k)}</div>
         </div>
         ${wrong.length ? `
@@ -559,24 +560,25 @@ async function viewKnowledge() {
       </div>`;
   }).join("");
   app.innerHTML = `<h1 class="page-title">知识点掌握度</h1>
-    <p class="page-sub">掌握度 = 累计答对 ÷ 累计作答。满 3 次且 ≥85% 才算「已掌握」。</p>
+    <p class="page-sub">掌握度 = 累计答对 ÷ 累计作答。作答超过 5 次才开始计分，超过 5 次且 ≥85% 才算「已掌握」。</p>
     <div class="kp-grid">${cards}</div>`;
 }
 
 function statusTag(k) {
-  if (k.attempts >= 3 && k.mastery >= 0.85) return '<span class="status-tag ok">已掌握 ✓</span>';
+  if (k.attempts > 5 && k.mastery >= 0.85) return '<span class="status-tag ok">已掌握 ✓</span>';
   if (k.attempts === 0) return '<span class="status-tag new">未练过</span>';
-  if (k.mastery < 0.5) return '<span class="status-tag bad">薄弱 · 需加强</span>';
-  return '<span class="status-tag warn">学习中</span>';
+  if (k.attempts > 5 && k.mastery < 0.5) return '<span class="status-tag bad">薄弱 · 需加强</span>';
+  return '<span class="status-tag warn">学习中（计分中）</span>';
 }
 
 function kpBlockHTML(kps, title, link) {
   const rows = kps.length ? kps.map((k) => {
     const pct = Math.round((k.mastery || 0) * 100);
+    const counted = k.attempts > 5;
     return `
       <div class="kp-row">
-        <div class="kp-head"><span class="kp-name">${esc(k.name)}</span><span class="kp-pct">${pct}%</span></div>
-        <div class="bar ${pct >= 85 && k.attempts >= 3 ? "ok" : pct < 50 ? "bad" : "warn"}"><i style="width:${pct}%"></i></div>
+        <div class="kp-head"><span class="kp-name">${esc(k.name)}</span><span class="kp-pct">${counted ? pct + "%" : "计分中"}</span></div>
+        <div class="bar ${counted ? (k.mastery >= 0.85 ? "ok" : pct < 50 ? "bad" : "warn") : ""}"><i style="width:${counted ? pct : 0}%"></i></div>
       </div>`;
   }).join("") : '<div style="font-size:13px;color:var(--faint)">暂无数据</div>';
   return `
@@ -647,40 +649,107 @@ async function addToWordbook(word) {
 }
 
 /* ================================ 单词本页 ================================ */
+const POS_OPTS = ["n.", "v.", "vt.", "vi.", "adj.", "adv.", "prep.", "conj.", "pron.", "num.", "art.", "aux.", "interj.", "phr."];
+
+function poolTag(w) {
+  if (w.in_pool === 0 && w.times_checked) return '<span class="pool-tag ok">🟢 抽查通过 · 已出池</span>';
+  if (w.in_pool === 1 && w.last_check_ok === 0) return '<span class="pool-tag bad">🔴 拼错 · 留池重抽</span>';
+  if (w.in_pool === 1 && w.confirmed) return '<span class="pool-tag pending">⚪ 在抽查池</span>';
+  return '<span class="pool-tag none">—</span>';
+}
+
+function wordStatus(w) {
+  if (w.confirmed && w.detail) return '<span class="status-tag ok">✓ 已收录</span>';
+  if (w.confirmed) return '<span class="status-tag warn">⏳ 待老师补详细</span>';
+  return '<span class="status-tag new">✏️ 填写中</span>';
+}
+
 async function viewWords() {
   const app = $("#app");
   let data;
   try { data = await API.vocabulary(); } catch (e) { return renderError(app, e); }
   const words = data.words || [];
-  const rows = words.map((w) => `
+  const rows = words.map((w) => {
+    const posText = w.pos.length ? w.pos.join(" / ") : "选择词性…";
+    const canConfirm = w.meaning_cn && w.pos.length;
+    return `
     <tr>
       <td class="v-word">${esc(w.word)}</td>
-      <td class="v-pos">${w.pos ? esc(w.pos) : '<span class="v-empty">待老师补</span>'}</td>
-      <td class="v-mean">${w.meaning_cn ? esc(w.meaning_cn) : '<span class="v-empty">待老师补</span>'}</td>
-      <td class="v-note"><input type="text" data-note="${w.id}" value="${esc(w.note)}" placeholder="写点备注…"></td>
+      <td class="v-pos">
+        <div class="pos-wrap">
+          <button class="pos-btn" data-posbtn="${w.id}">${esc(posText)} ▾</button>
+          <div class="pos-pop" data-pospop="${w.id}" hidden>
+            ${POS_OPTS.map((o) => `<label class="pos-opt">
+              <input type="checkbox" value="${o}" data-posc="${w.id}" ${w.pos.includes(o) ? "checked" : ""}>${o}</label>`).join("")}
+          </div>
+        </div>
+      </td>
+      <td class="v-mean"><input type="text" data-mean="${w.id}" value="${esc(w.meaning_cn)}" placeholder="你填的中文意思"></td>
+      <td class="v-detail">${w.detail ? esc(w.detail) : (w.confirmed
+        ? '<span class="v-empty">老师补词典词性 + 详细释义</span>'
+        : '<span class="v-empty">—</span>')}</td>
+      <td class="v-status">${poolTag(w)}${wordStatus(w)}</td>
       <td class="v-date">${fmtDate(w.added_ts)}</td>
-      <td><button class="btn ghost small" data-vdel="${w.id}">删除</button></td>
-    </tr>`).join("");
+      <td class="v-acts">
+        <button class="btn ghost small" data-confirm="${w.id}" ${canConfirm ? "" : "disabled"} title="确认你已填好中文和词性，老师就会补详细释义">确认已填</button>
+        <button class="btn ghost small" data-vdel="${w.id}">删除</button>
+      </td>
+    </tr>`;
+  }).join("");
+  const unfilled = words.filter((w) => !w.meaning_cn || !w.pos.length).length;
+  const awaitDetail = words.filter((w) => w.confirmed && !w.detail).length;
   app.innerHTML = `
     <h1 class="page-title">单词本</h1>
-    <p class="page-sub">做题时选中不认识的单词即可一键收藏；中文和词性会在老师批改作业时自动补上。</p>
+    <p class="page-sub">做题时选中不认识的单词即可一键收藏。你来填中文和词性（词性可多选），点「确认已填」后老师补词典词性与详细释义；之后单词会随机出现在作业里抽查——写对出池（绿色），拼错继续留池。</p>
     ${words.length ? `
     <div class="card" style="padding:0;overflow-x:auto">
       <table class="v-table">
-        <thead><tr><th>单词</th><th>词性</th><th>中文</th><th>我的备注</th><th>加入时间</th><th></th></tr></thead>
+        <thead><tr><th>单词</th><th>词性（你选，可多选）</th><th>中文意思（你填）</th><th>详细（老师补）</th><th>状态</th><th>加入时间</th><th></th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
-    <p class="page-sub" style="margin-top:12px">共 ${words.length} 词${data.unfilled ? `，其中 ${data.unfilled} 词待老师补充释义` : ""}，以后可据词本定制默写</p>`
+    <p class="page-sub" style="margin-top:12px">共 ${words.length} 词${unfilled ? `，其中 ${unfilled} 词待你补填中文/词性` : ""}${awaitDetail ? `，${awaitDetail} 词已确认、等老师补详细` : ""}</p>`
       : empty("📖", "单词本还空着——做题时选中不认识的单词就能一键收藏")}`;
-  $$("[data-note]").forEach((inp) => {
+
+  $$("[data-mean]").forEach((inp) => {
     inp.addEventListener("blur", async () => {
       try {
-        await API.vocabPatch(+inp.dataset.note, { note: inp.value.trim() });
-        toast("备注已保存 ✓");
+        await API.vocabPatch(+inp.dataset.mean, { meaning_cn: inp.value.trim() });
+        refreshConfirm(+inp.dataset.mean);
+        toast("中文意思已保存 ✓");
       } catch (e) { toast(`❌ ${e.message}`); }
     });
   });
+  $$("[data-posbtn]").forEach((btn) => {
+    btn.addEventListener("click", (ev) => {
+      ev.stopPropagation();
+      const pop = $(`[data-pospop="${btn.dataset.posbtn}"]`);
+      const willShow = pop.hidden;
+      $$("[data-pospop]").forEach((p) => (p.hidden = true));
+      pop.hidden = !willShow;
+    });
+  });
+  $$("[data-posc]").forEach((c) => {
+    c.addEventListener("change", async () => {
+      const id = +c.dataset.posc;
+      const chosen = $$(`[data-posc="${id}"]:checked`).map((i) => i.value);
+      const btn = $(`[data-posbtn="${id}"]`);
+      try {
+        await API.vocabPatch(id, { pos: chosen });
+        btn.textContent = (chosen.length ? chosen.join(" / ") : "选择词性…") + " ▾";
+        refreshConfirm(id);
+        toast("词性已保存 ✓");
+      } catch (e) { toast(`❌ ${e.message}`); }
+    });
+  });
+  $$("[data-confirm]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      try {
+        await API.vocabPatch(+b.dataset.confirm, { confirmed: 1 });
+        toast("已确认 ✓ 老师批改时会补词典词性与详细释义");
+        viewWords();
+      } catch (e) { toast(`❌ ${e.message}`); }
+    }));
   $$("[data-vdel]").forEach((b) =>
     b.addEventListener("click", async () => {
       try {
@@ -691,10 +760,27 @@ async function viewWords() {
     }));
 }
 
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".pos-wrap")) $$("[data-pospop]").forEach((p) => (p.hidden = true));
+});
+
+function refreshConfirm(id) {
+  const btn = $(`[data-confirm="${id}"]`);
+  if (!btn) return;
+  const inp = $(`[data-mean="${id}"]`);
+  const posCount = $$(`[data-posc="${id}"]:checked`).length;
+  btn.disabled = !(inp && inp.value.trim()) || !posCount;
+}
+
 /* ================================ 我的页 ================================ */
-const GOAL_OPTS = ["语法", "雅思词汇", "雅思写作", "阅读", "翻译"];
-const TOPIC_OPTS = ["教育", "环保", "科技", "城市", "健康", "工作", "文化", "媒体"];
-const QT_OPTS = ["单选", "填空", "语法填空", "TFNG", "写作", "翻译"];
+const GOAL_DEFAULT = ["语法", "雅思词汇", "雅思写作", "阅读", "翻译"];
+const TOPIC_DEFAULT = ["教育", "环保", "科技", "城市", "健康", "工作", "文化", "媒体"];
+const QT_DEFAULT = ["单选", "填空", "语法填空", "TFNG", "写作", "翻译"];
+const SPLIT_RE = /[,，、;；\s]+/;
+
+function parseInput(v) {
+  return String(v || "").split(SPLIT_RE).map((s) => s.trim()).filter(Boolean);
+}
 
 async function viewMe() {
   const app = $("#app");
@@ -703,30 +789,36 @@ async function viewMe() {
     [state, kmap] = await Promise.all([API.state(), API.knowledgeMap()]);
   } catch (e) { return renderError(app, e); }
   const p = state.profile || {};
-  const goals = p.goals || [], topics = p.topics || [], qts = p.question_types || [], notes = p.notes || "";
+  const goals = p.goals && p.goals.length ? p.goals : GOAL_DEFAULT;
+  const topics = p.topics && p.topics.length ? p.topics : TOPIC_DEFAULT;
+  const qts = p.question_types && p.question_types.length ? p.question_types : QT_DEFAULT;
+  const notes = p.notes || "";
 
-  const chips = (name, opts, chosen) => `
-    <div class="chips" data-group="${name}">
-      ${opts.map((o) => `<label class="chip ${chosen.includes(o) ? "on" : ""}">
-        <input type="checkbox" value="${esc(o)}" ${chosen.includes(o) ? "checked" : ""}>${esc(o)}</label>`).join("")}
-    </div>`;
+  const field = (id, label, val, ph) => `
+    <div class="field"><label>${label}</label>
+      <input type="text" id="${id}" value="${esc(Array.isArray(val) ? val.join("，") : val)}" placeholder="${esc(ph)}"></div>`;
 
   const summ = kmap.summary || {};
   const mapHTML = (kmap.stages || []).map((st) => `
     <div class="map-stage">
       <div class="map-stage-head">第${st.stage}阶段 · ${esc(st.stage_name)}</div>
       <div class="map-grid">
-        ${st.points.map((pt) => `
-          <div class="map-point ${pt.status}">
+        ${st.points.map((pt) => {
+          const barCls = pt.counted
+            ? (pt.status === "mastered" ? "ok" : pt.status === "weak" ? "bad" : "warn")
+            : "";
+          return `
+          <div class="map-point ${pt.counted ? pt.status : ""}">
             <div class="map-name">${esc(pt.name)}</div>
             <div class="map-score">${pt.score}<span>分</span></div>
-            <div class="bar ${pt.score >= 85 && pt.attempts >= 3 ? "ok" : pt.score === 0 ? "" : pt.score < 50 ? "bad" : "warn"}">
-              <i style="width:${pt.score}%"></i>
-            </div>
+            <div class="bar ${barCls}"><i style="width:${pt.counted ? pt.score : 0}%"></i></div>
             ${pt.attempts
-              ? `<div class="map-meta">${pt.attempts} 次作答${pt.status === "mastered" ? " · 已掌握 ✓" : pt.status === "weak" ? " · 薄弱 ⚠" : ""}</div>`
+              ? `<div class="map-meta">${pt.attempts} 次作答${pt.counted
+                  ? (pt.status === "mastered" ? " · 已掌握 ✓" : pt.status === "weak" ? " · 薄弱 ⚠" : "")
+                  : " · 计分中（超过 5 次才计分）"}</div>`
               : '<div class="map-meta">未练过</div>'}
-          </div>`).join("")}
+          </div>`;
+        }).join("")}
       </div>
     </div>`).join("");
 
@@ -740,13 +832,13 @@ async function viewMe() {
 
   app.innerHTML = `
     <h1 class="page-title">我的</h1>
-    <p class="page-sub">你的设置会直接告诉 AI 老师出题方向、话题和题型需求；老师仍会根据你的错题与弱点动态调整策略。</p>
+    <p class="page-sub">用输入框自由填写（逗号分隔即可，默认已包含常用选项）；你的设置会直接告诉 AI 老师出题方向、话题和题型需求，老师仍会根据你的错题与弱点动态调整策略。</p>
 
     <div class="card" style="margin-bottom:18px">
       <h3 class="card-h">🎯 学习目标与题目需求</h3>
-      <div class="field"><label>学习目标（可多选）</label>${chips("goals", GOAL_OPTS, goals)}</div>
-      <div class="field"><label>话题偏好（雅思话题）</label>${chips("topics", TOPIC_OPTS, topics)}</div>
-      <div class="field"><label>题型需求</label>${chips("qts", QT_OPTS, qts)}</div>
+      ${field("pf-goals", "学习目标（逗号分隔）", goals, "例如：语法，雅思词汇，翻译")}
+      ${field("pf-topics", "话题偏好（雅思话题）", topics, "例如：教育，环保，科技")}
+      ${field("pf-qts", "题型需求（逗号分隔）", qts, "例如：单选，填空，翻译")}
       <div class="field"><label>给老师的备注（自由填写）</label>
         <textarea id="profile-notes" rows="3" placeholder="例如：我希望多练从句；作文请给我模板；词汇想练同义替换……">${esc(notes)}</textarea></div>
       <button class="btn primary" id="btn-save-profile">保存设置</button>
@@ -756,8 +848,9 @@ async function viewMe() {
       <h3 class="card-h">📊 语法知识图谱</h3>
       <div class="map-summary">
         <span class="map-grade">${esc(summ.grade || "暂无数据")}</span>
-        <span class="map-stat">已学 ${summ.attempted}/${summ.total} · 已掌握 ${summ.mastered} · 薄弱 ${summ.weak} · 平均 ${summ.avg} 分</span>
+        <span class="map-stat">已学 ${summ.attempted}/${summ.total} · 已掌握 ${summ.mastered} · 薄弱 ${summ.weak}${summ.counting ? ` · 计分中 ${summ.counting}` : ""} · 平均 ${summ.avg} 分</span>
       </div>
+      <p class="page-sub" style="font-size:12.5px;margin-bottom:10px">规则：作答超过 5 次才开始按正确率计分（没做过题 0 分，满分 100）。</p>
       ${mapHTML || empty("🧭", "图谱还没导入（老师导入后显示）")}
     </div>
 
@@ -767,19 +860,16 @@ async function viewMe() {
     </div>`;
 
   $("#btn-save-profile").addEventListener("click", async () => {
-    const collect = (group) => Array.from($$(`.chips[data-group="${group}"] input:checked`)).map((i) => i.value);
     try {
       await API.saveProfile({
-        goals: collect("goals"),
-        topics: collect("topics"),
-        question_types: collect("qts"),
+        goals: parseInput($("#pf-goals").value),
+        topics: parseInput($("#pf-topics").value),
+        question_types: parseInput($("#pf-qts").value),
         notes: $("#profile-notes").value.trim(),
       });
       toast("已保存 ✓ 老师出题时会读取这些设置");
     } catch (e) { toast(`❌ ${e.message}`); }
   });
-  $$(".chips input").forEach((inp) => inp.addEventListener("change", () =>
-    inp.closest(".chip").classList.toggle("on", inp.checked)));
 }
 
 /* ================================ 设置页 ================================ */

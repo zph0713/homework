@@ -348,24 +348,32 @@ def cmd_weekly_record(args):
 def cmd_vocab(args):
     if args.vocab_cmd == "list":
         with db.connect() as conn:
-            words = db.vocab_list(conn, unfilled_only=args.unfilled)
+            words = db.vocab_list(conn, unfilled_only=args.unfilled,
+                                  confirmed_only=args.confirmed,
+                                  await_detail=args.await_detail,
+                                  pool_only=args.pool)
         if not words:
-            print("单词本还是空的（在网页上选中单词一键加入）")
+            print("（没有符合条件的词）")
             return
         if args.out_json:
             with open(args.out_json, "w", encoding="utf-8") as f:
                 json.dump({"words": words}, f, ensure_ascii=False, indent=2)
             print(f"已导出 {len(words)} 个单词 → {args.out_json}")
             return
-        print(f"共 {len(words)} 词" + ("（含未填中文/词性的）" if args.unfilled else ""))
-        print(f"{'ID':>4}  {'单词':<20} {'词性':<12} {'中文':<20} 备注")
-        print("-" * 90)
+        print(f"共 {len(words)} 词"
+              + ("（缺中文/词性——提醒学生在网页补填）" if args.unfilled else "")
+              + ("（已确认，待补详细）" if args.await_detail else ""))
+        print(f"{'ID':>4}  {'单词':<18} {'词性':<14} {'中文':<16} {'池':<4} {'确认':<4} 详细")
+        print("-" * 100)
         for w in words:
-            print(f"{w['id']:>4}  {w['word']:<20} {(w['pos'] or '—'):<12} "
-                  f"{(w['meaning_cn'] or '（待补）'):<20} {w['note'][:20]}")
+            pool = "✓绿" if (w["in_pool"] == 0 and w["times_checked"]) else (
+                "错池" if (w["in_pool"] == 1 and w["last_check_ok"] == 0) else "待抽")
+            print(f"{w['id']:>4}  {w['word']:<18} {'/'.join(w['pos']) or '—':<14} "
+                  f"{(w['meaning_cn'] or '（待填）'):<16} {pool:<4} {'✓' if w['confirmed'] else '—':<4} "
+                  f"{(w['detail'] or '')[:40]}")
     elif args.vocab_cmd == "add":
         with db.connect() as conn:
-            row, created = db.vocab_add(conn, args.word, note=args.note or "", source=args.source or "")
+            row, created = db.vocab_add(conn, args.word, source=args.source or "")
         print(f"{'已加入' if created else '已存在'}：{row['word']}（#{row['id']}）")
     elif args.vocab_cmd == "update":
         with open(args.json_file, encoding="utf-8") as f:
@@ -373,13 +381,32 @@ def cmd_vocab(args):
         updates = payload.get("updates", payload if isinstance(payload, list) else [])
         with db.connect() as conn:
             ids = db.vocab_update(conn, updates)
-        print(f"已更新 {len(ids)} 个单词的中文/词性")
+        print(f"已更新 {len(ids)} 个单词")
     elif args.vocab_cmd == "delete":
         with db.connect() as conn:
             db.vocab_delete(conn, args.vid)
         print(f"已删除单词 #{args.vid}")
     elif args.vocab_cmd == "dictation":
         cmd_vocab_dictation(args)
+    elif args.vocab_cmd == "check":
+        cmd_vocab_check(args)
+    elif args.vocab_cmd == "check-result":
+        cmd_vocab_check_result(args)
+
+
+def _vocab_question(w, tag):
+    """把词转成 fill 题目。tag: '词汇-默写' | '词汇-抽查'。"""
+    pos = "/".join(w["pos"]) if isinstance(w.get("pos"), list) else (w.get("pos") or "")
+    hint = f"（{pos}）" if pos else ""
+    verb = "默写" if tag == "词汇-默写" else "抽查"
+    return {
+        "type": "fill",
+        "prompt": f"{verb}：{w['meaning_cn']}{hint}____",
+        "answer": [w["word"]],
+        "explanation": " ".join(x for x in (w["word"], pos, w.get("meaning_cn")) if x),
+        "knowledge_point": tag,
+        "score": 1,
+    }
 
 
 def cmd_vocab_dictation(args):
@@ -392,7 +419,7 @@ def cmd_vocab_dictation(args):
     unfilled = len(words) - len(ready)
     if not ready:
         print("❌ 单词本里还没有带中文释义的词，无法出默写卷。")
-        print("   先 `vocab update <json>` 补上中文/词性，再生成。")
+        print("   学生在网页填好中文并确认后，再生成。")
         sys.exit(1)
     if unfilled:
         print(f"⚠ 跳过 {unfilled} 个未填中文释义的词")
@@ -400,29 +427,55 @@ def cmd_vocab_dictation(args):
     if len(ready) < args.limit:
         print(f"⚠ 只有 {len(ready)} 个词可用（需求 {args.limit}），将全部使用")
     picked = random.sample(ready, n) if args.random else list(reversed(ready))[:n]
-    questions = []
-    for i, w in enumerate(picked, 1):
-        hint = f"（{w['pos']}）" if w.get("pos") else ""
-        questions.append({
-            "type": "fill",
-            "prompt": f"默写：{w['meaning_cn']}{hint}____",
-            "answer": [w["word"]],
-            "explanation": " ".join(x for x in (w["word"], w.get("pos"), w.get("meaning_cn")) if x),
-            "knowledge_point": "词汇-默写",
-            "score": 1,
-        })
     paper = {
         "title": f"单词默写 · 词本 {n} 词",
         "skill": "vocabulary",
         "topic": "单词本默写",
         "goal": "看中文释义默写英文单词（来自单词本）。答完后老师核对：错词讲记法，并安排变式重默。",
-        "questions": questions,
+        "questions": [_vocab_question(w, "词汇-默写") for w in picked],
     }
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(paper, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"✅ 已生成默写卷（{n} 词）→ {out}")
     print("   发布：python3 agent/cli.py create " + str(out))
+
+
+def cmd_vocab_check(args):
+    """从抽查池随机抽词生成抽查卷（可整卷发布，也可把 questions 并入其他作业）。"""
+    import random
+    with db.connect() as conn:
+        cands = db.vocab_check_candidates(conn)
+    if not cands:
+        print("抽查池为空：需要已确认且填了中文的词（学生在网页填词性/中文后点「确认」）。")
+        sys.exit(1)
+    n = min(args.limit, len(cands))
+    if len(cands) < args.limit:
+        print(f"⚠ 池里只有 {len(cands)} 个词（需求 {args.limit}），将全部抽取")
+    picked = random.sample(cands, n)  # 抽查永远随机抽词
+    paper = {
+        "title": f"单词抽查 · 词本池 {n} 词",
+        "skill": "vocabulary",
+        "topic": "单词本抽查",
+        "goal": "随机抽查单词本里的词：写对即过关出池（绿色），拼错继续留在抽查池直到下次再考。",
+        "questions": [_vocab_question(w, "词汇-抽查") for w in picked],
+    }
+    out = Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(paper, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"✅ 已生成抽查卷（{n} 词）→ {out}")
+    print("   发布：python3 agent/cli.py create " + str(out))
+    print("   ⚠ 批改完成后必须回写池状态：vocab check-result --sub <提交id>")
+
+
+def cmd_vocab_check_result(args):
+    with db.connect() as conn:
+        r = db.vocab_apply_check(conn, args.sub_id)
+    print(f"✅ 抽查池已更新：")
+    print(f"   对 → 出池（绿色）：{len(r['correct'])} 个 {r['correct']}")
+    print(f"   错 → 留池待重抽：{len(r['wrong'])} 个 {r['wrong']}")
+    if r["wrong"]:
+        print("   错词会在下次抽查中再次出现，直到写对为止。")
 
 
 def cmd_profile(args):
@@ -585,20 +638,27 @@ def main(argv=None):
     pv = sub.add_parser("vocab", help="单词本")
     pvs = pv.add_subparsers(dest="vocab_cmd", required=True)
     pvl = pvs.add_parser("list", help="列出单词")
-    pvl.add_argument("--unfilled", action="store_true", help="只显示缺中文/词性的（批改后检查）")
+    pvl.add_argument("--unfilled", action="store_true", help="只显示缺中文/词性的（提醒学生补填）")
+    pvl.add_argument("--confirmed", action="store_true", help="只显示学生已确认的")
+    pvl.add_argument("--await-detail", action="store_true", help="只显示已确认但 AI 还没补详细的（批改后查）")
+    pvl.add_argument("--pool", action="store_true", help="只显示抽查池里的词")
     pvl.add_argument("--json", dest="out_json", help="导出到 JSON 文件")
     pva = pvs.add_parser("add", help="加入单词")
     pva.add_argument("--word", required=True)
-    pva.add_argument("--note", default="")
     pva.add_argument("--source", default="")
-    pvu = pvs.add_parser("update", help="按 JSON 批量补中文/词性")
-    pvu.add_argument("json_file", help='{"updates":[{"word":"...","meaning_cn":"...","pos":"..."}]}')
+    pvu = pvs.add_parser("update", help="按 JSON 批量更新（学生：meaning_cn/pos；AI：detail）")
+    pvu.add_argument("json_file", help='{"updates":[{"word":"...","detail":"词典词性+详细释义..."}]}')
     pvd = pvs.add_parser("delete", help="删除单词")
     pvd.add_argument("vid", type=int)
-    pvk = pvs.add_parser("dictation", help="从单词本生成默写卷 JSON")
+    pvk = pvs.add_parser("dictation", help="从单词本生成默写卷 JSON（全词本）")
     pvk.add_argument("--limit", type=int, default=10, help="默写词数（默认 10）")
     pvk.add_argument("--random", action="store_true", help="随机抽词（默认按加入先后）")
     pvk.add_argument("--out", default="papers/dictation_words.json", help="输出路径")
+    pvc = pvs.add_parser("check", help="从抽查池随机抽词生成抽查卷 JSON")
+    pvc.add_argument("--limit", type=int, default=5, help="抽查词数（默认 5，随机抽取）")
+    pvc.add_argument("--out", default="papers/vocab_check.json", help="输出路径")
+    pvcr = pvs.add_parser("check-result", help="批改后回写抽查池（对→出池，错→留池）")
+    pvcr.add_argument("--sub", dest="sub_id", type=int, required=True, help="抽查卷的提交 id")
 
     ppf = sub.add_parser("profile", help="学生画像（学习目标/话题/题型，出题前必读）")
     ppfs = ppf.add_subparsers(dest="profile_cmd", required=True)

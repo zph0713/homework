@@ -241,6 +241,30 @@ details.wrongs-toggle summary { cursor: pointer; color: var(--muted); font-size:
 .v-note input:hover { border-color: var(--line); }
 .v-note input:focus { border-color: var(--accent); background: #fff; }
 .v-date { color: var(--faint); font-size: 13px; white-space: nowrap; }
+.v-detail { font-size: 13px; color: var(--muted); max-width: 320px; line-height: 1.6; white-space: normal; }
+.v-status { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
+.v-acts { white-space: nowrap; }
+
+/* 词性多选下拉 */
+.pos-wrap { position: relative; }
+.pos-btn { border: 1.5px solid var(--line); background: #fff; border-radius: 8px;
+  padding: 5px 10px; font-size: 13px; cursor: pointer; min-width: 90px; color: var(--ink); }
+.pos-btn:hover { border-color: var(--accent); }
+.pos-pop { position: absolute; top: calc(100% + 4px); left: 0; z-index: 30;
+  background: #fff; border: 1px solid var(--line); border-radius: 10px;
+  box-shadow: var(--shadow-lg); padding: 8px; display: grid;
+  grid-template-columns: repeat(3, auto); gap: 2px; min-width: 180px; }
+.pos-opt { display: flex; align-items: center; gap: 5px; font-size: 13px;
+  padding: 4px 8px; border-radius: 6px; cursor: pointer; white-space: nowrap; }
+.pos-opt:hover { background: var(--accent-soft); }
+.pos-opt input { accent-color: var(--accent); }
+
+/* 抽查池标签 */
+.pool-tag { display: inline-block; font-size: 12px; padding: 1px 8px; border-radius: 999px; white-space: nowrap; }
+.pool-tag.ok { background: var(--ok-soft); color: var(--ok); border: 1px solid #a7f3d0; }
+.pool-tag.bad { background: var(--bad-soft); color: var(--bad); border: 1px solid #fecaca; }
+.pool-tag.pending { background: #f3f4f6; color: var(--muted); }
+.pool-tag.none { color: var(--faint); }
 
 /* ---------- 表单 / 选择芯片 ---------- */
 .card-h { font-size: 15px; font-weight: 700; margin-bottom: 14px; }

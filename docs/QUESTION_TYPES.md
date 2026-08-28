@@ -60,18 +60,29 @@
 - `answer.rubric` 写给 AI 的评分要点（忠实度、语法结构、词汇搭配），批改时给 0~1 比例分 + 逐句反馈
 - 中文原句设计成「逼出目标结构」，如想练现在完成时就给带「自从/已经」的句子
 
-## 默写（dictation）· 单词本专项
+## 默写与抽查（vocabulary）· 单词本专项
 
-**用途**：根据学生单词本定制默写——看中文释义写英文单词。
+**用途**：根据学生单词本定制默写/抽查——看中文释义写英文单词。
 
-**实现方式**：复用 `fill` 题型 + `skill=vocabulary`。**不要手写默写卷 JSON**，用 CLI 一键生成：
+**学生→AI 的分工**：学生填中文意思 + 词性（网页多选下拉）→ 点「确认已填」→ AI 在 `detail` 字段补**词典词性 + 详细中文释义**（`vocab list --await-detail` 查待补 → `vocab update` 写入）。
+
+**实现方式**：复用 `fill` 题型 + `skill=vocabulary`。**不要手写默写/抽查卷 JSON**，用 CLI 一键生成：
 
 ```bash
+# 全词本默写（定制默写训练）
 python3 agent/cli.py vocab dictation --limit 10 --out papers/dictation_words.json
-python3 agent/cli.py create papers/dictation_words.json
+# 抽查池随机抽词（词随机出现在作业里混考：可整卷发布，也可把 questions 并入其它卷）
+python3 agent/cli.py vocab check --limit 3 --out papers/vocab_check.json
+python3 agent/cli.py create papers/xxx.json
 ```
 
-生成规则：只收录已填中文释义的词（`meaning_cn` 非空），prompt 形如「默写：可持续的（adj.）____」，`answer=[单词]` 自动判分；同义词变体由 AI 批改时用 `grade` 覆盖兜底。
+生成规则：只收录已填中文释义的词（`meaning_cn` 非空；抽查池额外要求已确认），prompt 形如「默写/抽查：可持续的（adj.）____」，`answer=[单词]` 自动判分；同义词变体由 AI 批改时用 `grade` 覆盖兜底。知识点标签：默写用「词汇-默写」，抽查用「词汇-抽查」（抽查卷批改后必须回写池状态）。
+
+**抽查池回写**（抽查卷批改全部完成后执行，幂等）：
+```bash
+python3 agent/cli.py vocab check-result --sub <提交id>
+# 写对 → 出池，网页标绿 🟢；拼错 → 留池，下次抽查再考，直到写对
+```
 
 ## 预留题型：listening / speaking（未实现）
 

@@ -131,14 +131,20 @@ CREATE TABLE IF NOT EXISTS weekly_reviews (
   note        TEXT NOT NULL DEFAULT ''
 );
 CREATE TABLE IF NOT EXISTS vocabulary (
-  id         INTEGER PRIMARY KEY AUTOINCREMENT,
-  word       TEXT NOT NULL UNIQUE,
-  note       TEXT NOT NULL DEFAULT '',      -- 学生备注
-  meaning_cn TEXT NOT NULL DEFAULT '',      -- 词典中文（AI 批改时补充）
-  pos        TEXT NOT NULL DEFAULT '',      -- 词性（AI 批改时补充）
-  source     TEXT NOT NULL DEFAULT '',      -- 来源，如 homework#2
-  added_ts   TEXT NOT NULL DEFAULT (datetime('now','localtime')),
-  updated_ts TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+  id             INTEGER PRIMARY KEY AUTOINCREMENT,
+  word           TEXT NOT NULL UNIQUE,
+  meaning_cn     TEXT NOT NULL DEFAULT '',      -- 学生自填的中文意思
+  pos            TEXT NOT NULL DEFAULT '[]',    -- JSON 数组：学生多选词性（n./v./adj.…）
+  detail         TEXT NOT NULL DEFAULT '',      -- AI 补：词典词性 + 详细中文释义
+  confirmed      INTEGER NOT NULL DEFAULT 0,    -- 学生确认已填 meaning_cn + pos
+  in_pool        INTEGER NOT NULL DEFAULT 1,    -- 抽查池：1=在池 0=已过关出池
+  times_checked  INTEGER NOT NULL DEFAULT 0,    -- 被抽查次数
+  last_check_ok  INTEGER,                       -- 最近一次抽查结果：1=对 0=错
+  last_checked_ts TEXT,
+  last_check_sub INTEGER,                       -- 最近一次抽查的提交 id（防重复回写）
+  source         TEXT NOT NULL DEFAULT '',      -- 来源，如 homework#2
+  added_ts       TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+  updated_ts     TEXT NOT NULL DEFAULT (datetime('now','localtime'))
 );
 CREATE TABLE IF NOT EXISTS student_profile (
   key        TEXT PRIMARY KEY,             -- goals|topics|question_types|notes
@@ -187,9 +193,41 @@ def connect(path=None):
     return conn
 
 
+def _migrate(conn):
+    """旧库 → 新结构的小步迁移（幂等）。"""
+    try:
+        cols = [r["name"] for r in conn.execute("PRAGMA table_info(vocabulary)")]
+    except sqlite3.OperationalError:
+        return  # 新库：表由 SCHEMA 直接建成新结构
+    if not cols:
+        return
+    if "note" in cols and "detail" not in cols:
+        conn.execute("ALTER TABLE vocabulary RENAME COLUMN note TO detail")
+    for name, ddl in (
+        ("confirmed", "INTEGER NOT NULL DEFAULT 0"),
+        ("in_pool", "INTEGER NOT NULL DEFAULT 1"),
+        ("times_checked", "INTEGER NOT NULL DEFAULT 0"),
+        ("last_check_ok", "INTEGER"),
+        ("last_checked_ts", "TEXT"),
+        ("last_check_sub", "INTEGER"),
+    ):
+        if name not in cols:
+            conn.execute(f"ALTER TABLE vocabulary ADD COLUMN {name} {ddl}")
+    # 旧 pos 是纯文本（如 "adj."）→ 转成 JSON 数组
+    for r in conn.execute("SELECT id, pos FROM vocabulary WHERE pos != '' AND pos NOT LIKE '[%'"):
+        conn.execute("UPDATE vocabulary SET pos=? WHERE id=?",
+                     (json.dumps([r["pos"]]), r["id"]))
+
+
 def init_db(path=None):
     with connect(path) as conn:
         conn.executescript(SCHEMA)
+        _migrate(conn)
+        # 掌握度状态依赖 kp_status 规则，规则改版后旧数据要重算（幂等，代价低）
+        try:
+            recompute_knowledge_points(conn)
+        except sqlite3.OperationalError:
+            pass  # 新库还没有 grades/questions 时跳过
     return Path(path) if path else get_db_path()
 
 
@@ -513,9 +551,9 @@ def recompute_knowledge_points(conn):
 def kp_status(attempts, mastery):
     if attempts == 0:
         return "new"
-    if attempts >= 3 and mastery >= 0.85:
+    if attempts > 5 and mastery >= 0.85:
         return "mastered"
-    if mastery < 0.5:
+    if attempts > 5 and mastery < 0.5:
         return "weak"
     return "learning"
 
@@ -810,31 +848,57 @@ def weekly_candidates(conn):
 
 
 # ---------------------------------------------------------------- 单词本
-def vocab_add(conn, word, note="", source=""):
+def _parse_pos(raw):
+    """pos 列存 JSON 数组；兼容旧纯文本。"""
+    if isinstance(raw, list):
+        return [str(x) for x in raw if str(x).strip()]
+    if not raw:
+        return []
+    try:
+        v = json.loads(raw)
+        return [str(x) for x in v] if isinstance(v, list) else [str(v)]
+    except (ValueError, TypeError):
+        return [str(raw)]
+
+
+def vocab_add(conn, word, detail="", source=""):
     """加入单词本。已存在则返回既有行（created=False），不重复插入。"""
     word = (word or "").strip()
     if not word:
         raise ValueError("单词不能为空")
     cur = conn.execute(
-        "INSERT OR IGNORE INTO vocabulary (word, note, source) VALUES (?,?,?)",
-        (word, note, source),
+        "INSERT OR IGNORE INTO vocabulary (word, detail, source) VALUES (?,?,?)",
+        (word, detail, source),
     )
     created = cur.rowcount > 0
     row = conn.execute("SELECT * FROM vocabulary WHERE word=?", (word,)).fetchone()
     return dict(row), created
 
 
-def vocab_list(conn, unfilled_only=False):
-    sql = "SELECT * FROM vocabulary"
-    if unfilled_only:
-        sql += " WHERE meaning_cn='' OR pos=''"
+def vocab_list(conn, **filters):
+    """列出单词（pos 解析为数组）。filters: unfilled_only / confirmed_only /
+    await_detail / pool_only。"""
+    sql = "SELECT * FROM vocabulary WHERE 1=1"
+    if filters.get("unfilled_only"):
+        sql += " AND (meaning_cn='' OR pos='[]' OR pos='')"
+    if filters.get("confirmed_only"):
+        sql += " AND confirmed=1"
+    if filters.get("await_detail"):
+        sql += " AND confirmed=1 AND detail=''"
+    if filters.get("pool_only"):
+        sql += " AND in_pool=1 AND meaning_cn!='' AND confirmed=1"
     sql += " ORDER BY added_ts DESC, id DESC"
-    return [dict(r) for r in conn.execute(sql)]
+    out = []
+    for r in conn.execute(sql):
+        d = dict(r)
+        d["pos"] = _parse_pos(r["pos"])
+        out.append(d)
+    return out
 
 
 def vocab_update(conn, updates):
-    """AI 补充单词的中文/词性（也可改备注）。
-    updates: [{"word" 或 "id": ..., "meaning_cn": ..., "pos": ..., "note": ...}]"""
+    """更新单词字段：meaning_cn（学生）/ pos（学生，数组）/ detail（AI 词典信息）/ confirmed。
+    updates: [{"word" 或 "id": ..., "meaning_cn": ..., "pos": [...], "detail": ..., "confirmed": 1}]"""
     updated = []
     for u in updates:
         word = (u.get("word") or "").strip()
@@ -845,12 +909,14 @@ def vocab_update(conn, updates):
         if not row:
             continue
         meaning = u.get("meaning_cn", row["meaning_cn"])
-        pos = u.get("pos", row["pos"])
-        note = u.get("note", row["note"])
+        pos = u.get("pos", _parse_pos(row["pos"]))
+        pos_json = json.dumps(pos, ensure_ascii=False) if isinstance(pos, (list, tuple)) else str(pos)
+        detail = u.get("detail", row["detail"])
+        confirmed = int(u.get("confirmed", row["confirmed"]))
         conn.execute(
-            """UPDATE vocabulary SET meaning_cn=?, pos=?, note=?,
+            """UPDATE vocabulary SET meaning_cn=?, pos=?, detail=?, confirmed=?,
                updated_ts=datetime('now','localtime') WHERE id=?""",
-            (meaning or "", pos or "", note or "", row["id"]),
+            (meaning or "", pos_json, detail or "", confirmed, row["id"]),
         )
         updated.append(row["id"])
     return updated
@@ -858,6 +924,42 @@ def vocab_update(conn, updates):
 
 def vocab_delete(conn, vid):
     conn.execute("DELETE FROM vocabulary WHERE id=?", (vid,))
+
+
+def vocab_check_candidates(conn):
+    """抽查池候选：已确认且填了中文的词。"""
+    return vocab_list(conn, pool_only=True)
+
+
+def vocab_apply_check(conn, sub_id):
+    """批改后回写抽查池：抽对的词标记绿色并出池（in_pool=0），拼错的留在池里。
+    返回 {"correct": [...], "wrong": [...]}。"""
+    sub = conn.execute("SELECT * FROM submissions WHERE id=?", (sub_id,)).fetchone()
+    if not sub:
+        raise ValueError(f"提交 #{sub_id} 不存在")
+    qs = conn.execute("SELECT * FROM questions WHERE homework_id=?", (sub["homework_id"],)).fetchall()
+    grades = {r["question_id"]: r for r in conn.execute(
+        "SELECT * FROM grades WHERE submission_id=?", (sub_id,))}
+    correct, wrong = [], []
+    for q in qs:
+        if q["knowledge_point"] != "词汇-抽查":
+            continue
+        g = grades.get(q["id"])
+        if not g or g["correct"] is None:
+            continue
+        spec = json.loads(q["answer"])
+        word = _as_list(spec)[0] if spec else ""
+        if not word:
+            continue
+        ok = g["correct"] == 1.0
+        conn.execute(
+            """UPDATE vocabulary SET in_pool=?, last_check_ok=?, times_checked=times_checked+1,
+               last_checked_ts=datetime('now','localtime'), last_check_sub=?
+               WHERE word=? AND (last_check_sub IS NULL OR last_check_sub != ?)""",
+            (0 if ok else 1, 1 if ok else 0, sub_id, word, sub_id),
+        )
+        (correct if ok else wrong).append(word)
+    return {"correct": correct, "wrong": wrong}
 
 
 # ---------------------------------------------------------------- 学生画像
@@ -903,16 +1005,19 @@ def kmap_import(conn, payload):
 
 
 def kmap_list(conn):
-    """知识图谱 + 掌握度合并：未练过 mastery=0。"""
+    """知识图谱 + 掌握度合并：作答超过 5 次才开始按正确率计分，否则 0 分（统计中）。"""
     kps = {r["name"]: r for r in conn.execute("SELECT * FROM knowledge_points")}
     rows = [dict(r) for r in conn.execute("SELECT * FROM knowledge_map ORDER BY stage, seq")]
     stages = {}
     for r in rows:
         k = kps.get(r["name"])
+        attempts = k["attempts"] if k else 0
+        counted = attempts > 5
         r["mastery"] = k["mastery"] if k else 0.0
-        r["attempts"] = k["attempts"] if k else 0
+        r["attempts"] = attempts
         r["correct"] = k["correct"] if k else 0.0
-        r["score"] = round((k["mastery"] if k else 0.0) * 100)
+        r["score"] = round((k["mastery"] if k else 0.0) * 100) if counted else 0
+        r["counted"] = counted
         r["status"] = k["status"] if k else "new"
         st = stages.setdefault(r["stage"], {"stage": r["stage"], "stage_name": r["stage_name"], "points": []})
         st["points"].append(r)
@@ -920,13 +1025,15 @@ def kmap_list(conn):
 
 
 def kmap_summary(conn):
-    """图谱总评：已学/已掌握/薄弱/平均分。"""
+    """图谱总评：已学/已掌握/薄弱/计分中/平均分（平均只算已开始计分的点）。"""
     rows = kmap_list(conn)
-    total = sum(len(s["points"]) for s in rows)
-    attempted = sum(1 for s in rows for p in s["points"] if p["attempts"] > 0)
-    mastered = sum(1 for s in rows for p in s["points"] if p["status"] == "mastered")
-    weak = sum(1 for s in rows for p in s["points"] if p["status"] == "weak")
-    avg = round(sum(p["score"] for s in rows for p in s["points"]) / total) if total else 0
+    pts = [p for s in rows for p in s["points"]]
+    total = len(pts)
+    attempted = sum(1 for p in pts if p["attempts"] > 0)
+    mastered = sum(1 for p in pts if p["status"] == "mastered")
+    weak = sum(1 for p in pts if p["status"] == "weak")
+    counted = [p for p in pts if p["counted"]]
+    avg = round(sum(p["score"] for p in counted) / len(counted)) if counted else 0
     if total == 0:
         grade = "还没有知识点数据"
     elif avg >= 85:
@@ -938,7 +1045,7 @@ def kmap_summary(conn):
     else:
         grade = "刚起步：从第一阶段开始学习"
     return {"total": total, "attempted": attempted, "mastered": mastered, "weak": weak,
-            "avg": avg, "grade": grade}
+            "counting": total - len(counted), "avg": avg, "grade": grade}
 
 
 # ---------------------------------------------------------------- 删除试卷

@@ -193,6 +193,13 @@ CLI 会自动建库，无需手工初始化。
 | `diag list [--open]` / `diag resolve <id>` | 诊断档案查询 / 验证卷全对后标记解决 |
 | `weekly status` | 周回顾状态：距上次回顾天数 + 候选知识点 |
 | `weekly record --sampled a,b --wrong b [--hw N]` | 记录一次周回顾（出错知识点转入诊断） |
+| `vocab list [--unfilled\|--confirmed\|--await-detail\|--pool] [--json out.json]` | 单词本查询（学生填中文/词性，AI 补 detail） |
+| `vocab add --word X [--source S]` / `vocab delete <vid>` | 加入 / 删除单词 |
+| `vocab update updates.json` | 批量更新：学生 `meaning_cn`/`pos`（数组）；AI `detail`（词典词性+详细释义） |
+| `vocab dictation --limit N [--random] [--out F]` | 全词本默写卷生成（fill + 知识点「词汇-默写」） |
+| `vocab check --limit N [--out F]` | 抽查池随机抽词生成抽查卷（知识点「词汇-抽查」，可并入其它卷混考） |
+| `vocab check-result --sub <id>` | 抽查卷批改完成后回写池：对→出池（绿），错→留池重抽（幂等） |
+| `kmap import <json>` / `kmap list` / `kmap next [--limit N]` | 知识图谱导入 / 打分总览 / 下一个未掌握点 |
 
 ## 7. 纪律与约定
 
@@ -201,7 +208,7 @@ CLI 会自动建库，无需手工初始化。
 3. **题量克制**：验证卷 3~5 题为宜；诊断卷不超过 15 题。题目贵在多轮，不贵在多。
 4. **解析与点评分离**：`explanation` 是题目自带的通用解析（写卷时定稿）；`feedback` 是 AI 针对**这个学生这一次的错答**的个性化点评（批改时写）。两者都会显示给学生。
 5. **出变式题**：错题重练不要原题照搬（学生会背答案），要换数字/换主语/换语境，考同一个知识点。
-6. **掌握标准**：attempts ≥ 3 且 mastery ≥ 85% → `mastered`，之后降低该知识点的出题频率。
+6. **掌握标准**：作答超过 5 次且 mastery ≥ 85% → `mastered`，之后降低该知识点的出题频率；≤5 次不计分（图谱显示"计分中"）。
 7. **试卷 JSON 进 git（papers/），学习数据（data/）永远不进 git**。
 
 ## 8. 接入新模型的检查清单

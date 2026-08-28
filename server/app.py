@@ -161,7 +161,6 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/vocabulary":
                 with db.connect() as conn:
                     row, created = db.vocab_add(conn, body.get("word") or "",
-                                                note=(body.get("note") or "").strip(),
                                                 source=(body.get("source") or "").strip())
                 return self._send_json(200, {"id": row["id"], "created": created,
                                              "word": row["word"]})
@@ -191,14 +190,21 @@ class Handler(BaseHTTPRequestHandler):
             body = self._read_body()
         except ValueError as e:
             return self._send_error_json(400, str(e))
-        m = re.fullmatch(r"/api/vocabulary/(\d+)", path)
+        m = re.fullmatch(r"/api/vocabulary/(\d+)\s*", path)
         if not m:
             return self._send_error_json(404, "未知接口")
+        fields = {"id": int(m.group(1))}
+        for key in ("meaning_cn", "detail"):
+            if key in body:
+                fields[key] = body.get(key)
+        if "pos" in body:
+            if not isinstance(body["pos"], list):
+                raise ValueError("pos 应为数组（可多选词性）")
+            fields["pos"] = body["pos"]
+        if "confirmed" in body:
+            fields["confirmed"] = 1 if body["confirmed"] else 0
         with db.connect() as conn:
-            db.vocab_update(conn, [{"id": int(m.group(1)),
-                                    "meaning_cn": body.get("meaning_cn", ""),
-                                    "pos": body.get("pos", ""),
-                                    "note": body.get("note", "")}])
+            db.vocab_update(conn, [fields])
         return self._send_json(200, {"updated": True})
 
     def do_DELETE(self):
