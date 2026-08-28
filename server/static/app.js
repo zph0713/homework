@@ -791,7 +791,9 @@ async function viewWords() {
 }
 
 document.addEventListener("click", (e) => {
-  if (!e.target.closest(".pos-wrap")) $$("[data-pospop]").forEach((p) => (p.hidden = true));
+  // 点词性按钮或勾选框：交给各自的处理器；点其他任何地方（含浮层空白处）都关闭
+  if (e.target.closest("[data-posbtn]") || e.target.closest("[data-posc]")) return;
+  $$("[data-pospop]").forEach((p) => (p.hidden = true));
 });
 document.addEventListener("scroll", () => {
   $$("[data-pospop]").forEach((p) => (p.hidden = true));
