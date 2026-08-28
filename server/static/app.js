@@ -650,6 +650,8 @@ async function addToWordbook(word) {
 
 /* ================================ 单词本页 ================================ */
 const POS_OPTS = ["n.", "v.", "vt.", "vi.", "adj.", "adv.", "prep.", "conj.", "pron.", "num.", "art.", "aux.", "interj.", "phr."];
+let VW_PAGE = 1;   // 单词本当前页
+let VW_SIZE = 20;  // 每页词数
 
 function poolTag(w) {
   if (w.in_pool === 0 && w.times_checked) return '<span class="pool-tag ok">🟢 抽查通过 · 已出池</span>';
@@ -669,7 +671,10 @@ async function viewWords() {
   let data;
   try { data = await API.vocabulary(); } catch (e) { return renderError(app, e); }
   const words = data.words || [];
-  const rows = words.map((w) => {
+  const totalPages = Math.max(1, Math.ceil(words.length / VW_SIZE));
+  if (VW_PAGE > totalPages) VW_PAGE = totalPages;
+  const pageWords = words.slice((VW_PAGE - 1) * VW_SIZE, VW_PAGE * VW_SIZE);
+  const rows = pageWords.map((w) => {
     const posText = w.pos.length ? w.pos.join(" / ") : "选择词性…";
     const canConfirm = w.meaning_cn && w.pos.length;
     return `
@@ -698,18 +703,42 @@ async function viewWords() {
   }).join("");
   const unfilled = words.filter((w) => !w.meaning_cn || !w.pos.length).length;
   const awaitDetail = words.filter((w) => w.confirmed && !w.detail).length;
+  const pager = words.length > VW_SIZE ? `
+    <div class="pager">
+      <button class="btn ghost small" data-pg="prev" ${VW_PAGE <= 1 ? "disabled" : ""}>← 上一页</button>
+      <span class="pager-info">第 ${VW_PAGE} / ${totalPages} 页</span>
+      <button class="btn ghost small" data-pg="next" ${VW_PAGE >= totalPages ? "disabled" : ""}>下一页 →</button>
+      <span class="pager-size">每页
+        <select id="pg-size">${[10, 20, 50].map((n) => `<option value="${n}" ${VW_SIZE === n ? "selected" : ""}>${n}</option>`).join("")}</select>
+        词</span>
+    </div>` : "";
   app.innerHTML = `
     <h1 class="page-title">单词本</h1>
     <p class="page-sub">做题时选中不认识的单词即可一键收藏。你来填中文和词性（词性可多选），点「确认已填」后老师补词典词性与详细释义；之后单词会随机出现在作业里抽查——写对出池（绿色），拼错继续留池。</p>
     ${words.length ? `
-    <div class="card" style="padding:0;overflow-x:auto">
+    <div class="card v-card">
       <table class="v-table">
         <thead><tr><th>单词</th><th>词性（你选，可多选）</th><th>中文意思（你填）</th><th>详细（老师补）</th><th>状态</th><th>加入时间</th><th></th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
+    ${pager}
     <p class="page-sub" style="margin-top:12px">共 ${words.length} 词${unfilled ? `，其中 ${unfilled} 词待你补填中文/词性` : ""}${awaitDetail ? `，${awaitDetail} 词已确认、等老师补详细` : ""}</p>`
       : empty("📖", "单词本还空着——做题时选中不认识的单词就能一键收藏")}`;
+
+  $$("[data-pg]").forEach((b) =>
+    b.addEventListener("click", () => {
+      if (b.disabled) return;
+      VW_PAGE += b.dataset.pg === "next" ? 1 : -1;
+      viewWords();
+      window.scrollTo(0, 0);
+    }));
+  const sizeSel = $("#pg-size");
+  if (sizeSel) sizeSel.addEventListener("change", () => {
+    VW_SIZE = +sizeSel.value;
+    VW_PAGE = 1;
+    viewWords();
+  });
 
   $$("[data-mean]").forEach((inp) => {
     inp.addEventListener("blur", async () => {
