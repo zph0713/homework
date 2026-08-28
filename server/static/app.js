@@ -27,6 +27,27 @@ const API = {
   review: () => API._get("/api/review"),
   knowledge: () => API._get("/api/knowledge"),
   request: (knowledge_point, note) => API._post("/api/request", { knowledge_point, note: note || "" }),
+  vocabulary: () => API._get("/api/vocabulary"),
+  vocabAdd: (word, note, source) => API._post("/api/vocabulary", { word, note: note || "", source: source || "" }),
+  vocabPatch: (id, fields) => API._req("PATCH", `/api/vocabulary/${id}`, fields),
+  vocabDelete: (id) => API._req("DELETE", `/api/vocabulary/${id}`),
+  deleteHomework: (id) => API._req("DELETE", `/api/homeworks/${id}`),
+  profile: () => API._get("/api/profile"),
+  saveProfile: (p) => API._post("/api/profile", p),
+  knowledgeMap: () => API._get("/api/knowledge-map"),
+  settings: () => API._get("/api/settings"),
+  saveSettings: (cfg) => API._post("/api/settings", cfg),
+  restart: () => API._post("/api/restart", {}),
+  _req: async (method, url, body) => {
+    const r = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body || {}),
+    });
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || `HTTP ${r.status}`);
+    return data;
+  },
 };
 
 function esc(s) {
@@ -45,7 +66,7 @@ function toast(msg, ms = 2600) {
 }
 
 const SKILL = { grammar: "语法", vocabulary: "词汇", reading: "阅读", writing: "写作", listening: "听力", mixed: "综合" };
-const TYPE = { choice: "单选", fill: "填空", cloze: "语法填空", tfng: "判断 TFNG", writing: "写作" };
+const TYPE = { choice: "单选", fill: "填空", cloze: "语法填空", tfng: "判断 TFNG", writing: "写作", translate: "翻译" };
 const SUB_STATUS = { pending: "已交卷 · 待批改", partial: "已交卷 · 批改中", graded: "已批改" };
 
 function fmtDate(s) {
@@ -71,6 +92,9 @@ function route() {
   if (mResult) return viewResult(+mResult[1]);
   if (hash === "#/review") return viewReview();
   if (hash === "#/kp") return viewKnowledge();
+  if (hash === "#/words") return viewWords();
+  if (hash === "#/me") return viewMe();
+  if (hash === "#/settings") return viewSettings();
   app.innerHTML = '<div class="empty"><div class="big">🔍</div>页面不存在</div>';
 }
 
@@ -107,6 +131,27 @@ async function viewHome() {
         </div>
       </aside>
     </div>`;
+  $$("[data-del-hw]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const id = +b.dataset.delHw;
+      const h = hws.find((x) => x.id === id);
+      showModal(`
+        <h3>删除作业卡？</h3>
+        <p>《${esc(h ? h.title : `#${id}`)}》及其全部提交、批改记录都会被删除，无法恢复。</p>
+        <div class="btn-row">
+          <button class="btn ghost" data-act="cancel">取消</button>
+          <button class="btn danger" data-act="confirm">确认删除</button>
+        </div>`, async (act) => {
+        if (act !== "confirm") return;
+        try {
+          await API.deleteHomework(id);
+          toast("已删除 ✓");
+          viewHome();
+        } catch (e) {
+          toast(`❌ ${e.message}`);
+        }
+      });
+    }));
 }
 
 function hwCard(h) {
@@ -138,6 +183,7 @@ function hwCard(h) {
             ${badgeArch}
           </div>
         </div>
+        <button class="btn-del" data-del-hw="${h.id}" title="删除这张作业卡">✕</button>
       </div>
       ${h.goal ? `<div class="hw-goal">🎯 ${esc(h.goal)}</div>` : ""}
       <div class="hw-foot"><div>${statusHTML}</div><div class="hw-actions">${actions}</div></div>
@@ -176,7 +222,8 @@ function renderQuestion(q, i, passages) {
     : "";
   let main = "";
   if (q.type === "choice") {
-    main = `<div class="q-options">${(q.options || []).map((opt, oi) => {
+    main = `<div class="q-prompt">${esc(q.prompt)}</div>
+      <div class="q-options">${(q.options || []).map((opt, oi) => {
       const letter = (opt.match(/^([A-D])[.．、)\s]/) || [])[1] || String.fromCharCode(65 + oi);
       return `<label class="q-opt" data-q="${q.id}" data-v="${letter}">
         <input type="radio" name="q${q.id}" value="${letter}"><span>${esc(opt)}</span></label>`;
@@ -185,7 +232,8 @@ function renderQuestion(q, i, passages) {
     const opts = [
       ["TRUE", "TRUE · 与原文一致"], ["FALSE", "FALSE · 与原文矛盾"], ["NOT GIVEN", "NOT GIVEN · 未提及"],
     ];
-    main = `<div class="q-options">${opts.map(([v, label]) => {
+    main = `<div class="q-prompt">${esc(q.prompt)}</div>
+      <div class="q-options">${opts.map(([v, label]) => {
       const [big, hint] = label.split("·");
       return `<label class="q-opt" data-q="${q.id}" data-v="${v}">
         <input type="radio" name="q${q.id}" value="${v}"><span>${big}<span class="tfng-hint">${hint}</span></span></label>`;
@@ -199,8 +247,10 @@ function renderQuestion(q, i, passages) {
       (m, n) => `<span class="q-fill"><input type="text" data-q="${q.id}" data-blank="${n}" size="10"></span>`);
     main = `${q.prompt ? `<div class="q-prompt" style="margin-bottom:8px">${esc(q.prompt)}</div>` : ""}
       <div class="q-cloze-text">${html}</div>`;
-  } else if (q.type === "writing") {
-    main = `<div class="q-write"><textarea data-q="${q.id}" placeholder="在这里写下你的作文…"></textarea>
+  } else if (q.type === "writing" || q.type === "translate") {
+    const ph = q.type === "translate" ? "在这里写下你的译文…" : "在这里写下你的作文…";
+    main = `<div class="q-prompt">${esc(q.prompt)}</div>
+      <div class="q-write"><textarea data-q="${q.id}" placeholder="${ph}"></textarea>
       <div class="wc"><span data-wc="${q.id}">0</span> 词</div></div>`;
   }
   return `
@@ -240,7 +290,7 @@ function collectAnswers(qs) {
         if (inp.value.trim()) obj[inp.dataset.blank] = inp.value.trim();
       });
       if (Object.keys(obj).length) answers[q.id] = obj;
-    } else if (q.type === "writing") {
+    } else if (q.type === "writing" || q.type === "translate") {
       const el = $(`textarea[data-q="${q.id}"]`);
       if (el && el.value.trim()) answers[q.id] = el.value.trim();
     }
@@ -370,13 +420,14 @@ function clozePerBlank(it) {
 }
 
 function renderResultItem(it) {
-  const isWriting = it.type === "writing";
+  const isText = it.type === "writing" || it.type === "translate";
   const cls = it.correct === 1 ? "ok" : it.correct === 0 ? "bad" : "partial";
   const mark = it.correct === 1 ? "✓ 正确" : it.correct === 0 ? "✗ 错误" : "◐ 部分正确";
-  const showKey = it.correct !== 1 && it.correct_answer != null && !isWriting;
+  const showKey = it.correct !== 1 && it.correct_answer != null && !isText;
   let answerHTML = "";
-  if (isWriting) {
-    answerHTML = `<div class="r-answer">你的作文：</div>
+  if (isText) {
+    const lbl = it.type === "translate" ? "你的译文：" : "你的作文：";
+    answerHTML = `<div class="r-answer">${lbl}</div>
       <div class="r-essay">${esc(it.user_answer || "（未作答）")}</div>`;
   } else if (it.type === "cloze") {
     answerHTML = `<div class="cloze-check">${clozePerBlank(it)}</div>`;
@@ -448,8 +499,9 @@ async function viewReview() {
 
 function wrongCard(it) {
   let ansHTML = "";
-  if (it.type === "writing") {
-    ansHTML = `<div class="r-answer"><span>你的作文：</span></div>
+  if (it.type === "writing" || it.type === "translate") {
+    const lbl = it.type === "translate" ? "你的译文：" : "你的作文：";
+    ansHTML = `<div class="r-answer"><span>${lbl}</span></div>
       <div class="r-essay">${esc(it.user_answer || "")}</div>`;
   } else if (it.type === "cloze") {
     ansHTML = `<div class="cloze-check">${clozePerBlank(it)}</div>`;
@@ -545,6 +597,259 @@ function renderError(app, e) {
       <div>加载失败：${esc(e.message)}</div>
       <div style="margin-top:12px"><a class="btn ghost small" href="#/">返回首页</a></div>
     </div>`;
+}
+
+/* ================================ 选中单词 → 单词本 ================================ */
+let wordPopEl = null;
+function removeWordPop() {
+  if (wordPopEl) { wordPopEl.remove(); wordPopEl = null; }
+}
+document.addEventListener("mousedown", (e) => {
+  if (wordPopEl && !wordPopEl.contains(e.target)) removeWordPop();
+});
+document.addEventListener("scroll", removeWordPop, true);
+document.addEventListener("mouseup", () => {
+  setTimeout(() => {
+    removeWordPop();
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed) return;
+    const text = sel.toString().trim();
+    if (!text || !/^[A-Za-z][A-Za-z'’\- ]*$/.test(text)) return;
+    const node = sel.anchorNode;
+    const host = node && node.nodeType === 3 ? node.parentElement : node;
+    if (!host || !host.closest(".q-card, .r-card, .wrong-card, .q-passage, .q-cloze-text")) return;
+    const word = text.replace(/[^A-Za-z'’-]/g, " ").trim().split(/\s+/)[0];
+    if (!word || word.length < 2 || word.length > 40) return;
+    const rect = sel.getRangeAt(0).getBoundingClientRect();
+    const pop = document.createElement("div");
+    pop.className = "word-pop";
+    pop.innerHTML = `➕ <b>${esc(word)}</b> 加入单词本`;
+    pop.style.left = `${Math.min(window.scrollX + rect.left, window.innerWidth - 190)}px`;
+    pop.style.top = `${window.scrollY + rect.bottom + 6}px`;
+    pop.addEventListener("mousedown", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      removeWordPop();
+      addToWordbook(word);
+    });
+    document.body.appendChild(pop);
+    wordPopEl = pop;
+  }, 10);
+});
+
+async function addToWordbook(word) {
+  try {
+    const r = await API.vocabAdd(word, "", location.hash);
+    toast(r.created ? `「${word}」已加入单词本 ✓` : `「${word}」已在单词本中`);
+  } catch (e) {
+    toast(`❌ ${e.message}`);
+  }
+}
+
+/* ================================ 单词本页 ================================ */
+async function viewWords() {
+  const app = $("#app");
+  let data;
+  try { data = await API.vocabulary(); } catch (e) { return renderError(app, e); }
+  const words = data.words || [];
+  const rows = words.map((w) => `
+    <tr>
+      <td class="v-word">${esc(w.word)}</td>
+      <td class="v-pos">${w.pos ? esc(w.pos) : '<span class="v-empty">待老师补</span>'}</td>
+      <td class="v-mean">${w.meaning_cn ? esc(w.meaning_cn) : '<span class="v-empty">待老师补</span>'}</td>
+      <td class="v-note"><input type="text" data-note="${w.id}" value="${esc(w.note)}" placeholder="写点备注…"></td>
+      <td class="v-date">${fmtDate(w.added_ts)}</td>
+      <td><button class="btn ghost small" data-vdel="${w.id}">删除</button></td>
+    </tr>`).join("");
+  app.innerHTML = `
+    <h1 class="page-title">单词本</h1>
+    <p class="page-sub">做题时选中不认识的单词即可一键收藏；中文和词性会在老师批改作业时自动补上。</p>
+    ${words.length ? `
+    <div class="card" style="padding:0;overflow-x:auto">
+      <table class="v-table">
+        <thead><tr><th>单词</th><th>词性</th><th>中文</th><th>我的备注</th><th>加入时间</th><th></th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+    <p class="page-sub" style="margin-top:12px">共 ${words.length} 词${data.unfilled ? `，其中 ${data.unfilled} 词待老师补充释义` : ""}，以后可据词本定制默写</p>`
+      : empty("📖", "单词本还空着——做题时选中不认识的单词就能一键收藏")}`;
+  $$("[data-note]").forEach((inp) => {
+    inp.addEventListener("blur", async () => {
+      try {
+        await API.vocabPatch(+inp.dataset.note, { note: inp.value.trim() });
+        toast("备注已保存 ✓");
+      } catch (e) { toast(`❌ ${e.message}`); }
+    });
+  });
+  $$("[data-vdel]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      try {
+        await API.vocabDelete(+b.dataset.vdel);
+        toast("已删除 ✓");
+        viewWords();
+      } catch (e) { toast(`❌ ${e.message}`); }
+    }));
+}
+
+/* ================================ 我的页 ================================ */
+const GOAL_OPTS = ["语法", "雅思词汇", "雅思写作", "阅读", "翻译"];
+const TOPIC_OPTS = ["教育", "环保", "科技", "城市", "健康", "工作", "文化", "媒体"];
+const QT_OPTS = ["单选", "填空", "语法填空", "TFNG", "写作", "翻译"];
+
+async function viewMe() {
+  const app = $("#app");
+  let state, kmap;
+  try {
+    [state, kmap] = await Promise.all([API.state(), API.knowledgeMap()]);
+  } catch (e) { return renderError(app, e); }
+  const p = state.profile || {};
+  const goals = p.goals || [], topics = p.topics || [], qts = p.question_types || [], notes = p.notes || "";
+
+  const chips = (name, opts, chosen) => `
+    <div class="chips" data-group="${name}">
+      ${opts.map((o) => `<label class="chip ${chosen.includes(o) ? "on" : ""}">
+        <input type="checkbox" value="${esc(o)}" ${chosen.includes(o) ? "checked" : ""}>${esc(o)}</label>`).join("")}
+    </div>`;
+
+  const summ = kmap.summary || {};
+  const mapHTML = (kmap.stages || []).map((st) => `
+    <div class="map-stage">
+      <div class="map-stage-head">第${st.stage}阶段 · ${esc(st.stage_name)}</div>
+      <div class="map-grid">
+        ${st.points.map((pt) => `
+          <div class="map-point ${pt.status}">
+            <div class="map-name">${esc(pt.name)}</div>
+            <div class="map-score">${pt.score}<span>分</span></div>
+            <div class="bar ${pt.score >= 85 && pt.attempts >= 3 ? "ok" : pt.score === 0 ? "" : pt.score < 50 ? "bad" : "warn"}">
+              <i style="width:${pt.score}%"></i>
+            </div>
+            ${pt.attempts
+              ? `<div class="map-meta">${pt.attempts} 次作答${pt.status === "mastered" ? " · 已掌握 ✓" : pt.status === "weak" ? " · 薄弱 ⚠" : ""}</div>`
+              : '<div class="map-meta">未练过</div>'}
+          </div>`).join("")}
+      </div>
+    </div>`).join("");
+
+  const recentHTML = (state.recent_graded || []).map((s) => {
+    const pct = s.max_score ? Math.round((s.total_score / s.max_score) * 100) : 0;
+    return `<div class="recent-row"><span class="recent-title">${esc(s.title)}</span>
+      <span class="recent-score">${s.total_score}/${s.max_score}</span>
+      <span class="status-tag ${pct >= 85 ? "ok" : pct < 60 ? "bad" : "warn"}">${pct}%</span>
+      <span class="recent-date">${fmtDate(s.submitted_at)}</span></div>`;
+  }).join("") || '<div style="font-size:13px;color:var(--faint)">还没有已批改的作业</div>';
+
+  app.innerHTML = `
+    <h1 class="page-title">我的</h1>
+    <p class="page-sub">你的设置会直接告诉 AI 老师出题方向、话题和题型需求；老师仍会根据你的错题与弱点动态调整策略。</p>
+
+    <div class="card" style="margin-bottom:18px">
+      <h3 class="card-h">🎯 学习目标与题目需求</h3>
+      <div class="field"><label>学习目标（可多选）</label>${chips("goals", GOAL_OPTS, goals)}</div>
+      <div class="field"><label>话题偏好（雅思话题）</label>${chips("topics", TOPIC_OPTS, topics)}</div>
+      <div class="field"><label>题型需求</label>${chips("qts", QT_OPTS, qts)}</div>
+      <div class="field"><label>给老师的备注（自由填写）</label>
+        <textarea id="profile-notes" rows="3" placeholder="例如：我希望多练从句；作文请给我模板；词汇想练同义替换……">${esc(notes)}</textarea></div>
+      <button class="btn primary" id="btn-save-profile">保存设置</button>
+    </div>
+
+    <div class="card" style="margin-bottom:18px">
+      <h3 class="card-h">📊 语法知识图谱</h3>
+      <div class="map-summary">
+        <span class="map-grade">${esc(summ.grade || "暂无数据")}</span>
+        <span class="map-stat">已学 ${summ.attempted}/${summ.total} · 已掌握 ${summ.mastered} · 薄弱 ${summ.weak} · 平均 ${summ.avg} 分</span>
+      </div>
+      ${mapHTML || empty("🧭", "图谱还没导入（老师导入后显示）")}
+    </div>
+
+    <div class="card">
+      <h3 class="card-h">📈 近期作业正确率</h3>
+      ${recentHTML}
+    </div>`;
+
+  $("#btn-save-profile").addEventListener("click", async () => {
+    const collect = (group) => Array.from($$(`.chips[data-group="${group}"] input:checked`)).map((i) => i.value);
+    try {
+      await API.saveProfile({
+        goals: collect("goals"),
+        topics: collect("topics"),
+        question_types: collect("qts"),
+        notes: $("#profile-notes").value.trim(),
+      });
+      toast("已保存 ✓ 老师出题时会读取这些设置");
+    } catch (e) { toast(`❌ ${e.message}`); }
+  });
+  $$(".chips input").forEach((inp) => inp.addEventListener("change", () =>
+    inp.closest(".chip").classList.toggle("on", inp.checked)));
+}
+
+/* ================================ 设置页 ================================ */
+async function viewSettings() {
+  const app = $("#app");
+  let cfg;
+  try { cfg = await API.settings(); } catch (e) { return renderError(app, e); }
+  const saved = cfg.config || {};
+  app.innerHTML = `
+    <h1 class="page-title">设置</h1>
+    <p class="page-sub">修改后需重启服务生效。数据库路径对网页和 AI 老师同时生效（读同一份 config.json）。</p>
+
+    <div class="card" style="margin-bottom:18px">
+      <h3 class="card-h">⚙️ 服务配置</h3>
+      <div class="field"><label>数据库文件路径</label>
+        <input type="text" id="set-db" value="${esc(saved.db_path || cfg.db_path)}" placeholder="默认 data/homework.db"></div>
+      <div class="field-row">
+        <div class="field" style="flex:1"><label>监听地址</label>
+          <input type="text" id="set-host" value="${esc(saved.host || cfg.host)}" placeholder="127.0.0.1"></div>
+        <div class="field" style="flex:0 0 140px"><label>端口</label>
+          <input type="number" id="set-port" value="${esc(saved.port || cfg.port)}" placeholder="8877"></div>
+      </div>
+      <p class="page-sub">当前运行：${esc(cfg.host)}:${esc(cfg.port)} · 数据库 ${esc(cfg.db_path)}</p>
+      <div class="btn-row" style="justify-content:flex-start">
+        <button class="btn primary" id="btn-save-set">保存配置</button>
+        <button class="btn ghost" id="btn-restart">重启服务</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="card-h">🤖 给不同 AI Agent 导入「老师技能」</h3>
+      <div class="agent-guide">
+        <div class="agent-row"><b>Hermes Agent</b>
+          <code>cp skills/homework-lab/SKILL.md ~/.hermes/skills/education/homework-lab/</code>
+          重启会话后生效。触发词：出题吧 / 写好了 / 交了。</div>
+        <div class="agent-row"><b>Claude Code</b>
+          在项目目录运行 <code>claude</code>，根目录 AGENTS.md 自动加载，零配置。</div>
+        <div class="agent-row"><b>OpenAI Codex / OpenCode</b>
+          在项目目录运行 <code>codex</code> 或 <code>opencode</code>，AGENTS.md 自动加载。</div>
+        <div class="agent-row"><b>其他 agent / 自研</b>
+          把 <code>AGENTS.md</code> + <code>docs/AGENT_PROTOCOL.md</code> 全文放进 system prompt，赋予 shell 权限即可。</div>
+      </div>
+    </div>`;
+
+  $("#btn-save-set").addEventListener("click", async () => {
+    try {
+      await API.saveSettings({
+        db_path: $("#set-db").value.trim(),
+        host: $("#set-host").value.trim(),
+        port: $("#set-port").value.trim(),
+      });
+      toast("已保存 ✓ 需重启服务生效");
+    } catch (e) { toast(`❌ ${e.message}`); }
+  });
+  $("#btn-restart").addEventListener("click", () => {
+    showModal(`
+      <h3>重启服务？</h3>
+      <p>服务约 1 秒后自动重启并应用新配置，页面稍后自动刷新，学习数据不受影响。</p>
+      <div class="btn-row">
+        <button class="btn ghost" data-act="cancel">取消</button>
+        <button class="btn primary" data-act="confirm">确认重启</button>
+      </div>`, async (act) => {
+      if (act !== "confirm") return;
+      try {
+        await API.restart();
+        toast("正在重启…");
+        setTimeout(() => { location.reload(); }, 2500);
+      } catch (e) { toast(`❌ ${e.message}`); }
+    });
+  });
 }
 
 route();

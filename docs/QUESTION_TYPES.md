@@ -1,6 +1,7 @@
 # 题型规范与出题指南
 
-五种题型覆盖雅思语法/词汇训练的主要形态。所有题型统一支持 `explanation`（通用解析）与 `knowledge_point`（知识点标签）。
+六种题型覆盖雅思语法/词汇/翻译训练的主要形态。所有题型统一支持 `explanation`（通用解析）与 `knowledge_point`（知识点标签）。
+听力/口语为**预留题型，尚未实现**（见文末），出题时不要使用。
 
 ## choice · 单选
 
@@ -50,6 +51,36 @@
 - `answer.rubric` 写给 AI 的评分要点（学生看不到），批改时按点给分（可用小数）
 - 篇幅建议：Task 1 迷你练 ≤3 句；Task 2 段落练 ≤80 词。题目贵在多轮，不贵在长
 
+## translate · 翻译
+
+**用途**：中译英训练（输出型语法 + 话题词汇双重练习），学生画像勾选「翻译」后安排。
+
+**出题要点**：
+- prompt 给中文原句 + 明确的翻译要求（必用语法结构 / 话题词汇）
+- `answer.rubric` 写给 AI 的评分要点（忠实度、语法结构、词汇搭配），批改时给 0~1 比例分 + 逐句反馈
+- 中文原句设计成「逼出目标结构」，如想练现在完成时就给带「自从/已经」的句子
+
+## 默写（dictation）· 单词本专项
+
+**用途**：根据学生单词本定制默写——看中文释义写英文单词。
+
+**实现方式**：复用 `fill` 题型 + `skill=vocabulary`。**不要手写默写卷 JSON**，用 CLI 一键生成：
+
+```bash
+python3 agent/cli.py vocab dictation --limit 10 --out papers/dictation_words.json
+python3 agent/cli.py create papers/dictation_words.json
+```
+
+生成规则：只收录已填中文释义的词（`meaning_cn` 非空），prompt 形如「默写：可持续的（adj.）____」，`answer=[单词]` 自动判分；同义词变体由 AI 批改时用 `grade` 覆盖兜底。
+
+## 预留题型：listening / speaking（未实现）
+
+> ⚠️ 当前开发目标**不包含**听力和口语，以下仅为预留设计，agent 出题时不要生成这两类题。
+
+- **listening（预留）**：question JSON 增加可选字段 `audio_url`（音频地址，支持 file:// 本地路径或 http）；前端播放按钮 + 可重复听；答题形态复用 choice/fill/cloze。
+- **speaking（预留）**：`GET /api/record` + MediaRecorder 录音上传，answer 存音频文件引用 + 转写文本；AI 批改读转写文本。
+- 服务器 API 已预留 `/api/audio` 命名空间；开发计划详见 `docs/ROADMAP.md`，当前阶段不动。
+
 ## 通用出题纪律
 
 1. `knowledge_point` 必填且命名一致（详见 AGENT_PROTOCOL §7）
@@ -57,3 +88,4 @@
 3. 题干语境全部用雅思话题（教育/环保/科技/城市/健康/工作），语法练习同时积累话题词汇
 4. 解析默认用中文，讲清规则 + 回到本题
 5. 重练卷必须出变式题（换主语/换数字/换语境），禁止原题照搬
+6. 学生画像勾选的题型（「我的」页）优先出；画像里没勾的题型不主动出

@@ -18,10 +18,10 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DB = PROJECT_ROOT / "data" / "homework.db"
 
-QUESTION_TYPES = {"choice", "fill", "cloze", "tfng", "writing"}
+QUESTION_TYPES = {"choice", "fill", "cloze", "tfng", "writing", "translate"}
 OBJECTIVE_TYPES = {"choice", "tfng"}      # 自动批改即可定论
 REVIEW_TYPES = {"fill", "cloze"}         # 未命中参考答案时需 AI 复核
-MANUAL_TYPES = {"writing"}               # 必须 AI 批改
+MANUAL_TYPES = {"writing", "translate"}  # 必须 AI 批改
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS homeworks (
@@ -130,6 +130,28 @@ CREATE TABLE IF NOT EXISTS weekly_reviews (
   homework_id INTEGER,                      -- 关联的抽查卷
   note        TEXT NOT NULL DEFAULT ''
 );
+CREATE TABLE IF NOT EXISTS vocabulary (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  word       TEXT NOT NULL UNIQUE,
+  note       TEXT NOT NULL DEFAULT '',      -- 学生备注
+  meaning_cn TEXT NOT NULL DEFAULT '',      -- 词典中文（AI 批改时补充）
+  pos        TEXT NOT NULL DEFAULT '',      -- 词性（AI 批改时补充）
+  source     TEXT NOT NULL DEFAULT '',      -- 来源，如 homework#2
+  added_ts   TEXT NOT NULL DEFAULT (datetime('now','localtime')),
+  updated_ts TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+);
+CREATE TABLE IF NOT EXISTS student_profile (
+  key        TEXT PRIMARY KEY,             -- goals|topics|question_types|notes
+  value      TEXT NOT NULL DEFAULT '[]',   -- JSON
+  updated_ts TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+);
+CREATE TABLE IF NOT EXISTS knowledge_map (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  name       TEXT NOT NULL UNIQUE,
+  stage      INTEGER NOT NULL,
+  stage_name TEXT NOT NULL DEFAULT '',
+  seq        INTEGER NOT NULL DEFAULT 0
+);
 CREATE INDEX IF NOT EXISTS idx_log_ts ON learning_log(ts);
 CREATE INDEX IF NOT EXISTS idx_diag_kp ON diagnoses(knowledge_point);
 CREATE INDEX IF NOT EXISTS idx_q_hw   ON questions(homework_id);
@@ -140,7 +162,19 @@ CREATE INDEX IF NOT EXISTS idx_gr_sub ON grades(submission_id);
 
 # ---------------------------------------------------------------- 连接与初始化
 def get_db_path() -> Path:
-    return Path(os.environ.get("HOMELAB_DB", str(DEFAULT_DB)))
+    """数据库路径：HOMELAB_DB 环境变量 > config.json 的 db_path > 默认 data/homework.db。
+    这样设置页改的路径对 CLI 与服务器同时生效。"""
+    env = os.environ.get("HOMELAB_DB")
+    if env:
+        return Path(env).expanduser()
+    try:
+        cfg = json.loads((PROJECT_ROOT / "config.json").read_text(encoding="utf-8"))
+        p = (cfg or {}).get("db_path")
+        if p:
+            return Path(str(p)).expanduser()
+    except (OSError, ValueError):
+        pass
+    return DEFAULT_DB
 
 
 def connect(path=None):
@@ -160,8 +194,8 @@ def init_db(path=None):
 
 
 def ensure_db():
-    if not get_db_path().exists():
-        init_db()
+    """启动时确保库存在且表结构最新：SCHEMA 全部 IF NOT EXISTS，幂等，可安全反复执行。"""
+    init_db()
 
 
 # ---------------------------------------------------------------- 答案归一化
@@ -226,7 +260,7 @@ def check_answer(qtype, answer_spec, user_ans):
             else:
                 review = True
         return (hit / total, review)
-    if qtype == "writing":
+    if qtype == "writing" or qtype == "translate":
         return (None, True)  # 必须 AI 批改
     return (None, True)
 
@@ -279,7 +313,7 @@ def validate_paper(data):
             elif t == "tfng":
                 if tfng_canonical(ans) is None:
                     errors.append(f"第{i}题(tfng): answer 应为 TRUE / FALSE / NOT GIVEN")
-            elif t == "writing":
+            elif t == "writing" or t == "translate":
                 pass  # answer 放评分要点对象
     # passages 引用校验
     passages = data.get("passages") or []
@@ -675,12 +709,19 @@ def state_snapshot(conn):
     """首页/总览数据。"""
     diag = conn.execute("SELECT COUNT(*) c FROM diagnoses WHERE status='open'").fetchone()["c"]
     wk = conn.execute("SELECT MAX(reviewed_ts) t FROM weekly_reviews").fetchone()["t"]
+    recent = conn.execute(
+        """SELECT s.id, s.total_score, s.max_score, s.correct_count, s.total_count,
+                  s.submitted_at, h.title
+           FROM submissions s JOIN homeworks h ON h.id = s.homework_id
+           WHERE s.status='graded' ORDER BY s.id DESC LIMIT 5""").fetchall()
     return {
         "homeworks": list_homeworks(conn),
         "knowledge": knowledge_table(conn),
         "open_requests": list_requests(conn),
         "open_diagnoses": diag,
         "last_weekly_review": wk,
+        "recent_graded": [dict(r) for r in recent],
+        "profile": profile_get(conn),
     }
 
 
@@ -766,3 +807,145 @@ def weekly_candidates(conn):
         if r["name"] not in seen:
             result.append(r["name"])
     return result
+
+
+# ---------------------------------------------------------------- 单词本
+def vocab_add(conn, word, note="", source=""):
+    """加入单词本。已存在则返回既有行（created=False），不重复插入。"""
+    word = (word or "").strip()
+    if not word:
+        raise ValueError("单词不能为空")
+    cur = conn.execute(
+        "INSERT OR IGNORE INTO vocabulary (word, note, source) VALUES (?,?,?)",
+        (word, note, source),
+    )
+    created = cur.rowcount > 0
+    row = conn.execute("SELECT * FROM vocabulary WHERE word=?", (word,)).fetchone()
+    return dict(row), created
+
+
+def vocab_list(conn, unfilled_only=False):
+    sql = "SELECT * FROM vocabulary"
+    if unfilled_only:
+        sql += " WHERE meaning_cn='' OR pos=''"
+    sql += " ORDER BY added_ts DESC, id DESC"
+    return [dict(r) for r in conn.execute(sql)]
+
+
+def vocab_update(conn, updates):
+    """AI 补充单词的中文/词性（也可改备注）。
+    updates: [{"word" 或 "id": ..., "meaning_cn": ..., "pos": ..., "note": ...}]"""
+    updated = []
+    for u in updates:
+        word = (u.get("word") or "").strip()
+        if "id" in u and u["id"] is not None:
+            row = conn.execute("SELECT * FROM vocabulary WHERE id=?", (int(u["id"]),)).fetchone()
+        else:
+            row = conn.execute("SELECT * FROM vocabulary WHERE word=?", (word,)).fetchone()
+        if not row:
+            continue
+        meaning = u.get("meaning_cn", row["meaning_cn"])
+        pos = u.get("pos", row["pos"])
+        note = u.get("note", row["note"])
+        conn.execute(
+            """UPDATE vocabulary SET meaning_cn=?, pos=?, note=?,
+               updated_ts=datetime('now','localtime') WHERE id=?""",
+            (meaning or "", pos or "", note or "", row["id"]),
+        )
+        updated.append(row["id"])
+    return updated
+
+
+def vocab_delete(conn, vid):
+    conn.execute("DELETE FROM vocabulary WHERE id=?", (vid,))
+
+
+# ---------------------------------------------------------------- 学生画像
+def profile_get(conn):
+    out = {}
+    for r in conn.execute("SELECT key, value, updated_ts FROM student_profile"):
+        try:
+            out[r["key"]] = json.loads(r["value"])
+        except ValueError:
+            out[r["key"]] = r["value"]
+        out[r["key"] + "_ts"] = r["updated_ts"]
+    return out
+
+
+def profile_set(conn, key, value):
+    conn.execute(
+        """INSERT INTO student_profile (key, value, updated_ts) VALUES (?,?,datetime('now','localtime'))
+           ON CONFLICT(key) DO UPDATE SET value=excluded.value,
+           updated_ts=datetime('now','localtime')""",
+        (key, json.dumps(value, ensure_ascii=False) if not isinstance(value, str) else value),
+    )
+
+
+# ---------------------------------------------------------------- 知识图谱
+def kmap_import(conn, payload):
+    """payload: {"stages":[{"stage":1,"stage_name":"基础词法","points":["名词",...]}, ...]}
+    全量替换 knowledge_map 表。"""
+    stages = payload.get("stages")
+    if not isinstance(stages, list) or not stages:
+        raise ValueError("kmap JSON 需要 stages 数组")
+    conn.execute("DELETE FROM knowledge_map")
+    seq = 0
+    for st in stages:
+        stage = int(st.get("stage", 0))
+        stage_name = st.get("stage_name", f"第{stage}阶段")
+        for p in st.get("points", []):
+            seq += 1
+            conn.execute(
+                "INSERT INTO knowledge_map (name, stage, stage_name, seq) VALUES (?,?,?,?)",
+                (p, stage, stage_name, seq),
+            )
+    return seq
+
+
+def kmap_list(conn):
+    """知识图谱 + 掌握度合并：未练过 mastery=0。"""
+    kps = {r["name"]: r for r in conn.execute("SELECT * FROM knowledge_points")}
+    rows = [dict(r) for r in conn.execute("SELECT * FROM knowledge_map ORDER BY stage, seq")]
+    stages = {}
+    for r in rows:
+        k = kps.get(r["name"])
+        r["mastery"] = k["mastery"] if k else 0.0
+        r["attempts"] = k["attempts"] if k else 0
+        r["correct"] = k["correct"] if k else 0.0
+        r["score"] = round((k["mastery"] if k else 0.0) * 100)
+        r["status"] = k["status"] if k else "new"
+        st = stages.setdefault(r["stage"], {"stage": r["stage"], "stage_name": r["stage_name"], "points": []})
+        st["points"].append(r)
+    return [stages[k] for k in sorted(stages)]
+
+
+def kmap_summary(conn):
+    """图谱总评：已学/已掌握/薄弱/平均分。"""
+    rows = kmap_list(conn)
+    total = sum(len(s["points"]) for s in rows)
+    attempted = sum(1 for s in rows for p in s["points"] if p["attempts"] > 0)
+    mastered = sum(1 for s in rows for p in s["points"] if p["status"] == "mastered")
+    weak = sum(1 for s in rows for p in s["points"] if p["status"] == "weak")
+    avg = round(sum(p["score"] for s in rows for p in s["points"]) / total) if total else 0
+    if total == 0:
+        grade = "还没有知识点数据"
+    elif avg >= 85:
+        grade = "优秀：整体掌握扎实"
+    elif avg >= 60:
+        grade = "良好：主干已掌握，薄弱点待清零"
+    elif avg >= 30:
+        grade = "起步：按图谱顺序逐步推进"
+    else:
+        grade = "刚起步：从第一阶段开始学习"
+    return {"total": total, "attempted": attempted, "mastered": mastered, "weak": weak,
+            "avg": avg, "grade": grade}
+
+
+# ---------------------------------------------------------------- 删除试卷
+def delete_homework(conn, hw_id):
+    h = conn.execute("SELECT * FROM homeworks WHERE id=?", (hw_id,)).fetchone()
+    if not h:
+        raise ValueError(f"试卷 #{hw_id} 不存在")
+    conn.execute("DELETE FROM homeworks WHERE id=?", (hw_id,))  # 级联删除 questions/submissions/grades
+    add_log(conn, "other", summary=f"删除试卷《{h['title']}》（#{hw_id}）及其全部提交记录")
+    return dict(h)

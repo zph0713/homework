@@ -211,3 +211,90 @@ details.wrongs-toggle summary { cursor: pointer; color: var(--muted); font-size:
   background: var(--bad-soft); border-radius: 8px; padding: 10px 14px; margin: 10px 0; }
 .waiting { background: var(--warn-soft); border: 1px dashed #fcd34d; border-radius: 10px;
   padding: 12px 16px; font-size: 14px; color: #92400e; margin-bottom: 16px; }
+
+/* ---------- 删除 / 危险按钮 ---------- */
+.btn.danger { background: var(--bad); }
+.btn.danger:hover { opacity: .85; }
+.btn-del { border: none; background: transparent; color: var(--faint); font-size: 15px;
+  cursor: pointer; padding: 2px 6px; border-radius: 8px; line-height: 1.2; flex-shrink: 0; }
+.btn-del:hover { color: var(--bad); background: var(--bad-soft); }
+
+/* ---------- 选中单词弹层 ---------- */
+.word-pop { position: absolute; z-index: 70; background: var(--ink); color: #fff;
+  padding: 7px 14px; border-radius: 999px; font-size: 13.5px; cursor: pointer;
+  box-shadow: var(--shadow-lg); white-space: nowrap; animation: popIn .12s ease; }
+.word-pop:hover { background: var(--accent); }
+@keyframes popIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; } }
+
+/* ---------- 单词本表格 ---------- */
+.v-table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 720px; }
+.v-table th { text-align: left; padding: 12px 16px; color: var(--muted); font-weight: 600;
+  font-size: 13px; border-bottom: 1px solid var(--line); background: #fafafa; }
+.v-table td { padding: 10px 16px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+.v-table tr:hover td { background: #fafafa; }
+.v-word { font-weight: 700; font-size: 15px; }
+.v-pos, .v-mean { color: var(--muted); }
+.v-empty { color: var(--faint); font-size: 12.5px; border: 1px dashed var(--line);
+  padding: 1px 8px; border-radius: 999px; }
+.v-note input { border: 1px solid transparent; background: transparent; padding: 5px 10px;
+  border-radius: 8px; width: 100%; min-width: 130px; font-size: 14px; outline: none; }
+.v-note input:hover { border-color: var(--line); }
+.v-note input:focus { border-color: var(--accent); background: #fff; }
+.v-date { color: var(--faint); font-size: 13px; white-space: nowrap; }
+
+/* ---------- 表单 / 选择芯片 ---------- */
+.card-h { font-size: 15px; font-weight: 700; margin-bottom: 14px; }
+.field { margin-bottom: 14px; }
+.field > label { display: block; font-size: 13.5px; color: var(--muted); margin-bottom: 6px; }
+.field input[type="text"], .field input[type="number"], .field textarea {
+  width: 100%; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 10px;
+  font-size: 14px; font-family: inherit; outline: none; background: #fff; }
+.field input:focus, .field textarea:focus { border-color: var(--accent); }
+.field-row { display: flex; gap: 12px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px;
+  border: 1.5px solid var(--line); border-radius: 999px; font-size: 13.5px; cursor: pointer;
+  user-select: none; transition: all .12s; }
+.chip input { display: none; }
+.chip:hover { border-color: #c7d2fe; }
+.chip.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent);
+  font-weight: 600; }
+
+/* ---------- 知识图谱 ---------- */
+.map-summary { display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  background: var(--accent-soft); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; }
+.map-grade { font-weight: 700; color: var(--accent); }
+.map-stat { font-size: 13px; color: var(--muted); }
+.map-stage { margin-bottom: 16px; }
+.map-stage-head { font-size: 13.5px; font-weight: 700; color: var(--muted);
+  margin-bottom: 10px; padding-left: 10px; border-left: 3px solid var(--accent); }
+.map-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.map-point { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; background: #fff; }
+.map-point.mastered { border-color: #a7f3d0; background: var(--ok-soft); }
+.map-point.weak { border-color: #fecaca; background: var(--bad-soft); }
+.map-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+.map-score { font-size: 20px; font-weight: 800; line-height: 1.3; }
+.map-score span { font-size: 11px; font-weight: 400; color: var(--faint); margin-left: 2px; }
+.map-point .bar { margin: 4px 0; }
+.map-meta { font-size: 11.5px; color: var(--faint); }
+
+/* ---------- 近期成绩 ---------- */
+.recent-row { display: flex; align-items: center; gap: 12px; padding: 9px 2px;
+  border-bottom: 1px solid #f3f4f6; font-size: 14px; flex-wrap: wrap; }
+.recent-row:last-child { border-bottom: none; }
+.recent-title { flex: 1; min-width: 160px; font-weight: 500; }
+.recent-score { color: var(--muted); font-weight: 600; }
+.recent-date { color: var(--faint); font-size: 13px; }
+
+/* ---------- 设置页 agent 指导 ---------- */
+.agent-guide { display: flex; flex-direction: column; gap: 12px; }
+.agent-row { font-size: 13.5px; color: var(--muted); line-height: 1.8; }
+.agent-row b { color: var(--ink); display: inline-block; min-width: 130px; }
+code { background: #f3f4f6; border-radius: 6px; padding: 2px 7px; font-size: 12.5px;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace; color: var(--accent); word-break: break-all; }
+
+/* ---------- 顶栏响应式 ---------- */
+@media (max-width: 700px) {
+  .topbar-inner { flex-wrap: wrap; gap: 6px; }
+  nav { order: 3; width: 100%; overflow-x: auto; }
+}

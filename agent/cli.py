@@ -344,6 +344,160 @@ def cmd_weekly_record(args):
         print("提示：出错知识点记得用 `diag add` 记录为练习目标")
 
 
+# ---------------------------------------------------------------- 单词本 / 画像 / 图谱 / 删除
+def cmd_vocab(args):
+    if args.vocab_cmd == "list":
+        with db.connect() as conn:
+            words = db.vocab_list(conn, unfilled_only=args.unfilled)
+        if not words:
+            print("单词本还是空的（在网页上选中单词一键加入）")
+            return
+        if args.out_json:
+            with open(args.out_json, "w", encoding="utf-8") as f:
+                json.dump({"words": words}, f, ensure_ascii=False, indent=2)
+            print(f"已导出 {len(words)} 个单词 → {args.out_json}")
+            return
+        print(f"共 {len(words)} 词" + ("（含未填中文/词性的）" if args.unfilled else ""))
+        print(f"{'ID':>4}  {'单词':<20} {'词性':<12} {'中文':<20} 备注")
+        print("-" * 90)
+        for w in words:
+            print(f"{w['id']:>4}  {w['word']:<20} {(w['pos'] or '—'):<12} "
+                  f"{(w['meaning_cn'] or '（待补）'):<20} {w['note'][:20]}")
+    elif args.vocab_cmd == "add":
+        with db.connect() as conn:
+            row, created = db.vocab_add(conn, args.word, note=args.note or "", source=args.source or "")
+        print(f"{'已加入' if created else '已存在'}：{row['word']}（#{row['id']}）")
+    elif args.vocab_cmd == "update":
+        with open(args.json_file, encoding="utf-8") as f:
+            payload = json.load(f)
+        updates = payload.get("updates", payload if isinstance(payload, list) else [])
+        with db.connect() as conn:
+            ids = db.vocab_update(conn, updates)
+        print(f"已更新 {len(ids)} 个单词的中文/词性")
+    elif args.vocab_cmd == "delete":
+        with db.connect() as conn:
+            db.vocab_delete(conn, args.vid)
+        print(f"已删除单词 #{args.vid}")
+    elif args.vocab_cmd == "dictation":
+        cmd_vocab_dictation(args)
+
+
+def cmd_vocab_dictation(args):
+    """从单词本生成默写卷 JSON：看中文释义写英文单词（fill 题型，自动判分）。
+    只收录已填中文释义的词；不足 limit 时全部使用并提示。"""
+    import random
+    with db.connect() as conn:
+        words = db.vocab_list(conn)
+    ready = [w for w in words if w.get("meaning_cn")]
+    unfilled = len(words) - len(ready)
+    if not ready:
+        print("❌ 单词本里还没有带中文释义的词，无法出默写卷。")
+        print("   先 `vocab update <json>` 补上中文/词性，再生成。")
+        sys.exit(1)
+    if unfilled:
+        print(f"⚠ 跳过 {unfilled} 个未填中文释义的词")
+    n = min(args.limit, len(ready))
+    if len(ready) < args.limit:
+        print(f"⚠ 只有 {len(ready)} 个词可用（需求 {args.limit}），将全部使用")
+    picked = random.sample(ready, n) if args.random else list(reversed(ready))[:n]
+    questions = []
+    for i, w in enumerate(picked, 1):
+        hint = f"（{w['pos']}）" if w.get("pos") else ""
+        questions.append({
+            "type": "fill",
+            "prompt": f"默写：{w['meaning_cn']}{hint}____",
+            "answer": [w["word"]],
+            "explanation": " ".join(x for x in (w["word"], w.get("pos"), w.get("meaning_cn")) if x),
+            "knowledge_point": "词汇-默写",
+            "score": 1,
+        })
+    paper = {
+        "title": f"单词默写 · 词本 {n} 词",
+        "skill": "vocabulary",
+        "topic": "单词本默写",
+        "goal": "看中文释义默写英文单词（来自单词本）。答完后老师核对：错词讲记法，并安排变式重默。",
+        "questions": questions,
+    }
+    out = Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(paper, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"✅ 已生成默写卷（{n} 词）→ {out}")
+    print("   发布：python3 agent/cli.py create " + str(out))
+
+
+def cmd_profile(args):
+    if args.profile_cmd == "get":
+        with db.connect() as conn:
+            p = db.profile_get(conn)
+        print(json.dumps(p, ensure_ascii=False, indent=2))
+        if not p:
+            print("（画像为空，学生还没在「我的」页设置）")
+    elif args.profile_cmd == "set":
+        with open(args.json_file, encoding="utf-8") as f:
+            payload = json.load(f)
+        with db.connect() as conn:
+            for k, v in payload.items():
+                db.profile_set(conn, k, v)
+        print(f"已更新画像：{list(payload.keys())}")
+
+
+def cmd_kmap(args):
+    if args.kmap_cmd == "import":
+        with open(args.json_file, encoding="utf-8") as f:
+            payload = json.load(f)
+        with db.connect() as conn:
+            n = db.kmap_import(conn, payload)
+        print(f"知识图谱已导入：{n} 个知识点")
+    elif args.kmap_cmd == "list":
+        with db.connect() as conn:
+            stages = db.kmap_list(conn)
+            summ = db.kmap_summary(conn)
+        if not stages:
+            print("图谱为空：`kmap import curriculum/grammar_map.json` 导入")
+            return
+        print(f"总评：{summ['grade']}（已学 {summ['attempted']}/{summ['total']}，"
+              f"已掌握 {summ['mastered']}，薄弱 {summ['weak']}，平均 {summ['avg']} 分）")
+        for st in stages:
+            print(f"\n◆ 第{st['stage']}阶段 · {st['stage_name']}")
+            for p in st["points"]:
+                mark = {"mastered": "✓", "weak": "⚠"}.get(p["status"], "·")
+                print(f"  {mark} {p['name']:<12} {p['score']:>3} 分"
+                      + (f"（{p['attempts']} 次作答）" if p["attempts"] else ""))
+    elif args.kmap_cmd == "next":
+        cmd_kmap_next(args)
+
+
+def cmd_kmap_next(args):
+    """按图谱 stage/seq 顺序列出尚未掌握的知识点（语法学习顺序的执行抓手）。
+    出语法卷前先看这个：优先出最靠前的未掌握点。"""
+    with db.connect() as conn:
+        stages = db.kmap_list(conn)
+    if not stages:
+        print("图谱为空：`kmap import curriculum/grammar_map.json` 导入")
+        return
+    todo = []
+    for st in stages:
+        for p in st["points"]:
+            if p["status"] != "mastered":
+                todo.append(p)
+    if not todo:
+        print("🎉 图谱全部知识点已掌握！后续用周回顾保持。")
+        return
+    labels = {"weak": "⚠ 薄弱", "learning": "◐ 学习中", "new": "· 未练过"}
+    for p in todo[:args.limit]:
+        mark = labels.get(p["status"], p["status"])
+        extra = f"（{p['attempts']} 次作答）" if p["attempts"] else "（未练过）"
+        print(f"第{p['stage']}阶段[{p['stage_name']}] {mark} {p['name']}  {p['score']}分 {extra}")
+    if len(todo) > args.limit:
+        print(f"（共 {len(todo)} 个未掌握；按图谱顺序学完当前再往后，先不跳级）")
+
+
+def cmd_delete(args):
+    with db.connect() as conn:
+        h = db.delete_homework(conn, args.hw_id)
+    print(f"已删除试卷《{h['title']}》#{args.hw_id}（含全部提交与批改记录）")
+
+
 def main(argv=None):
     db.ensure_db()
     p = argparse.ArgumentParser(
@@ -428,6 +582,41 @@ def main(argv=None):
     pwr.add_argument("--hw", type=int, help="关联抽查卷 id")
     pwr.add_argument("--note", help="备注")
 
+    pv = sub.add_parser("vocab", help="单词本")
+    pvs = pv.add_subparsers(dest="vocab_cmd", required=True)
+    pvl = pvs.add_parser("list", help="列出单词")
+    pvl.add_argument("--unfilled", action="store_true", help="只显示缺中文/词性的（批改后检查）")
+    pvl.add_argument("--json", dest="out_json", help="导出到 JSON 文件")
+    pva = pvs.add_parser("add", help="加入单词")
+    pva.add_argument("--word", required=True)
+    pva.add_argument("--note", default="")
+    pva.add_argument("--source", default="")
+    pvu = pvs.add_parser("update", help="按 JSON 批量补中文/词性")
+    pvu.add_argument("json_file", help='{"updates":[{"word":"...","meaning_cn":"...","pos":"..."}]}')
+    pvd = pvs.add_parser("delete", help="删除单词")
+    pvd.add_argument("vid", type=int)
+    pvk = pvs.add_parser("dictation", help="从单词本生成默写卷 JSON")
+    pvk.add_argument("--limit", type=int, default=10, help="默写词数（默认 10）")
+    pvk.add_argument("--random", action="store_true", help="随机抽词（默认按加入先后）")
+    pvk.add_argument("--out", default="papers/dictation_words.json", help="输出路径")
+
+    ppf = sub.add_parser("profile", help="学生画像（学习目标/话题/题型，出题前必读）")
+    ppfs = ppf.add_subparsers(dest="profile_cmd", required=True)
+    ppfs.add_parser("get", help="读取画像 JSON")
+    ppfe = ppfs.add_parser("set", help="按 JSON 更新画像")
+    ppfe.add_argument("json_file", help='{"goals":[...],"topics":[...],"question_types":[...]}')
+
+    pk = sub.add_parser("kmap", help="语法知识图谱")
+    pks = pk.add_subparsers(dest="kmap_cmd", required=True)
+    pki = pks.add_parser("import", help="导入图谱（全量替换）")
+    pki.add_argument("json_file", help="curriculum/grammar_map.json")
+    pks.add_parser("list", help="图谱 + 掌握度打分")
+    pkn = pks.add_parser("next", help="按图谱顺序列出下一个未掌握知识点")
+    pkn.add_argument("--limit", type=int, default=3)
+
+    pdel = sub.add_parser("delete", help="删除试卷（级联删除提交与批改）")
+    pdel.add_argument("hw_id", type=int)
+
     args = p.parse_args(argv)
     handlers = {
         "init": cmd_init, "create": cmd_create, "list": cmd_list, "paper": cmd_paper,
@@ -439,6 +628,8 @@ def main(argv=None):
         else cmd_diag_list(a) if a.diag_cmd == "list" else cmd_diag_resolve(a),
         "weekly": lambda a: cmd_weekly_status(a) if a.weekly_cmd == "status"
         else cmd_weekly_record(a),
+        "vocab": cmd_vocab, "profile": cmd_profile, "kmap": cmd_kmap,
+        "delete": cmd_delete,
     }
     try:
         handlers[args.cmd](args)
