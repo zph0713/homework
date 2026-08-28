@@ -1,0 +1,54 @@
+{
+  "title": "验证卷 #1 · 将来完成时 / 情态被动 / 现在完成时",
+  "skill": "grammar",
+  "topic": "IELTS 话题语境变式",
+  "goal": "诊断卷#1 的错点变式验证：将来完成时结构、不规则动词分词、情态动词被动、现在完成时标志词。全对才算过关。",
+  "questions": [
+    {
+      "type": "choice",
+      "prompt": "By the time the conference ends in June, the organisers ___ over 200 workshops.",
+      "options": [
+        "A. will have hosted",
+        "B. will host",
+        "C. have hosted",
+        "D. had hosted"
+      ],
+      "answer": "A",
+      "explanation": "by the time + 将来时间点（会议在 6 月结束）→ 到那个时间点之前已经完成 → 将来完成时 will have + 过去分词。B 只表示将来动作，不强调『届时已完成』；C/D 时态基准点错误。",
+      "knowledge_point": "将来完成时"
+    },
+    {
+      "type": "fill",
+      "prompt": "By next March, she ____ (work) at the company for exactly ten years.",
+      "answer": ["will have worked"],
+      "explanation": "by + 将来时间点 + for 时间段 → will have worked。结构：will have + 过去分词；work 是规则动词。",
+      "knowledge_point": "将来完成时"
+    },
+    {
+      "type": "fill",
+      "prompt": "These outdated regulations ____ (must / reform) before the new term begins.",
+      "answer": ["must be reformed"],
+      "explanation": "情态动词被动 = 情态动词 + be + 过去分词：must be reformed。口诀：情态动词后接动词原形，被动原形就是 be done。",
+      "knowledge_point": "被动语态"
+    },
+    {
+      "type": "fill",
+      "prompt": "Since the new metro line opened, cycling in the city ____ (rise) sharply.",
+      "answer": ["has risen"],
+      "explanation": "since + 过去时间点 → 现在完成时 has + 过去分词；rise 是不规则动词 rise-rose-risen，注意不是 rised。",
+      "knowledge_point": "现在完成时"
+    },
+    {
+      "type": "cloze",
+      "prompt": "阅读短文，用括号内单词的正确形式填空（注意时态、非谓语与主谓一致）。",
+      "passage": "Over the past five years, air quality in the city __1__ (improve) significantly. The government encourages residents __2__ (use) public transport, and one of the most effective measures __3__ (be) the congestion charge.",
+      "answer": {
+        "1": ["has improved"],
+        "2": ["to use"],
+        "3": ["is"]
+      },
+      "explanation": "① Over the past five years 是现在完成时标志 → has improved；② encourage sb to do sth → to use；③ one of the + 复数名词 + 单数谓语 → is（主语核心是 one）。",
+      "knowledge_point": "综合语法"
+    }
+  ]
+}
