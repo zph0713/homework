@@ -15,16 +15,17 @@
 
 ## 三大终极目标（一切出题决策的总纲）
 
-1. **语法第一优先，按知识图谱顺序学**：图谱 6 阶段 30 知识点（curriculum/grammar_map.json）。每阶段全部「已掌握」（attempts≥3 且 ≥85%）才进入下一阶段，不跳级。出语法题前先 `kmap next` 看下一个未掌握点。
+1. **语法第一优先，按知识图谱顺序学**：图谱 6 阶段 30 知识点（curriculum/grammar_map.json）。每阶段全部「已掌握」才进入下一阶段，不跳级。**掌握标准：作答超过 5 次且正确率 ≥85%**（≤5 次不计分，图谱显示"计分中"）。出语法题前先 `kmap next` 看下一个未掌握点。
 2. **错题揪着不放**：只要有错 → 讲解 → 立即出同知识点变式验证卷 → 全对才算过 → 关闭诊断。之后周回顾抽查再发现错，重新揪。**不放过任何一个没掌握的知识点**。
-3. **按学生画像定制**：出题前必读 `profile get`（目标/话题/题型/备注）。学生在「我的」页设置的雅思话题、翻译/阅读/写作需求直接决定题目方向；出题策略随错题与弱点动态调整。
+3. **按学生画像定制**：出题前必读 `profile get`（学生在「我的」页用输入框自由填：目标/话题/题型/备注，逗号分隔）。雅思话题、翻译/阅读/写作需求直接决定题目方向；出题策略随错题与弱点动态调整。
 
-## 出题前三个必读
+## 出题前四个必读
 
 ```bash
-python3 agent/cli.py profile get          # 学生画像：目标/话题/题型需求
+python3 agent/cli.py profile get          # 学生画像：目标/话题/题型需求（输入框自由填写）
 python3 agent/cli.py kmap next --limit 3  # 图谱顺序中下一个未掌握知识点
-python3 agent/cli.py vocab list --unfilled   # 单词本缺中文/词性的词（出题前顺手补）
+python3 agent/cli.py vocab list --await-detail   # 学生已确认、等 AI 补词典详细的词（AI 行动项）
+python3 agent/cli.py vocab list --unfilled       # 缺中文/词性的词（提醒学生补填，不是 AI 填）
 ```
 
 ## 标准循环
@@ -44,9 +45,12 @@ python3 agent/cli.py log explain --summary "讲解..." --kp <知识点> --ref su
 python3 agent/cli.py diag add --kp "<知识点>" --finding "<问题描述>" --severity high --sub <sub_id>
 #    ↑ 批改发现的每个问题必须写进诊断档案（跨环境跟踪的关键）
 
-# 3.5 单词本查漏（批改后必做）
-python3 agent/cli.py vocab list --unfilled     # 有缺中文/词性的词 → 写 /tmp/vocab.json 补齐
-python3 agent/cli.py vocab update /tmp/vocab.json   # {"updates":[{"word":"...","meaning_cn":"...","pos":"..."}]}
+# 3.5 单词本查漏（批改后必做，两件事）
+python3 agent/cli.py vocab list --await-detail   # ① 学生已确认的词 → AI 写 /tmp/vocab.json
+python3 agent/cli.py vocab update /tmp/vocab.json
+#      {"updates":[{"word":"...","detail":"词典词性 + 详细中文释义"}]}
+#      （中文/词性由学生自己填，AI 只补 detail）
+python3 agent/cli.py vocab check-result --sub <sub_id>   # ② 本次含「词汇-抽查」题 → 回写抽查池
 
 # 4. 出变式验证卷（3~5 题，同知识点换语境，禁止原题照搬）
 #    按 docs/AGENT_PROTOCOL.md §4 写 JSON → papers/verify_xxx.json
@@ -55,7 +59,7 @@ python3 agent/cli.py create papers/verify_xxx.json
 #    仍有错 → 继续讲 + 再出变式卷，直到全对（目标 2）
 
 # 5. 追踪
-python3 agent/cli.py weakpoints     # 掌握度：≥3 次且 ≥85% = 已掌握，之后降频
+python3 agent/cli.py weakpoints     # 掌握度：超过 5 次且 ≥85% = 已掌握，之后降频
 python3 agent/cli.py kmap next      # 图谱顺序下一个未掌握点（目标 1）
 python3 agent/cli.py requests       # 学生重练申请，处理后 request done <id>
 
@@ -71,19 +75,30 @@ python3 agent/cli.py weekly record --sampled "kp1,kp2" --wrong "kp1" --hw <id>
 
 ## 出题决策顺序（学生要求出题时）
 
-1. 学生口头指定方向（永远最高优先级，如「出默写」「练翻译」）
+1. 学生口头指定方向（永远最高优先级，如「出默写」「练翻译」「抽查单词」）
 2. 未解决诊断（`diag list --open`）→ 出对应知识点的验证卷
 3. 图谱顺序下一个未掌握点（`kmap next`）→ 语法卷主攻它
 4. 周回顾出错知识点 → 重练
 5. 掌握度 <50% 的薄弱点 → 专项练习
 6. 写作路线推进（`docs/WRITING_CURRICULUM.md`）或画像勾选的翻译/阅读训练
 7. 学生要求默写 → `python3 agent/cli.py vocab dictation --limit 10`（一键生成，勿手写）
+8. 抽查单词 → `python3 agent/cli.py vocab check --limit 3`（随机抽池中词；可整卷发布，也可把 questions 并入任何作业混考）
+
+## 单词本 / 抽查池（学生参与的新流程）
+
+**分工**：学生填中文意思 + 词性（网页多选下拉）→ 点「确认已填」→ AI 补 `detail`（词典词性+详细释义）→ 单词进入抽查池。
+
+- 抽查卷生成：`vocab check --limit N --out papers/vocab_check.json`（知识点「词汇-抽查」）
+- 批改全部完成后回写：`vocab check-result --sub <sub_id>`——对 → 出池（网页标绿），拼错 → 留池下次再考，直到写对（幂等，可重复跑）
+- 全词本默写（区别于抽查）：`vocab dictation --limit 10`
+- 常用查看：`vocab list`（全量）/ `--pool`（池中词）/ `--await-detail`（待 AI 补详细）/ `--unfilled`（待学生补填）
 
 ## 前端能力（出题时对齐，勿超纲）
 
-- 题型：choice / fill / cloze / tfng / writing / translate；默写 = fill + skill=vocabulary
+- 题型：choice / fill / cloze / tfng / writing / translate；默写 = fill + skill=vocabulary + 知识点「词汇-默写」；抽查 = fill + 知识点「词汇-抽查」（用 CLI 生成，勿手写）
 - **listening / speaking 未实现**，不要出这两类题（预留设计见 docs/ROADMAP.md）
-- 学生在网页可：划词加入单词本、改画像（「我的」页）、错题本申请重练、删除作业卡、设置页改库路径/端口
+- 学生在网页可：划词加入单词本、单词本页填中文/词性（多选下拉）并确认、改画像（「我的」页输入框）、错题本申请重练、删除作业卡、设置页改库路径/端口
+- 知识图谱：作答超过 5 次才按正确率计分，≥85% 且超过 5 次 = 已掌握
 - 题型细节以 `docs/QUESTION_TYPES.md` 为准
 
 ## 批改原则
