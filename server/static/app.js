@@ -755,7 +755,7 @@ async function viewWords() {
       const pop = $(`[data-pospop="${btn.dataset.posbtn}"]`);
       const willShow = pop.hidden;
       $$("[data-pospop]").forEach((p) => (p.hidden = true));
-      pop.hidden = !willShow;
+      if (willShow) openPosPop(btn, pop);
     });
   });
   $$("[data-posc]").forEach((c) => {
@@ -792,6 +792,20 @@ async function viewWords() {
 document.addEventListener("click", (e) => {
   if (!e.target.closest(".pos-wrap")) $$("[data-pospop]").forEach((p) => (p.hidden = true));
 });
+document.addEventListener("scroll", () => {
+  $$("[data-pospop]").forEach((p) => (p.hidden = true));
+}, true);
+
+function openPosPop(btn, pop) {
+  /* 用 fixed 定位到按钮下方，避免被表格滚动容器裁剪；放不下就向上弹出。 */
+  pop.hidden = false;
+  const r = btn.getBoundingClientRect();
+  const h = pop.offsetHeight;
+  pop.style.position = "fixed";
+  pop.style.left = `${Math.min(Math.max(8, r.left), window.innerWidth - pop.offsetWidth - 8)}px`;
+  const openUp = r.bottom + 6 + h > window.innerHeight - 8;
+  pop.style.top = `${openUp ? Math.max(8, r.top - h - 6) : r.bottom + 6}px`;
+}
 
 function refreshConfirm(id) {
   const btn = $(`[data-confirm="${id}"]`);
