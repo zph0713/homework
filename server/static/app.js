@@ -83,6 +83,7 @@ function route() {
   const hash = location.hash || "#/";
   const app = $("#app");
   const navName = hash.slice(2).split("/")[0] || "home";
+  document.body.classList.toggle("wide", navName === "words");
   $$("nav a").forEach((a) => a.classList.toggle("active", a.dataset.nav === navName));
   app.innerHTML = '<div class="loading">加载中…</div>';
   const mPaper = hash.match(/^#\/paper\/(\d+)/);
@@ -716,7 +717,7 @@ async function viewWords() {
     <h1 class="page-title">单词本</h1>
     <p class="page-sub">做题时选中不认识的单词即可一键收藏。你来填中文和词性（词性可多选），点「确认已填」后老师补词典词性与详细释义；之后单词会随机出现在作业里抽查——写对出池（绿色），拼错继续留池。</p>
     ${words.length ? `
-    <div class="card v-card">
+    <div class="v-wrap">
       <table class="v-table">
         <thead><tr><th>单词</th><th>词性（你选，可多选）</th><th>中文意思（你填）</th><th>详细（老师补）</th><th>状态</th><th>加入时间</th><th></th></tr></thead>
         <tbody>${rows}</tbody>

@@ -226,20 +226,24 @@ details.wrongs-toggle summary { cursor: pointer; color: var(--muted); font-size:
 .word-pop:hover { background: var(--accent); }
 @keyframes popIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; } }
 
-/* ---------- 单词本表格 ---------- */
-.v-card { padding: 0; overflow-x: auto; }
-.v-table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 980px; }
-.v-table th { text-align: left; padding: 12px 16px; color: var(--muted); font-weight: 600;
-  font-size: 13px; border-bottom: 1px solid var(--line); background: #fafafa; white-space: nowrap; }
-.v-table td { padding: 12px 16px; border-bottom: 1px solid #f3f4f6; vertical-align: top; }
+/* ---------- 单词本表格（无框、全宽、无内部滚动） ---------- */
+body.wide main { max-width: none; }
+.v-wrap { width: 100%; }
+.v-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 14px; }
+.v-table th { text-align: left; padding: 12px 14px; color: var(--muted); font-weight: 600;
+  font-size: 13px; border-bottom: 2px solid var(--line); background: #fafafa; white-space: nowrap; }
+.v-table td { padding: 12px 14px; border-bottom: 1px solid #f3f4f6; vertical-align: top; word-break: break-word; }
 .v-table tr:hover td { background: #fafafa; }
-.v-table th:nth-child(1) { width: 130px; }
-.v-table th:nth-child(2) { width: 160px; }
-.v-table th:nth-child(3) { width: 170px; }
-.v-table th:nth-child(4) { min-width: 240px; }
-.v-table th:nth-child(5) { width: 190px; }
-.v-table th:nth-child(6) { width: 100px; }
-.v-table th:nth-child(7) { width: 170px; }
+.v-table th:nth-child(1) { width: 12%; }
+.v-table th:nth-child(2) { width: 14%; }
+.v-table th:nth-child(3) { width: 14%; }
+.v-table th:nth-child(4) { width: 27%; }
+.v-table th:nth-child(5) { width: 17%; }
+.v-table th:nth-child(6) { width: 9%; }
+.v-table th:nth-child(7) { width: 7%; }
+@media (max-width: 640px) {
+  .v-table th:nth-child(6), .v-table td:nth-child(6) { display: none; }
+}
 .v-word { font-weight: 700; font-size: 15px; }
 .v-pos, .v-mean { color: var(--muted); }
 .v-empty { color: var(--faint); font-size: 12.5px; border: 1px dashed var(--line);
