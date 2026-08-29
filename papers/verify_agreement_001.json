@@ -1,0 +1,47 @@
+{
+  "title": "验证卷 #4 · 主谓一致（one of / a large number of / each）",
+  "skill": "grammar",
+  "topic": "IELTS 话题语境变式（第四轮·主谓一致专项）",
+  "goal": "收尾最后一个点：主谓一致。重点揪 one of + 复数名词 → is（上卷刚对、这卷换语境又错，回归未记牢），同时用 a large number of / the number of / each 做对比，防止矫枉过正。全对即过关。",
+  "questions": [
+    {
+      "type": "fill",
+      "prompt": "One of the biggest challenges facing cities today ____ (be) traffic congestion.",
+      "answer": ["is"],
+      "explanation": "one of + 复数名词，主语核心是 One（单数）→ is。别被后面的复数名词 challenges 带偏。",
+      "knowledge_point": "主谓一致"
+    },
+    {
+      "type": "choice",
+      "prompt": "One of my favourite books on this topic ____ written by a former teacher.",
+      "options": ["is", "are"],
+      "answer": "A",
+      "explanation": "one of + 复数名词 → 单数谓语 is。主语核心是 One，不是 books。",
+      "knowledge_point": "主谓一致"
+    },
+    {
+      "type": "choice",
+      "prompt": "A large number of students ____ now using online learning platforms.",
+      "options": ["are", "is"],
+      "answer": "A",
+      "explanation": "对比规则：a large number of + 复数名词 → 复数谓语 are（强调'很多学生'）。注意和 the number of（→ is）区分，别混。",
+      "knowledge_point": "主谓一致"
+    },
+    {
+      "type": "choice",
+      "prompt": "The number of applications this year ____ higher than last year.",
+      "options": ["is", "are"],
+      "answer": "A",
+      "explanation": "the number of + 复数名词 → 单数谓语 is（主语核心是 the number）。和 a large number of（→ are）正好相反。",
+      "knowledge_point": "主谓一致"
+    },
+    {
+      "type": "choice",
+      "prompt": "Each of the candidates in this election ____ promised to cut taxes.",
+      "options": ["has", "have"],
+      "answer": "A",
+      "explanation": "each / every + 单数名词 → 单数谓语 has。'每个候选人'各自承诺，用单数。",
+      "knowledge_point": "主谓一致"
+    }
+  ]
+}
