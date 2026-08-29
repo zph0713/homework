@@ -1,0 +1,48 @@
+{
+  "title": "验证卷 #5 · the number of vs a large number of（对比专项）",
+  "skill": "grammar",
+  "topic": "IELTS 话题语境变式（第五轮·主谓一致对比收尾）",
+  "goal": "收尾最后一个子点：把两条相反规则对比记牢。①the number of / one of / each + 复数名词 → 单数(is/has)；②a large number of / a number of / many / most of + 复数名词 → 复数(are/have)。题目交替出现，必须逐题判断主语核心，不能套一条规则到底。全对即过关。",
+  "questions": [
+    {
+      "type": "choice",
+      "prompt": "A large number of the city's residents ____ now working from home.",
+      "options": ["are", "is"],
+      "answer": "A",
+      "explanation": "a large number of + 复数名词 → 复数谓语 are（强调'很多居民'）。主语核心是那个复数名词，不是 number。",
+      "knowledge_point": "主谓一致"
+    },
+    {
+      "type": "choice",
+      "prompt": "The number of people working from home ____ risen sharply since 2020.",
+      "options": ["has", "have"],
+      "answer": "A",
+      "explanation": "the number of + 复数名词 → 单数谓语 has（主语核心是 the number）。和上一题 a large number of（→ have）正好相反。",
+      "knowledge_point": "主谓一致"
+    },
+    {
+      "type": "choice",
+      "prompt": "A number of new apps ____ launched this year to help students study.",
+      "options": ["have", "has"],
+      "answer": "A",
+      "explanation": "a number of（= many）+ 复数名词 → 复数谓语 have。注意: a number of = many（→ are/have），但 the number of = 'the count'（→ is/has）。只差一个冠词，规则相反。",
+      "knowledge_point": "主谓一致"
+    },
+    {
+      "type": "choice",
+      "prompt": "Most of the students in this class ____ using online platforms for homework.",
+      "options": ["are", "is"],
+      "answer": "A",
+      "explanation": "most of + 复数名词 → 复数谓语 are（强调'大多数学生'）。同类：many / some of / a few of + 复数名词 → are。",
+      "knowledge_point": "主谓一致"
+    },
+    {
+      "type": "choice",
+      "prompt": "One of the most effective ways to improve your score ____ practising under timed conditions.",
+      "options": ["is", "are"],
+      "answer": "A",
+      "explanation": "one of + 复数名词 → 单数谓语 is（主语核心是 One）。巩固上卷已对的点，和 a large number of / most of（→ are）对比。",
+      "knowledge_point": "主谓一致"
+    }
+  ]
+}
