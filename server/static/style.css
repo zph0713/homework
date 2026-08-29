@@ -279,6 +279,7 @@ body.wide main { max-width: none; }
   background: #fff; border: 1px solid var(--line); border-radius: 12px;
   box-shadow: var(--shadow-lg); padding: 10px 12px; display: grid;
   grid-template-columns: repeat(3, 1fr); gap: 4px 14px; min-width: 280px; }
+.pos-pop[hidden] { display: none; } /* 关键：覆盖上面 display:grid，否则 hidden 属性失效、弹层永远显示 */
 .pos-opt { display: flex; align-items: center; gap: 8px; font-size: 14px;
   padding: 6px 10px; border-radius: 8px; cursor: pointer; white-space: nowrap; }
 .pos-opt:hover { background: var(--accent-soft); }
