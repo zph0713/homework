@@ -22,6 +22,7 @@
 ## 出题前四个必读
 
 ```bash
+python3 agent/cli.py config get          # 教学规则（题目目标）：掌握标准/验证卷题量/周回顾间隔/出题优先级
 python3 agent/cli.py profile get          # 学生画像：目标/话题/题型需求（输入框自由填写）
 python3 agent/cli.py kmap next --limit 3  # 图谱顺序中下一个未掌握知识点
 python3 agent/cli.py vocab list --await-detail   # 学生已确认、等 AI 补词典详细的词（AI 行动项）

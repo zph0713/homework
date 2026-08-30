@@ -1,0 +1,44 @@
+{
+  "title": "验证卷 #9 · 时间标志词定被动/时态 + 不规则分词形式",
+  "skill": "grammar",
+  "topic": "IELTS 话题语境变式（第九轮·主谓一致已过关，攻下一层：按时间标志词选时态+产出正确动词形式）",
+  "goal": "主谓一致已内化。本轮攻两个新暴露的问题：①时间标志词定不了时态——last week/last year/five years ago（已结束）→ 一般过去时；since/so far/over the past decade + 现在仍相关 → 现在完成时；②产出完整谓语时分词形式错（come-come-come, give-gave-given）。被动语态结构已会，本轮重点在'被动+对的时间'。全对即过关。",
+  "questions": [
+    {
+      "type": "fill",
+      "prompt": "The new hospital in this district ____ (build) five years ago, and it serves the whole town now.",
+      "answer": ["was built"],
+      "explanation": "five years ago → 已结束的过去时间点 → 一般过去时；hospital 被建造 → 被动 was built。后半句的 now 只描述现状，不影响前半句时态。",
+      "knowledge_point": "被动语态"
+    },
+    {
+      "type": "fill",
+      "prompt": "The headmaster of the school ____ (give) a talk about study skills last week.",
+      "answer": ["gave"],
+      "explanation": "last week → 一般过去时；主动语态，give 的过去式 gave。时间标志词先定好时态，再写动词形式。",
+      "knowledge_point": "时态与语态"
+    },
+    {
+      "type": "fill",
+      "prompt": "A number of students from the class ____ (take) part in the online competition so far this year.",
+      "answer": ["have taken"],
+      "explanation": "so far this year（延续到现在）→ 现在完成时；裸 a number of + 复数名词 → have；take 的过去分词是 taken：have taken。",
+      "knowledge_point": "现在完成时"
+    },
+    {
+      "type": "choice",
+      "prompt": "The old bridge in the town centre ____ many times over the past decade, and it is still in use today.",
+      "options": ["has been repaired", "was repaired"],
+      "answer": "A",
+      "explanation": "over the past decade + still in use（和现在有关）→ 现在完成时被动 has been repaired。若只说 'It was repaired last year'（已结束、无现在联系）才用一般过去时。",
+      "knowledge_point": "被动语态"
+    },
+    {
+      "type": "fill",
+      "prompt": "A large number of the old buildings in the city centre ____ (rebuild) since 2015.",
+      "answer": ["have been rebuilt"],
+      "explanation": "since 2015（延续到现在）→ 现在完成时；a large number of + 复数名词 → have；buildings 被重建 → 被动，build 的过去分词 built：have been rebuilt。",
+      "knowledge_point": "被动语态"
+    }
+  ]
+}

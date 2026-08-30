@@ -20,7 +20,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from agent import db  # noqa: E402
+from agent import db, settings  # noqa: E402
 
 SKILL_LABELS = {
     "grammar": "语法", "vocabulary": "词汇", "reading": "阅读",
@@ -45,6 +45,43 @@ def _fmt_wrong_count(sub):
 def cmd_init(args):
     path = db.init_db()
     print(f"数据库已初始化：{path}")
+
+
+def cmd_setup(args):
+    """首次初始化（网页向导的 CLI 等价物）：写 config.json + 部署数据库。"""
+    if settings.is_initialized():
+        print("已完成初始化，如需修改请到网页设置页（或直接编辑 config.json）")
+        return
+    payload = {"db_path": args.db, "host": args.host, "port": args.port,
+               "api_token": args.api_token}
+    if args.rules_json:
+        with open(args.rules_json, encoding="utf-8") as f:
+            payload["rules"] = json.load(f)
+    if args.profile_json:
+        with open(args.profile_json, encoding="utf-8") as f:
+            payload["profile"] = json.load(f)
+    r = db.perform_setup(payload)
+    print(f"✅ 初始化完成：数据库 {r['db_path']} · http://{r['host']}:{r['port']}")
+    print("启动网页：python3 server/app.py（或双击 start.command）")
+
+
+def cmd_config(args):
+    """查看当前生效配置（数据库路径/端口/教学规则/画像默认值）。"""
+    cfg = settings.effective_config()
+    if args.json:
+        print(json.dumps(cfg, ensure_ascii=False, indent=2))
+        return
+    print(f"数据库文件：{settings.get_db_path()}")
+    print(f"监听地址：{cfg['host']}:{cfg['port']}")
+    print(f"AI API 令牌：{'已设置' if cfg.get('api_token') else '未设置（仅本机可访问）'}")
+    print("\n教学规则（题目目标）：")
+    from agent.settings import RULE_LABELS
+    for k, v in cfg["rules"].items():
+        label = RULE_LABELS.get(k, k)
+        print(f"  {label}：{v}")
+    print("\n学生画像默认值：")
+    for k, v in cfg["profile"].items():
+        print(f"  {k}：{v}")
 
 
 def cmd_create(args):
@@ -561,6 +598,17 @@ def main(argv=None):
 
     sub.add_parser("init", help="初始化数据库")
 
+    ps = sub.add_parser("setup", help="首次初始化：写 config.json + 部署数据库（网页向导的 CLI 版）")
+    ps.add_argument("--db", help="数据库文件路径（默认 <项目>/data/homework.db）")
+    ps.add_argument("--host", default="127.0.0.1", help="监听地址（默认 127.0.0.1）")
+    ps.add_argument("--port", type=int, help="网页端口（默认 8877）")
+    ps.add_argument("--api-token", help="AI 服务 API 访问令牌（可选）")
+    ps.add_argument("--rules-json", help="教学规则 JSON 文件（题目目标）")
+    ps.add_argument("--profile-json", help="学生画像默认值 JSON 文件")
+
+    pcg = sub.add_parser("config", help="查看当前生效配置（数据库路径/端口/教学规则）")
+    pcg.add_argument("--json", action="store_true", help="输出完整 JSON")
+
     pc = sub.add_parser("create", help="从 JSON 发布试卷")
     pc.add_argument("paper_json", help="试卷 JSON 路径（规范见 docs/AGENT_PROTOCOL.md）")
     pc.add_argument("--status", default="published", choices=["draft", "published"])
@@ -679,7 +727,8 @@ def main(argv=None):
 
     args = p.parse_args(argv)
     handlers = {
-        "init": cmd_init, "create": cmd_create, "list": cmd_list, "paper": cmd_paper,
+        "init": cmd_init, "setup": cmd_setup, "config": cmd_config,
+        "create": cmd_create, "list": cmd_list, "paper": cmd_paper,
         "pending": cmd_pending, "autograde": cmd_autograde, "grade": cmd_grade,
         "report": cmd_report, "wronglist": cmd_wronglist, "weakpoints": cmd_weakpoints,
         "requests": cmd_requests, "request": cmd_request_done, "archive": cmd_archive,

@@ -1,7 +1,9 @@
 """homework-lab 数据层：SQLite 表结构 + 试卷/提交/批改/知识点核心逻辑。
 
 纯标准库实现（sqlite3 + json），零第三方依赖。
-数据库路径可用环境变量 HOMELAB_DB 覆盖，默认 <项目根>/data/homework.db。
+数据库路径统一由 agent.settings 解析：HOMELAB_DB 环境变量 > config.json 的 db_path
+> 默认 <项目根>/data/homework.db。网页设置页/初始化页写入的 config.json 对 CLI 与
+服务器同时生效。
 
 批改分层：
   - 客观题（choice / tfng）：自动批改即可定对错，无需 AI 复核。
@@ -15,8 +17,10 @@ import re
 import sqlite3
 from pathlib import Path
 
+from agent import settings
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_DB = PROJECT_ROOT / "data" / "homework.db"
+DEFAULT_DB = settings.DEFAULT_DB
 
 QUESTION_TYPES = {"choice", "fill", "cloze", "tfng", "writing", "translate"}
 OBJECTIVE_TYPES = {"choice", "tfng"}      # 自动批改即可定论
@@ -169,18 +173,8 @@ CREATE INDEX IF NOT EXISTS idx_gr_sub ON grades(submission_id);
 # ---------------------------------------------------------------- 连接与初始化
 def get_db_path() -> Path:
     """数据库路径：HOMELAB_DB 环境变量 > config.json 的 db_path > 默认 data/homework.db。
-    这样设置页改的路径对 CLI 与服务器同时生效。"""
-    env = os.environ.get("HOMELAB_DB")
-    if env:
-        return Path(env).expanduser()
-    try:
-        cfg = json.loads((PROJECT_ROOT / "config.json").read_text(encoding="utf-8"))
-        p = (cfg or {}).get("db_path")
-        if p:
-            return Path(str(p)).expanduser()
-    except (OSError, ValueError):
-        pass
-    return DEFAULT_DB
+    由 agent.settings 统一解析，这样设置页/初始化页改的路径对 CLI 与服务器同时生效。"""
+    return settings.get_db_path()
 
 
 def connect(path=None):
@@ -234,6 +228,72 @@ def init_db(path=None):
 def ensure_db():
     """启动时确保库存在且表结构最新：SCHEMA 全部 IF NOT EXISTS，幂等，可安全反复执行。"""
     init_db()
+
+
+def perform_setup(payload: dict) -> dict:
+    """首次初始化核心逻辑（网页向导与 cli.py setup 共用）：
+    写 config.json（数据库路径/端口/题目目标）→ 部署数据库（建库建表 + 图谱为空时
+    自动导入 curriculum/grammar_map.json + 种子画像）。
+
+    payload: {db_path?, host?, port?, api_token?, rules?, profile?}
+    相对 db_path 按项目根解析后存绝对路径 —— 保证网页、CLI、AI 服务接口访问位置一致。
+    返回 {db_path, host, port, restart_required, ...}；调用方负责重启服务。
+    """
+    from agent import settings as _s  # 本函数内引入，避免模块级循环
+
+    if _s.is_initialized():
+        raise ValueError("已完成初始化，如需修改请到设置页")
+    cfg = _s.effective_config()
+
+    if payload.get("db_path"):
+        p = Path(str(payload["db_path"])).expanduser()
+        if not p.is_absolute():
+            p = PROJECT_ROOT / p
+        db_path = str(p)
+    else:
+        db_path = str(_s.DEFAULT_DB)
+    try:
+        Path(db_path).parent.mkdir(parents=True, exist_ok=True)
+    except OSError as e:
+        raise ValueError(f"数据库目录无法创建: {e}")
+
+    port = cfg["port"]
+    if payload.get("port"):
+        try:
+            port = int(payload["port"])
+        except (TypeError, ValueError):
+            raise ValueError("端口必须是数字")
+        if not 1 <= port <= 65535:
+            raise ValueError("端口范围 1-65535")
+    host = str(payload.get("host") or cfg["host"]).strip() or "127.0.0.1"
+
+    cfg["db_path"] = db_path
+    cfg["host"] = host
+    cfg["port"] = port
+    if payload.get("api_token") is not None:
+        cfg["api_token"] = str(payload["api_token"]).strip()
+    if isinstance(payload.get("rules"), dict):
+        rules = dict(_s.DEFAULT_RULES)
+        rules.update(payload["rules"])
+        cfg["rules"] = rules
+    if isinstance(payload.get("profile"), dict):
+        profile = dict(_s.DEFAULT_PROFILE)
+        profile.update(payload["profile"])
+        cfg["profile"] = profile
+    _s.save_config(cfg)
+
+    init_db(db_path)
+    kmap_file = PROJECT_ROOT / "curriculum" / "grammar_map.json"
+    with connect(db_path) as conn:
+        has_map = conn.execute("SELECT COUNT(*) c FROM knowledge_map").fetchone()["c"] > 0
+        if not has_map and kmap_file.is_file():
+            kmap_import(conn, json.loads(kmap_file.read_text(encoding="utf-8")))
+        profile = cfg["profile"]
+        profile_set(conn, "goals", profile.get("goals") or [])
+        profile_set(conn, "topics", profile.get("topics") or [])
+        profile_set(conn, "question_types", profile.get("question_types") or [])
+        profile_set(conn, "notes", profile.get("notes") or "")
+    return {"db_path": db_path, "host": host, "port": port, "initialized": True}
 
 
 # ---------------------------------------------------------------- 答案归一化

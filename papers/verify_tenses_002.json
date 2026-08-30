@@ -1,0 +1,43 @@
+{
+  "title": "验证卷 #2 · 情态被动 / 不规则分词 / 主谓一致",
+  "skill": "grammar",
+  "topic": "IELTS 话题语境变式（第二轮）",
+  "goal": "验证卷#1 仍未过关的三个点换语境再考：①情态动词被动（be 不能漏）②rise 等不规则动词的分词 ③主谓一致（one of / the number of / 动名词主语）。全对才算过关。",
+  "questions": [
+    {
+      "type": "fill",
+      "prompt": "Food waste in school canteens ____ (should / address) immediately.",
+      "answer": ["should be addressed"],
+      "explanation": "情态动词被动 = should + be + 过去分词：should be addressed。口诀：情态动词 + be + V-ed，be 不能省。",
+      "knowledge_point": "被动语态"
+    },
+    {
+      "type": "fill",
+      "prompt": "All personal data ____ (must / protect) under the new privacy law.",
+      "answer": ["must be protected"],
+      "explanation": "must be protected：情态动词 + be + 过去分词。上一题 should，这题 must，结构完全一样。",
+      "knowledge_point": "被动语态"
+    },
+    {
+      "type": "fill",
+      "prompt": "The number of remote workers ____ (rise) steadily since 2020.",
+      "answer": ["has risen"],
+      "explanation": "①since 2020 → 现在完成时 has + 过去分词；②rise 是不规则动词 rise-rose-risen，分词是 risen；③the number of + 复数名词，主语核心是 the number（单数）→ has。",
+      "knowledge_point": "现在完成时"
+    },
+    {
+      "type": "fill",
+      "prompt": "Since the subway opened, the use of private cars in the city centre ____ (decline) by 30%.",
+      "answer": ["has declined"],
+      "explanation": "since + 过去时间点 → 现在完成时；the use of private cars 主语核心是 use（单数）→ has declined。",
+      "knowledge_point": "现在完成时"
+    },
+    {
+      "type": "fill",
+      "prompt": "One of the main challenges facing modern cities ____ (be) traffic congestion.",
+      "answer": ["is"],
+      "explanation": "one of + 复数名词 + 单数谓语：主语核心是 one → is。不要被 challenges 带偏。",
+      "knowledge_point": "主谓一致"
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "title": "验证卷 #3 · 不规则分词 / the number of 单三",
+  "skill": "grammar",
+  "topic": "IELTS 话题语境变式（第三轮）",
+  "goal": "收尾剩余两个点：①不规则动词的过去分词（rise→risen 第三次错，这次连 grow/increase 一起考）②'the number of / the proportion of + 复数名词 → has' 单三一致。全对即过关。",
+  "questions": [
+    {
+      "type": "fill",
+      "prompt": "Since 2020, the number of electric vehicles on the road ____ (rise) sharply.",
+      "answer": ["has risen"],
+      "explanation": "双考点：①since + 时间点 → 现在完成时；②the number of + 复数名词，主语核心是 the number（单数）→ has；③rise-rose-risen。",
+      "knowledge_point": "现在完成时"
+    },
+    {
+      "type": "fill",
+      "prompt": "Since the app launched, its user base ____ (grow) to ten million.",
+      "answer": ["has grown"],
+      "explanation": "since + 过去时间点 → has + 过去分词；grow-grew-grown，user base 是单数主语。",
+      "knowledge_point": "现在完成时"
+    },
+    {
+      "type": "fill",
+      "prompt": "The proportion of online shoppers ____ (increase) steadily since 2015.",
+      "answer": ["has increased"],
+      "explanation": "the proportion of + 复数名词，主语核心是 the proportion（单数）→ has；increase 规则动词 → increased。",
+      "knowledge_point": "现在完成时"
+    },
+    {
+      "type": "choice",
+      "prompt": "The number of students who apply for this course every year ____ increasing.",
+      "options": ["is", "are"],
+      "answer": "A",
+      "explanation": "the number of + 复数名词 → 单数谓语 is。注意区分：a large number of + 复数名词 → are（那是另一条规则，别混）。",
+      "knowledge_point": "主谓一致"
+    },
+    {
+      "type": "fill",
+      "prompt": "One of the most common reasons for traffic accidents ____ (be) driver distraction.",
+      "answer": ["is"],
+      "explanation": "one of + 复数名词 → 单数谓语 is（上卷已对，这题巩固）。",
+      "knowledge_point": "主谓一致"
+    }
+  ]
+}

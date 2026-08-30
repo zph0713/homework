@@ -1,0 +1,38 @@
+{
+  "title": "周回顾抽查 #1 · 被动语态 / 现在完成时 / 将来完成时",
+  "skill": "grammar",
+  "topic": "每周回顾（随机抽近期知识点，防遗忘）",
+  "goal": "周回顾抽查：从近期学过的知识点里随机抽 3 个（被动语态、现在完成时、将来完成时），检验是否还记得。错题会重新揪出来练。",
+  "questions": [
+    {
+      "type": "fill",
+      "prompt": "The new library ____ (build) in the city centre last year, and it has been open ever since.",
+      "answer": ["was built"],
+      "explanation": "last year → 一般过去时；library 被建造 → 被动 was built。",
+      "knowledge_point": "被动语态"
+    },
+    {
+      "type": "fill",
+      "prompt": "She ____ (work) as a nurse for ten years, and she is still on the same ward today.",
+      "answer": ["has worked"],
+      "explanation": "for ten years + 现在仍持续（still）→ 现在完成时 has worked，强调从过去延续到现在的状态。",
+      "knowledge_point": "现在完成时"
+    },
+    {
+      "type": "choice",
+      "prompt": "By the time the exam results are announced, most of the candidates ____ already left the country.",
+      "options": ["will have", "have"],
+      "answer": "A",
+      "explanation": "by + 将来时间点 → 将来完成时 will have done（到那时已经离开）。",
+      "knowledge_point": "将来完成时"
+    },
+    {
+      "type": "choice",
+      "prompt": "The report ____ by the committee last month, but no one has read it yet.",
+      "options": ["was submitted", "has been submitted"],
+      "answer": "A",
+      "explanation": "last month 是明确的过去时间点 → 一般过去时被动 was submitted；后半句的 now 状态才用现在完成时。",
+      "knowledge_point": "被动语态"
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "title": "验证卷 #6 · a number of / a large number of（无 the → 复数）专项",
+  "skill": "grammar",
+  "topic": "IELTS 话题语境变式（第六轮·收尾'无 the'短语的复数规则）",
+  "goal": "上卷 Q40 仍把 a number of + 复数名词写成 has。本轮只考一个方向：没有 the 的数量短语（a number of / a large number of / a great many）+ 复数名词 → 一律复数谓语。口诀：看到 the 想'数字'(is/has)，看到 a(large) 想'很多个'(are/have)。全对即过关。",
+  "questions": [
+    {
+      "type": "choice",
+      "prompt": "A large number of graduates ____ choosing to work in smaller cities after the pandemic.",
+      "options": ["are", "is"],
+      "answer": "A",
+      "explanation": "a large number of + 复数名词 → 复数谓语 are。没有 the，number 不是'那个数字'，而是'很多个毕业生'。",
+      "knowledge_point": "主谓一致"
+    },
+    {
+      "type": "choice",
+      "prompt": "A number of online courses ____ been cancelled due to low enrolment.",
+      "options": ["have", "has"],
+      "answer": "A",
+      "explanation": "a number of = many + 复数名词 → have。对比：The number of cancellations has risen（有 the 才单数）。",
+      "knowledge_point": "主谓一致"
+    },
+    {
+      "type": "choice",
+      "prompt": "A large number of the complaints received ____ about noise from construction sites.",
+      "options": ["were", "was"],
+      "answer": "A",
+      "explanation": "a large number of + 复数名词（the complaints）→ were。'of...'后面的名词才是真正的主语核心，仍是复数。",
+      "knowledge_point": "主谓一致"
+    },
+    {
+      "type": "choice",
+      "prompt": "A great many residents in the district ____ opposed to the new traffic plan.",
+      "options": ["are", "is"],
+      "answer": "A",
+      "explanation": "a great many = many + 复数名词 → are。同类短语：a number of / a large number of / a great many，全部走复数。",
+      "knowledge_point": "主谓一致"
+    },
+    {
+      "type": "choice",
+      "prompt": "The number of complaints received ____ dropped after the new traffic plan was introduced.",
+      "options": ["has", "have"],
+      "answer": "A",
+      "explanation": "有 the → 主语核心是'那个数字'→ has。和上一题 a great many（→ are）对照：只差一个冠词，规则相反。",
+      "knowledge_point": "主谓一致"
+    }
+  ]
+}

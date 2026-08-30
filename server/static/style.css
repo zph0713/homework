@@ -80,6 +80,13 @@ main { max-width: 1180px; margin: 0 auto; padding: 24px 20px 120px; }
 .btn.ghost { background: transparent; border-color: var(--line); color: var(--ink); }
 .btn.ghost:hover { background: #f3f4f6; }
 .btn.small { padding: 5px 12px; font-size: 13px; }
+.btn.mini { padding: 4px 10px; font-size: 12.5px; border-radius: 8px; }
+.btn.big { padding: 12px 30px; font-size: 15.5px; border-radius: 12px; }
+
+/* ---------- 首次初始化向导 ---------- */
+.setup-wrap { max-width: 720px; margin: 0 auto; }
+.setup-wrap .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
+.setup-wrap .field-row .field { flex: 1; }
 
 /* ---------- 知识点 ---------- */
 .kp-side { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 70px; }

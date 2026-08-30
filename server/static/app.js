@@ -35,6 +35,8 @@ const API = {
   profile: () => API._get("/api/profile"),
   saveProfile: (p) => API._post("/api/profile", p),
   knowledgeMap: () => API._get("/api/knowledge-map"),
+  setupStatus: () => API._get("/api/setup-status"),
+  setup: (payload) => API._post("/api/setup", payload),
   settings: () => API._get("/api/settings"),
   saveSettings: (cfg) => API._post("/api/settings", cfg),
   restart: () => API._post("/api/restart", {}),
@@ -919,11 +921,19 @@ async function viewMe() {
 }
 
 /* ================================ 设置页 ================================ */
+const RULE_DEFAULTS = {
+  mastery_threshold: 85, mastery_min_attempts: 5,
+  verify_min_questions: 3, verify_max_questions: 5,
+  weekly_interval_days: 7, diag_max_questions: 15,
+  question_priority: "student_request,open_diag,kmap_next,weekly_wrong,weakpoints,writing_curriculum,vocab_dictation",
+};
+
 async function viewSettings() {
   const app = $("#app");
   let cfg;
   try { cfg = await API.settings(); } catch (e) { return renderError(app, e); }
   const saved = cfg.config || {};
+  const rules = Object.assign({}, RULE_DEFAULTS, saved.rules || {});
   app.innerHTML = `
     <h1 class="page-title">设置</h1>
     <p class="page-sub">修改后需重启服务生效。数据库路径对网页和 AI 老师同时生效（读同一份 config.json）。</p>
@@ -938,6 +948,8 @@ async function viewSettings() {
         <div class="field" style="flex:0 0 140px"><label>端口</label>
           <input type="number" id="set-port" value="${esc(saved.port || cfg.port)}" placeholder="8877"></div>
       </div>
+      <div class="field"><label>AI 服务访问令牌（可选，设置后 /api/agent/* 需带 Authorization: Bearer &lt;令牌&gt;）</label>
+        <input type="text" id="set-token" value="${esc(saved.api_token || "")}" placeholder="留空 = 仅本机可访问"></div>
       <p class="page-sub">当前运行：${esc(cfg.host)}:${esc(cfg.port)} · 数据库 ${esc(cfg.db_path)}</p>
       <div class="btn-row" style="justify-content:flex-start">
         <button class="btn primary" id="btn-save-set">保存配置</button>
@@ -945,29 +957,77 @@ async function viewSettings() {
       </div>
     </div>
 
+    <div class="card" style="margin-bottom:18px">
+      <h3 class="card-h">🎯 题目目标（教学规则）</h3>
+      <p class="page-sub">AI 老师出题前读取这些规则决定方向与题量。修改后立即生效，无需重启。学生画像（目标/话题/题型）在「我的」页修改。</p>
+      <div class="field-row">
+        <div class="field"><label>掌握标准（正确率 %）</label>
+          <input type="number" id="set-mastery" value="${esc(rules.mastery_threshold)}" min="50" max="100"></div>
+        <div class="field"><label>计分最少作答次数</label>
+          <input type="number" id="set-attempts" value="${esc(rules.mastery_min_attempts)}" min="1" max="20"></div>
+        <div class="field"><label>验证卷最少题数</label>
+          <input type="number" id="set-vmin" value="${esc(rules.verify_min_questions)}" min="1" max="10"></div>
+        <div class="field"><label>验证卷最多题数</label>
+          <input type="number" id="set-vmax" value="${esc(rules.verify_max_questions)}" min="1" max="10"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>周回顾间隔（天）</label>
+          <input type="number" id="set-weekly" value="${esc(rules.weekly_interval_days)}" min="1" max="60"></div>
+        <div class="field"><label>诊断卷题数上限</label>
+          <input type="number" id="set-diag" value="${esc(rules.diag_max_questions)}" min="5" max="30"></div>
+      </div>
+      <div class="field"><label>出题优先级（逗号分隔）</label>
+        <input type="text" id="set-priority" value="${esc(rules.question_priority || "")}"></div>
+      <div class="btn-row" style="justify-content:flex-start">
+        <button class="btn primary" id="btn-save-rules">保存题目目标</button>
+      </div>
+    </div>
+
     <div class="card">
-      <h3 class="card-h">🤖 给不同 AI Agent 导入「老师技能」</h3>
+      <h3 class="card-h">🤖 给不同 AI 老师导入「老师技能」</h3>
       <div class="agent-guide">
-        <div class="agent-row"><b>Hermes Agent</b>
+        <div class="agent-row"><b>Hermes Agent / Claude Code / Codex 等本地 agent</b>
           <code>cp skills/homework-lab/SKILL.md ~/.hermes/skills/education/homework-lab/</code>
-          重启会话后生效。触发词：出题吧 / 写好了 / 交了。</div>
+          能跑命令的 agent 直接执行 <code>python3 agent/cli.py &lt;命令&gt;</code>；触发词：出题吧 / 写好了 / 交了。</div>
+        <div class="agent-row"><b>在线 AI 服务（ChatGPT 自定义 GPT / 豆包 / Kimi / Dify / n8n）</b>
+          把 <code>skills/homework-lab/SKILL.md</code> 导入该服务（自定义指令/知识库），它通过
+          <code>http://127.0.0.1:${esc(cfg.port)}/api/agent/*</code> 调用本服务读写数据库（出题/批改/单词本/题目目标）。
+          完整协议见 <code>docs/HTTP_API.md</code>。AI 服务不在本机时：监听地址改 0.0.0.0 + 设置令牌，或 SSH 隧道。</div>
         <div class="agent-row"><b>Claude Code</b>
           在项目目录运行 <code>claude</code>，根目录 AGENTS.md 自动加载，零配置。</div>
         <div class="agent-row"><b>OpenAI Codex / OpenCode</b>
           在项目目录运行 <code>codex</code> 或 <code>opencode</code>，AGENTS.md 自动加载。</div>
         <div class="agent-row"><b>其他 agent / 自研</b>
-          把 <code>AGENTS.md</code> + <code>docs/AGENT_PROTOCOL.md</code> 全文放进 system prompt，赋予 shell 权限即可。</div>
+          把 <code>AGENTS.md</code> + <code>docs/AGENT_PROTOCOL.md</code> + <code>docs/HTTP_API.md</code> 全文放进 system prompt，赋予 shell 或 HTTP 能力即可。</div>
       </div>
     </div>`;
 
   $("#btn-save-set").addEventListener("click", async () => {
     try {
-      await API.saveSettings({
+      const r = await API.saveSettings({
         db_path: $("#set-db").value.trim(),
         host: $("#set-host").value.trim(),
         port: $("#set-port").value.trim(),
+        api_token: $("#set-token").value.trim(),
       });
-      toast("已保存 ✓ 需重启服务生效");
+      toast(r.message || "已保存");
+      if (r.restart_required) setTimeout(() => location.reload(), 1500);
+    } catch (e) { toast(`❌ ${e.message}`); }
+  });
+  $("#btn-save-rules").addEventListener("click", async () => {
+    try {
+      const r = await API.saveSettings({
+        rules: {
+          mastery_threshold: +$("#set-mastery").value || 85,
+          mastery_min_attempts: +$("#set-attempts").value || 5,
+          verify_min_questions: +$("#set-vmin").value || 3,
+          verify_max_questions: +$("#set-vmax").value || 5,
+          weekly_interval_days: +$("#set-weekly").value || 7,
+          diag_max_questions: +$("#set-diag").value || 15,
+          question_priority: $("#set-priority").value.trim(),
+        },
+      });
+      toast(r.message || "已保存 ✓");
     } catch (e) { toast(`❌ ${e.message}`); }
   });
   $("#btn-restart").addEventListener("click", () => {
@@ -988,4 +1048,152 @@ async function viewSettings() {
   });
 }
 
-route();
+/* ================================ 首次初始化向导 ================================ */
+function splitList(v) {
+  return String(v || "").split(/[,，]/).map((s) => s.trim()).filter(Boolean);
+}
+function joinList(arr) {
+  return (arr || []).join("，");
+}
+
+async function boot() {
+  let status;
+  try {
+    status = await API.setupStatus();
+  } catch (e) {
+    return renderError($("#app"), e);
+  }
+  if (status && !status.initialized) {
+    renderSetup(status);
+    return;
+  }
+  route();
+}
+
+function renderSetup(status) {
+  const app = $("#app");
+  const cfg = status.config || {};
+  const d = status.defaults || {};
+  const rules = Object.assign({}, d.rules, cfg.rules || {});
+  const profile = Object.assign({}, d.profile, cfg.profile || {});
+  const dbPreset = [
+    { label: "默认（项目内）", path: d.db_path },
+    { label: "文稿目录", path: "~/Documents/homework-lab-data/homework.db" },
+  ].map((p) => `<button type="button" class="btn ghost mini" data-db="${esc(p.path)}">${esc(p.label)}</button>`).join("");
+
+  app.innerHTML = `
+    <div class="setup-wrap">
+      <h1 class="page-title">🎓 Homework Lab · 本地初始化</h1>
+      <p class="page-sub">首次使用需要完成三步配置。所有设置都有默认值，之后随时可在「设置」页修改。</p>
+
+      <div class="card" style="margin-bottom:18px">
+        <h3 class="card-h">📁 1. 数据库文件位置</h3>
+        <p class="page-sub">学习数据（试卷提交、错题、单词本）都存在这一个 SQLite 文件里。网页、AI 老师、命令行读取的是<strong>同一份 config.json</strong>，路径天然一致。输入相对路径会自动转为项目下的绝对路径。</p>
+        <div class="field"><label>数据库文件路径</label>
+          <input type="text" id="wz-db" value="${esc(cfg.db_path || d.db_path)}" placeholder="${esc(d.db_path)}">
+          <div class="btn-row" style="justify-content:flex-start">${dbPreset}</div>
+        </div>
+        <p class="page-sub">${status.db_exists ? "⚠️ 该位置已存在数据库文件 → 部署时直接使用，不会覆盖任何数据。" : "🆕 该位置还没有数据库 → 部署时自动创建目录和全部数据表。"}</p>
+      </div>
+
+      <div class="card" style="margin-bottom:18px">
+        <h3 class="card-h">🌐 2. 端口设置</h3>
+        <div class="field" style="flex:0 0 140px"><label>网页端口</label>
+          <input type="number" id="wz-port" value="${esc(cfg.port || d.port || 8877)}" min="1" max="65535" placeholder="8877">
+        </div>
+        <p class="page-sub">默认 8877。修改后服务会自动重启到新端口，页面自动跳转。</p>
+      </div>
+
+      <div class="card" style="margin-bottom:18px">
+        <h3 class="card-h">🎯 3. 题目目标</h3>
+        <p class="page-sub">AI 老师出题前会读取这些目标来决定方向与题量，均可后期修改。</p>
+        <div class="field-row">
+          <div class="field"><label>掌握标准（正确率 %）</label>
+            <input type="number" id="wz-mastery" value="${esc(rules.mastery_threshold)}" min="50" max="100"></div>
+          <div class="field"><label>计分最少作答次数</label>
+            <input type="number" id="wz-attempts" value="${esc(rules.mastery_min_attempts)}" min="1" max="20"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>验证卷最少题数</label>
+            <input type="number" id="wz-vmin" value="${esc(rules.verify_min_questions)}" min="1" max="10"></div>
+          <div class="field"><label>验证卷最多题数</label>
+            <input type="number" id="wz-vmax" value="${esc(rules.verify_max_questions)}" min="1" max="10"></div>
+          <div class="field"><label>周回顾间隔（天）</label>
+            <input type="number" id="wz-weekly" value="${esc(rules.weekly_interval_days)}" min="1" max="60"></div>
+          <div class="field"><label>诊断卷题数上限</label>
+            <input type="number" id="wz-diag" value="${esc(rules.diag_max_questions)}" min="5" max="30"></div>
+        </div>
+        <div class="field"><label>出题优先级（逗号分隔，依次生效）</label>
+          <input type="text" id="wz-priority" value="${esc(rules.question_priority || "")}">
+          <p class="page-sub">选项：student_request（学生指定方向）/ open_diag（未解决诊断）/ kmap_next（图谱下一未掌握点）/ weekly_wrong（周回顾错题）/ weakpoints（薄弱点）/ writing_curriculum（写作路线）/ vocab_dictation（默写抽查）</p>
+        </div>
+        <div class="field"><label>学习目标（逗号分隔）</label>
+          <input type="text" id="wz-goals" value="${esc(joinList(profile.goals))}" placeholder="彻底解决英语语法问题，雅思词汇短语积累"></div>
+        <div class="field-row">
+          <div class="field"><label>话题（逗号分隔）</label>
+            <input type="text" id="wz-topics" value="${esc(joinList(profile.topics))}" placeholder="教育，环保，科技，城市，健康，工作"></div>
+          <div class="field"><label>题型偏好（逗号分隔，留空=不限）</label>
+            <input type="text" id="wz-qtypes" value="${esc(joinList(profile.question_types))}" placeholder="choice，fill，writing…"></div>
+        </div>
+        <div class="field"><label>备注</label>
+          <input type="text" id="wz-notes" value="${esc(profile.notes || "")}" placeholder="给 AI 老师的补充说明（可选）"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:18px">
+        <h3 class="card-h">🤖 4. AI 老师接入（可选）</h3>
+        <p class="page-sub">默认只允许本机访问。如果要在局域网内让 AI 服务（ChatGPT 自定义 GPT / Dify / n8n 等）直接调用本服务，可以设置一个访问令牌（留空则不校验）。</p>
+        <div class="field"><label>AI 服务访问令牌（可选）</label>
+          <input type="text" id="wz-token" placeholder="留空 = 仅本机可访问"></div>
+      </div>
+
+      <div class="btn-row" style="justify-content:center;margin:26px 0">
+        <button class="btn primary big" id="btn-deploy">🚀 部署并开始使用</button>
+      </div>
+      <p class="page-sub" style="text-align:center" id="wz-msg"></p>
+    </div>`;
+
+  $$(".btn[data-db]").forEach((b) => b.addEventListener("click", () => {
+    $("#wz-db").value = b.dataset.db;
+  }));
+
+  $("#btn-deploy").addEventListener("click", async () => {
+    const btn = $("#btn-deploy");
+    btn.disabled = true;
+    btn.textContent = "部署中…";
+    try {
+      const r = await API.setup({
+        db_path: $("#wz-db").value.trim(),
+        port: $("#wz-port").value.trim(),
+        api_token: $("#wz-token").value.trim(),
+        rules: {
+          mastery_threshold: +$("#wz-mastery").value || 85,
+          mastery_min_attempts: +$("#wz-attempts").value || 5,
+          verify_min_questions: +$("#wz-vmin").value || 3,
+          verify_max_questions: +$("#wz-vmax").value || 5,
+          weekly_interval_days: +$("#wz-weekly").value || 7,
+          diag_max_questions: +$("#wz-diag").value || 15,
+          question_priority: $("#wz-priority").value.trim(),
+        },
+        profile: {
+          goals: splitList($("#wz-goals").value),
+          topics: splitList($("#wz-topics").value),
+          question_types: splitList($("#wz-qtypes").value),
+          notes: $("#wz-notes").value.trim(),
+        },
+      });
+      $("#wz-msg").textContent = "✅ " + r.message + `（数据库：${r.db_path}）`;
+      if (r.restart_required) {
+        $("#wz-msg").textContent += " 正在重启，请稍候…";
+        setTimeout(() => { location.href = `http://${r.host}:${r.port}/`; }, 2500);
+      } else {
+        setTimeout(() => location.reload(), 1200);
+      }
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = "🚀 部署并开始使用";
+      $("#wz-msg").textContent = "❌ " + e.message;
+    }
+  });
+}
+
+boot();

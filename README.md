@@ -11,6 +11,21 @@
 
 ## 使用说明
 
+### 一键启动（推荐）
+
+```bash
+./start.command        # macOS：双击或在终端运行，自动起服务 + 打开浏览器
+./start.sh             # Linux / macOS 终端
+```
+
+**首次使用**：打开网页后自动进入「本地初始化」向导，只需三步（都有默认值，可后期修改）：
+
+1. **数据库文件位置** —— 学习数据（提交/错题/单词本）存在这一个 SQLite 文件里；输入相对路径会自动转成绝对路径，**网页、AI 老师、命令行读的是同一份 config.json，访问位置天然一致**
+2. **端口** —— 默认 8877，改后服务自动重启到新端口
+3. **题目目标** —— 教学规则（掌握标准 ≥85%、计分最少作答 5 次、验证卷 3~5 题、周回顾 7 天、诊断卷 ≤15 题、出题优先级）+ 学生画像（目标/话题/题型）
+
+之后随时可在「设置」页修改教学规则与服务配置、「我的」页修改画像。
+
 ### 学生端（网页）
 
 ```
@@ -104,14 +119,15 @@ python3 agent/cli.py requests
 
 | 变量 | 默认 | 说明 |
 |---|---|---|
-| `HOMELAB_DB` | `data/homework.db` | 数据库路径（测试时指向临时文件） |
-| `HOMELAB_PORT` | `8877` | 网页端口 |
+| `HOMELAB_DB` | config.json 的 db_path | 数据库路径（测试时指向临时文件；优先级最高） |
+| `HOMELAB_PORT` | config.json 的 port | 网页端口 |
+| `HOMELAB_CONFIG` | `<项目>/config.json` | 配置文件路径（测试隔离用） |
 
 ### 数据与备份
 
 - 所有学习数据在 `data/homework.db`（单文件 SQLite），备份只需复制这一个文件
 - 试卷内容在 `papers/*.json`，随 git 版本管理
-- 迁移到新机器：复制整个目录 + 启动即可（零依赖，无需安装任何东西）
+- 迁移到新机器：复制整个目录 → `./start.command` → 网页上把数据库路径指到旧库即可接管全部历史数据（或直接复制 config.json + data/）
 
 ---
 
@@ -119,12 +135,13 @@ python3 agent/cli.py requests
 
 ### 接入原理
 
-老师角色只需要两种能力：**执行 shell 命令** + **读写 JSON 文件**。整个系统对 agent 的接口就两个东西：
+老师角色需要的能力：**执行 shell 命令 / 读写 JSON**（本地 agent）或 **发 HTTP 请求**（在线 AI 服务）。系统对 agent 的接口有两条：
 
-1. `agent/cli.py` —— 所有操作走这一个命令行工具
-2. `docs/AGENT_PROTOCOL.md` —— 试卷与批改的 JSON 规范（唯一契约）
+1. `agent/cli.py` —— 所有操作走这一个命令行工具（本地 agent 用）
+2. `docs/HTTP_API.md` 的 `/api/agent/*` —— 同一能力的 JSON HTTP 接口（在线 AI 服务用；**出题/批改/单词本/题目目标检查全覆盖**）
+3. `docs/AGENT_PROTOCOL.md` —— 试卷与批改的 JSON 规范（唯一契约，两条接口共用）
 
-因此任何模型、任何 agent 框架都能无缝接入，换模型时**学生端、数据库、历史数据全部不变**。
+任何模型、任何 agent 框架都能无缝接入，换模型时**学生端、数据库、历史数据全部不变**。
 
 ### AGENTS.md —— 仓库自带的教师角色指令
 
@@ -137,7 +154,8 @@ python3 agent/cli.py requests
 | **OpenCode** | 在项目目录运行 `opencode`，AGENTS.md 自动加载 |
 | **Cursor / Windsurf** | 打开项目目录即可，AGENTS.md 会被读取 |
 | **Hermes Agent** | 用下方「Hermes Skill 配置」的 skill（本仓库自带） |
-| **任意 API / 自研 agent** | 把 `AGENTS.md` + `docs/AGENT_PROTOCOL.md` 全文塞进 system prompt，赋予它 shell 权限即可 |
+| **在线 AI 服务（ChatGPT 自定义 GPT / 豆包 / Kimi / Dify / n8n）** | 把 `skills/homework-lab/SKILL.md` 导入该服务（自定义指令/知识库），它通过 `http://127.0.0.1:<端口>/api/agent/*` 调用本服务，协议见 `docs/HTTP_API.md`；AI 服务不在本机时：监听地址改 0.0.0.0 + 设置访问令牌，或 SSH 隧道 |
+| **任意 API / 自研 agent** | 把 `AGENTS.md` + `docs/AGENT_PROTOCOL.md`（+ `docs/HTTP_API.md`）全文塞进 system prompt，赋予 shell 或 HTTP 能力即可 |
 
 ### 各 agent 的角色分工（以多 agent 协作为例）
 
@@ -212,21 +230,26 @@ ln -s "$(pwd)/skills/homework-lab" ~/.hermes/skills/education/homework-lab
 ```
 homework-lab/
 ├── AGENTS.md              # ★ 教师角色指令（Claude Code / Codex / OpenCode 等自动加载）
+├── start.command / start.sh   # 一键启动：起服务 + 打开浏览器
+├── config.json            # 本地配置（初始化页/设置页写入，不入 git）：数据库路径/端口/题目目标
 ├── agent/
-│   ├── db.py              # 数据层：表结构、试卷校验、自动批改、知识点统计
-│   └── cli.py             # Agent CLI：发布/批改/错题/知识点管理（模型无关接口）
+│   ├── db.py              # 数据层：表结构、试卷校验、自动批改、知识点统计、初始化部署
+│   ├── cli.py             # Agent CLI：发布/批改/错题/知识点管理（模型无关接口）
+│   └── settings.py        # 配置模块：默认值 + config.json 读写（网页/CLI/API 共用）
 ├── server/
-│   ├── app.py             # 本地 HTTP 服务器（标准库，只绑 127.0.0.1）
-│   └── static/            # 学生端网页（无框架 SPA）
+│   ├── app.py             # 本地 HTTP 服务器（标准库，默认只绑 127.0.0.1）
+│   ├── agent_api.py       # AI 服务接入 API（/api/agent/*，协议见 docs/HTTP_API.md）
+│   └── static/            # 学生端网页（无框架 SPA，含首次初始化向导）
 ├── papers/                # 试卷库（JSON，随 git 版本管理）
 ├── scripts/
 │   └── check_pending.py   # 定时巡检脚本（待批改提醒，供 cron 使用）
 ├── skills/
 │   └── homework-lab/
-│       └── SKILL.md       # Hermes 技能文件（安装方法见上文）
+│       └── SKILL.md       # ★ AI 老师技能（本地 agent 用 CLI，在线服务用 HTTP API）
 ├── data/                  # SQLite 学习数据（本地，不入 git）
 └── docs/
     ├── AGENT_PROTOCOL.md  # ★ 任何 AI/agent 的接入协议（试卷 JSON 规范 + CLI 参考）
+    ├── HTTP_API.md        # ★ 在线 AI 服务的 HTTP 接入协议（/api/agent/*）
     ├── QUESTION_TYPES.md  # 题型规范与出题指南
     └── WRITING_CURRICULUM.md  # 雅思写作课程路线（短句 → 图表 → 大作文）
 ```
@@ -237,17 +260,16 @@ homework-lab/
 git clone git@github.com:zph0713/homework.git
 cd homework
 
-# 1. 初始化数据库（首次，或直接跳过——CLI 会自动建库）
-python3 agent/cli.py init
+# 1. 一键启动（自动起服务 + 打开浏览器）→ 网页上完成首次初始化（数据库路径/端口/题目目标）
+./start.command        # macOS；Linux 用 ./start.sh
 
-# 2. 发布第一份试卷
+# 或者手动：
+python3 server/app.py  # → 打开 http://127.0.0.1:8877 完成初始化
+
+# 2. 发布第一份试卷（AI 老师）
 python3 agent/cli.py create papers/diagnostic_001.json
 
-# 3. 启动本地网页
-python3 server/app.py
-# → 打开 http://127.0.0.1:8877
-
-# 4. （可选）接入你的 AI 老师：Hermes 装 skill，或让支持 AGENTS.md 的工具在本目录启动
+# 3. （可选）接入你的 AI 老师：本地 agent 装 skill / 在线 AI 服务导入 skill + HTTP API
 ```
 
 ## 常见问题
