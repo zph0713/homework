@@ -47,6 +47,13 @@ DEFAULT_PROFILE = {
     "topics": ["教育", "环保", "科技", "城市", "健康", "工作"],
     "question_types": [],
     "notes": "",
+    # 三类作业各一句话要求（学生可改；老师出题时按此定风格与目标）
+    "grammar_requirement": "按知识图谱反复攻克语法短板，翻译题中发现并纠正语法问题，错题揪着不放直到掌握。",
+    "vocabulary_requirement": "雅思答案词+单词本词汇随机汉英互译/拼写/词性练习，短语由老师讲解展示，可收藏进短语本。",
+    "ielts_requirement": "贴近剑桥雅思真题：阅读节选小题、题干翻译、作文长句中译英、口语随机话题。",
+    # 口语当季话题（老师优先从当季话题出题，也可少量随机追问；Part3 由老师自行出题）
+    "ielts_part1_topics": [],
+    "ielts_part2_topics": [],
 }
 
 DEFAULT_CONFIG = {

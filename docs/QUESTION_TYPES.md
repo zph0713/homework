@@ -1,7 +1,7 @@
 # 题型规范与出题指南
 
-六种题型覆盖雅思语法/词汇/翻译训练的主要形态。所有题型统一支持 `explanation`（通用解析）与 `knowledge_point`（知识点标签）。
-听力/口语为**预留题型，尚未实现**（见文末），出题时不要使用。
+八种题型覆盖语法 / 词汇 / 翻译 / 雅思专项训练的主要形态。所有题型统一支持 `explanation`（通用解析）与 `knowledge_point`（知识点标签）。
+听力为**预留题型，尚未实现**（见文末）；口语已实现**纯文字版**（只出题不批改，见 speaking 一节）。
 
 ## choice · 单选
 
@@ -84,12 +84,52 @@ python3 agent/cli.py vocab check-result --sub <提交id>
 # 写对 → 出池，网页标绿 🟢；拼错 → 留池，下次抽查再考，直到写对
 ```
 
-## 预留题型：listening / speaking（未实现）
+## speaking · 口语话题（纯文字 · 只出题不批改）
 
-> ⚠️ 当前开发目标**不包含**听力和口语，以下仅为预留设计，agent 出题时不要生成这两类题。
+**用途**：雅思口语 Part 1 / Part 2 / Part 3 随机话题训练。**只出题，不要求作答、不做批改**，学生自行开口练习、自行判断，前端只提供「下一题」按钮。
+
+**出题要点**：
+- 试卷 `skill` 必须为 `ielts_speaking`（前端识别后进入口语流程页，不显示交卷栏）
+- 每道题：`type=speaking`，`prompt`=题目文本，`answer` 留空 `""`，`extra={"part": 1|2|3}`，`score=0`
+- **Part 2 尽量模拟真实考试**：prompt 用多行文本写「Describe ... / You should say: - 要点1 - 要点2 ... and explain ...」，前端会渲染成真题风格的题目卡（含「准备 1 分钟 · 陈述 1-2 分钟」提示）
+- **话题来源优先级**：① 学生「我的」页填写的 Part 1 / Part 2 当季话题（`profile get` 的 `ielts_part1_topics` / `ielts_part2_topics`）② 少量随机追问或在同一话题下多问几题 ③ Part 3 由老师自行出题（基于 Part 2 话题延伸）
+- 一份口语卷建议 6~12 题（Part 1 若干 + Part 2 一题 + Part 3 追问若干）
+- 贴近剑桥真题：Part 1 日常问答（hometown / work or study / weather / leisure...），Part 2 人物 / 地点 / 事件 / 物品 / 活动类卡片题
+
+**实现说明**：口语卷没有提交、没有批改、不计入任何统计；`knowledge_point` 写「口语Part1」等仅作标注。
+
+## phrase · 短语讲解卡（AI 老师教 · 学生收藏）
+
+**用途**：常用口语 / 作文表达的教学展示。**短语只由 AI 老师教**，学生不答题，一键收藏进短语本。
+
+**出题要点**：
+- `type=phrase`，`prompt`=短语本体（如 `take ... into account`），`answer` 留空 `""`，`score=0`
+- `extra={"meaning_cn": "中文释义", "example": "英文例句", "example_cn": "例句中文"}` —— 前端渲染成讲解卡（短语 + 释义 + 例句 + 「加入短语本」按钮）
+- 短语库：`curriculum/phrase_bank.json`（60 条口语/作文高频表达，带释义与例句），词汇短语作业生成器会随机抽 5 条；也可手写自己的短语卡
+- 学生收藏后进入「短语本」页（`phrases` 表）；`phrase list` 可查看
+
+## 词汇短语作业（skill=vocabulary · 学生自验证）
+
+**用途**：雅思听力/阅读答案词 + 单词本词汇的随机汉英互译 / 拼写 / 词性练习。**交卷即自动批改，学生自行对照答案验证，老师不参与批改**（区别于默写/抽查流程）。
+
+**生成方式**（不要手写 JSON，用 CLI）：
+
+```bash
+python3 agent/cli.py vocab homework --ielts 20 --wordbook 5 --phrases 5 --out papers/vocab_homework.json
+python3 agent/cli.py create papers/vocab_homework.json
+```
+
+生成规则：
+- 20 个雅思听力/阅读答案词（`curriculum/ielts_answer_words.json`，300 词库）+ 5 个单词本中带中文+词性的词
+- 每个词随机出 4 种题型之一：拼写（首字母提示）/ 汉译英（fill）/ 英译汉（choice 4 选 1）/ 词性（choice 4 选 1）
+- 5 条短语讲解卡（type=phrase，来自 `curriculum/phrase_bank.json`）
+- 知识点留空（不计入语法掌握度）；学生交卷后服务器自动批改定稿
+
+## 预留题型：listening（未实现）
+
+> ⚠️ 当前开发目标**不包含**听力音频，以下仅为预留设计，agent 出题时不要生成带音频的题目。
 
 - **listening（预留）**：question JSON 增加可选字段 `audio_url`（音频地址，支持 file:// 本地路径或 http）；前端播放按钮 + 可重复听；答题形态复用 choice/fill/cloze。
-- **speaking（预留）**：`GET /api/record` + MediaRecorder 录音上传，answer 存音频文件引用 + 转写文本；AI 批改读转写文本。
 - 服务器 API 已预留 `/api/audio` 命名空间；开发计划详见 `docs/ROADMAP.md`，当前阶段不动。
 
 ## 通用出题纪律

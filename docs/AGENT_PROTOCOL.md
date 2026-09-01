@@ -51,7 +51,11 @@ CLI 会自动建库，无需手工初始化。
 ```jsonc
 {
   "title": "诊断卷 #1 · 时态 / 语态 / 主谓一致",   // 必填
-  "skill": "grammar",        // grammar|vocabulary|reading|writing|listening|mixed
+  "skill": "grammar",        // 作业栏目（决定前端归属与统计口径）：
+                             //   grammar = 语法作业（老师批改+讲解，计入掌握度/错题本/近期成绩）
+                             //   vocabulary = 词汇短语作业（交卷自批改，学生自验证，老师不批改）
+                             //   ielts_reading / ielts_stem / ielts_essay / ielts_speaking = 雅思专项训练四栏目
+                             //   （reading/writing/listening/mixed 为旧值，新卷不要用）
   "topic": "IELTS 写作 Task 1 语境",               // 可选
   "goal": "本次考察目标（显示给学生看）",            // 可选
   "passages": [               // 可选：阅读材料，题里用 passage_ref 引用
@@ -63,7 +67,7 @@ CLI 会自动建库，无需手工初始化。
 
 ### 题型字段
 
-公共字段：`type`、`prompt`、`explanation`（解析，批改后显示）、`knowledge_point`（知识点标签，**必填**，掌握度统计依赖它）、`score`（默认 1 分）。
+公共字段：`type`、`prompt`、`explanation`（解析，批改后显示）、`knowledge_point`（知识点标签，**必填**，掌握度统计依赖它）、`score`（默认 1 分）、`extra`（可选，JSON 扩展字段——speaking 存 `{"part": 1|2|3}`，phrase 存 `{"meaning_cn","example","example_cn"}`）。
 
 **① choice 单选（雅思选择题）**
 
@@ -141,6 +145,37 @@ CLI 会自动建库，无需手工初始化。
 
 - 不会自动批改；AI 给 `correct`（1 / 0 / 0.5 等小数）和详细 `feedback`
 
+**⑥ speaking 口语话题（只出题不批改 · 试卷 skill=ielts_speaking）**
+
+```jsonc
+{
+  "type": "speaking",
+  "prompt": "Describe a memorable trip you have taken.\n\nYou should say:\n- where you went\n- who you went with\n- what you did there\n\nand explain why this trip was memorable for you.",
+  "answer": "",
+  "extra": { "part": 2 },
+  "knowledge_point": "口语Part2",
+  "score": 0
+}
+```
+
+- `answer` 留空；`extra.part` 为 1/2/3；Part 2 的 prompt 用多行写「Describe ... / You should say: ... and explain ...」，前端渲染成真题风格题目卡
+- 口语卷没有提交与批改，不计入任何统计；话题优先取学生「我的」页的当季话题（`profile get`）
+
+**⑦ phrase 短语讲解卡（AI 老师教 · 学生收藏）**
+
+```jsonc
+{
+  "type": "phrase",
+  "prompt": "take ... into account",
+  "answer": "",
+  "extra": { "meaning_cn": "把…考虑在内", "example": "We must take safety into account.", "example_cn": "我们必须把安全考虑在内。" },
+  "knowledge_point": "",
+  "score": 0
+}
+```
+
+- 只展示不答题；学生点「加入短语本」收藏（`phrases` 表）；词汇短语作业生成器会自动从 `curriculum/phrase_bank.json` 抽 5 条
+
 ### 校验
 
 `create` 时自动校验全部字段，错误以中文列出（题号 + 原因）。校验不过不会入库。
@@ -199,6 +234,8 @@ CLI 会自动建库，无需手工初始化。
 | `vocab dictation --limit N [--random] [--out F]` | 全词本默写卷生成（fill + 知识点「词汇-默写」） |
 | `vocab check --limit N [--out F]` | 抽查池随机抽词生成抽查卷（知识点「词汇-抽查」，可并入其它卷混考） |
 | `vocab check-result --sub <id>` | 抽查卷批改完成后回写池：对→出池（绿），错→留池重抽（幂等） |
+| `vocab homework [--ielts 20 --wordbook 5 --phrases 5] [--out F]` | 生成「词汇短语作业」卷：雅思答案词+单词本词（随机拼写/汉英互译/词性）+短语讲解卡（skill=vocabulary，交卷自批改） |
+| `phrase list` / `phrase add --phrase X [--meaning M --example E]` / `phrase delete <id>` | 短语本管理（AI 老师教的短语，学生从作业卡收藏） |
 | `kmap import <json>` / `kmap list` / `kmap next [--limit N]` | 知识图谱导入 / 打分总览 / 下一个未掌握点 |
 
 ## 7. 纪律与约定
@@ -209,7 +246,8 @@ CLI 会自动建库，无需手工初始化。
 4. **解析与点评分离**：`explanation` 是题目自带的通用解析（写卷时定稿）；`feedback` 是 AI 针对**这个学生这一次的错答**的个性化点评（批改时写）。两者都会显示给学生。
 5. **出变式题**：错题重练不要原题照搬（学生会背答案），要换数字/换主语/换语境，考同一个知识点。
 6. **掌握标准**：作答超过 5 次且 mastery ≥ 85% → `mastered`，之后降低该知识点的出题频率；≤5 次不计分（图谱显示"计分中"）。
-7. **试卷 JSON 进 git（papers/），学习数据（data/）永远不进 git**。
+7. **统计口径（三栏目重构后）**：语法知识图谱 / 掌握度概览 / 近期正确率 / 错题本**只统计 skill=grammar 的作业**。词汇短语作业交卷即自动批改、学生自验证，老师不批改；雅思阅读节选小题批改要附答案讲解，作文长句中译英批改要纠正语法；口语卷只出题不批改。
+8. **试卷 JSON 进 git（papers/），学习数据（data/）永远不进 git**。
 
 ## 8. 接入新模型的检查清单
 

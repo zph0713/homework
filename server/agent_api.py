@@ -304,7 +304,8 @@ def agent_request_done(handler, body):
 
 def agent_profile_set(handler, body):
     with db.connect() as conn:
-        for key in ("goals", "topics", "question_types"):
+        for key in ("goals", "topics", "question_types",
+                    "ielts_part1_topics", "ielts_part2_topics"):
             if key in body:
                 val = body[key]
                 if not isinstance(val, list):
@@ -312,7 +313,26 @@ def agent_profile_set(handler, body):
                 db.profile_set(conn, key, val)
         if "notes" in body:
             db.profile_set(conn, "notes", str(body["notes"]))
+        for key in ("grammar_requirement", "vocabulary_requirement", "ielts_requirement"):
+            if key in body:
+                db.profile_set(conn, key, str(body[key]))
     return handler._send_json(200, {"saved": True})
+
+
+def agent_phrases(handler):
+    with db.connect() as conn:
+        return handler._send_json(200, {"phrases": db.phrase_list(conn)})
+
+
+def agent_phrase_add(handler, body):
+    with db.connect() as conn:
+        row, created = db.phrase_add(
+            conn, body.get("phrase") or "",
+            meaning_cn=body.get("meaning_cn") or "",
+            example=body.get("example") or "",
+            example_cn=body.get("example_cn") or "",
+            source=(body.get("source") or "").strip())
+    return handler._send_json(200, {"id": row["id"], "created": created, "phrase": row["phrase"]})
 
 
 def agent_log(handler, body):
@@ -355,6 +375,7 @@ GET_ROUTES = [
     (r"/api/agent/papers/(\d+)", agent_paper_detail),
     (r"/api/agent/submissions/(\d+)", agent_submission),
     (r"/api/agent/vocab", agent_vocab),
+    (r"/api/agent/phrases", agent_phrases),
     (r"/api/agent/weakpoints", agent_weakpoints),
     (r"/api/agent/diag", agent_diag_list),
     (r"/api/agent/weekly", agent_weekly_status),
@@ -371,6 +392,7 @@ POST_ROUTES = [
     (r"/api/agent/grade", agent_grade),
     (r"/api/agent/vocab-detail", agent_vocab_detail),
     (r"/api/agent/vocab-check-result", agent_vocab_check_result),
+    (r"/api/agent/phrases", agent_phrase_add),
     (r"/api/agent/diag", agent_diag),
     (r"/api/agent/weekly", agent_weekly),
     (r"/api/agent/requests", agent_request_done),

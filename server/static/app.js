@@ -31,6 +31,9 @@ const API = {
   vocabAdd: (word, note, source) => API._post("/api/vocabulary", { word, note: note || "", source: source || "" }),
   vocabPatch: (id, fields) => API._req("PATCH", `/api/vocabulary/${id}`, fields),
   vocabDelete: (id) => API._req("DELETE", `/api/vocabulary/${id}`),
+  phrases: () => API._get("/api/phrases"),
+  phraseAdd: (p) => API._post("/api/phrases", p),
+  phraseDelete: (id) => API._req("DELETE", `/api/phrases/${id}`),
   deleteHomework: (id) => API._req("DELETE", `/api/homeworks/${id}`),
   profile: () => API._get("/api/profile"),
   saveProfile: (p) => API._post("/api/profile", p),
@@ -67,9 +70,60 @@ function toast(msg, ms = 2600) {
   toastTimer = setTimeout(() => (t.hidden = true), ms);
 }
 
-const SKILL = { grammar: "语法", vocabulary: "词汇", reading: "阅读", writing: "写作", listening: "听力", mixed: "综合" };
-const TYPE = { choice: "单选", fill: "填空", cloze: "语法填空", tfng: "判断 TFNG", writing: "写作", translate: "翻译" };
+const SKILL = {
+  grammar: "语法", vocabulary: "词汇", reading: "阅读", writing: "写作", listening: "听力", mixed: "综合",
+  ielts_reading: "阅读节选小题", ielts_stem: "题干翻译", ielts_essay: "作文中译英", ielts_speaking: "口语话题",
+};
+const TYPE = {
+  choice: "单选", fill: "填空", cloze: "语法填空", tfng: "判断 TFNG",
+  writing: "写作", translate: "翻译", speaking: "口语话题", phrase: "短语讲解",
+};
 const SUB_STATUS = { pending: "已交卷 · 待批改", partial: "已交卷 · 批改中", graded: "已批改" };
+
+/* 三大作业栏目（与顶部导航一致） */
+const LANES = [
+  {
+    key: "vocabulary", icon: "📚", title: "词汇短语作业",
+    desc: "雅思听力阅读答案词 + 单词本词汇随机汉英互译 / 拼写 / 词性；短语由老师讲解展示，可收藏进短语本。",
+    note: "交卷即自动批改，自行对照答案验证（老师不批改词汇）",
+    skills: ["vocabulary"],
+  },
+  {
+    key: "grammar", icon: "🔧", title: "语法作业",
+    desc: "按知识图谱反复攻克语法短板，翻译中发现语法问题并反复纠正；错题本专属于语法作业。",
+    skills: ["grammar"],
+  },
+  {
+    key: "ielts", icon: "🎯", title: "雅思专项训练",
+    desc: "阅读节选小题 · 听力阅读题干翻译 · 作文长句中译英 · 口语随机话题（文字训练，贴近剑桥真题）。",
+    skills: ["ielts_reading", "ielts_stem", "ielts_essay", "ielts_speaking"],
+  },
+];
+const LANE_BY_KEY = Object.fromEntries(LANES.map((l) => [l.key, l]));
+const SUB_LANES = {
+  "ielts-reading": { icon: "📰", title: "阅读节选小题训练", skills: ["ielts_reading"],
+    desc: "剑桥真题风格的阅读节选 + 各类小题（选择 / TFNG / 填空 / 配对）。批改由老师完成并附答案讲解。" },
+  "ielts-stem": { icon: "🔤", title: "听力阅读题干翻译练习", skills: ["ielts_stem"],
+    desc: "翻译听力 / 阅读的题干（instruction + questions），扫清审题障碍。老师批改译文。" },
+  "ielts-essay": { icon: "✒️", title: "作文长句中译英", skills: ["ielts_essay"],
+    desc: "大作文各题型模版句 + 小作文图表描述例句的中译英训练。老师纠正语法问题。" },
+  "ielts-speaking": { icon: "🎤", title: "口语随机话题", skills: ["ielts_speaking"],
+    desc: "Part 1 / Part 2 / Part 3 随机话题（优先当季话题）。只出题不要求作答、不批改，点「下一题」即可。" },
+};
+/* 子栏目 / 辅助页归属到哪个主栏目（导航高亮用） */
+const NAV_PARENT = {
+  words: "lane-vocabulary", phrases: "lane-vocabulary", review: "lane-grammar",
+  "ielts-reading": "lane-ielts", "ielts-stem": "lane-ielts",
+  "ielts-essay": "lane-ielts", "ielts-speaking": "lane-ielts",
+};
+
+function laneOf(skill) {
+  const lane = LANES.find((l) => l.skills.includes(skill));
+  if (lane) return lane.key;
+  if (["reading", "listening"].includes(skill)) return "ielts";   // 旧数据兼容
+  if (["writing", "mixed"].includes(skill)) return "grammar";     // 旧数据兼容
+  return "grammar";
+}
 
 function fmtDate(s) {
   return (s || "").slice(5, 16);
@@ -81,21 +135,31 @@ function fmtAnswer(a) {
 }
 
 /* ================================ 路由 ================================ */
+function navKeyFor(hash) {
+  const m = hash.match(/^#\/lane\/([a-z-]+)/);
+  if (m) return NAV_PARENT[m[1]] || `lane-${m[1]}`;
+  const name = hash.slice(2).split("/")[0] || "home";
+  return NAV_PARENT[name] || name;
+}
+
 function route() {
   const hash = location.hash || "#/";
   const app = $("#app");
-  const navName = hash.slice(2).split("/")[0] || "home";
-  document.body.classList.toggle("wide", navName === "words");
-  $$("nav a").forEach((a) => a.classList.toggle("active", a.dataset.nav === navName));
+  const navKey = navKeyFor(hash);
+  document.body.classList.toggle("wide", navKey === "words" || navKey === "phrases");
+  $$("nav [data-nav]").forEach((a) => a.classList.toggle("active", a.dataset.nav === navKey));
   app.innerHTML = '<div class="loading">加载中…</div>';
   const mPaper = hash.match(/^#\/paper\/(\d+)/);
   const mResult = hash.match(/^#\/result\/(\d+)/);
+  const mLane = hash.match(/^#\/lane\/([a-z-]+)/);
   if (hash === "#/" || hash === "#") return viewHome();
   if (mPaper) return viewPaper(+mPaper[1]);
   if (mResult) return viewResult(+mResult[1]);
+  if (mLane) return viewLane(mLane[1]);
   if (hash === "#/review") return viewReview();
   if (hash === "#/kp") return viewKnowledge();
   if (hash === "#/words") return viewWords();
+  if (hash === "#/phrases") return viewPhrases();
   if (hash === "#/me") return viewMe();
   if (hash === "#/settings") return viewSettings();
   app.innerHTML = '<div class="empty"><div class="big">🔍</div>页面不存在</div>';
@@ -113,27 +177,79 @@ async function viewHome() {
   const kps = data.knowledge || [];
   const reqs = data.open_requests || [];
 
-  const hwCards = hws.length ? hws.map(hwCard).join("") : empty("📭", "还没有作业，等老师发布吧");
-  const kpBlock = kpBlockHTML(kps.slice(0, 8), "掌握度概览", "#/kp");
+  const lanesHTML = LANES.map((lane) => {
+    const laneHws = hws.filter((h) => lane.skills.includes(h.skill));
+    const cards = laneHws.length
+      ? laneHws.slice(0, 6).map(hwCard).join("")
+      : empty("🕐", "这一栏还没有作业，等老师发布吧");
+    const reqNotice = lane.key === "grammar" && reqs.length
+      ? `<div class="waiting" style="margin-bottom:10px">⏳ 你已申请重练：${reqs.map((r) => esc(r.knowledge_point)).join("、")}，下次语法作业会额外增加</div>` : "";
+    return `
+      <section class="lane">
+        <div class="lane-head">
+          <h2>${lane.icon} ${lane.title}</h2>
+          <a class="lane-more" href="#/lane/${lane.key}">${laneHws.length ? `全部 ${laneHws.length} 张 →` : "进入 →"}</a>
+        </div>
+        <p class="lane-desc">${lane.desc}</p>
+        ${lane.note ? `<p class="lane-note">💡 ${lane.note}</p>` : ""}
+        ${reqNotice}
+        <div class="hw-list">${cards}</div>
+      </section>`;
+  }).join("");
+
+  const kpBlock = kpBlockHTML(kps.slice(0, 8), "语法掌握度概览（只统计语法作业）", "#/kp");
 
   app.innerHTML = `
-    <div class="home-grid">
-      <div>
-        <h1 class="page-title">我的作业</h1>
-        <p class="page-sub">做完点交卷，老师在后台批改；批改完成后点「查看结果」看讲解。</p>
-        ${reqs.length ? `<div class="waiting">⏳ 你已申请重练：${reqs.map((r) => esc(r.knowledge_point)).join("、")}，下次作业会安排</div>` : ""}
-        <div class="hw-list">${hwCards}</div>
-      </div>
-      <aside class="kp-side">
-        ${kpBlock}
-        <div class="kp-card">
-          <h3>学习循环</h3>
-          <div style="font-size:13.5px;color:var(--muted);line-height:2">
-            ① 做作业 → 交卷<br>② 老师批改 + 讲解<br>③ 针对薄弱点再出题验证<br>④ 每周错题重练<br>⑤ 全对 = 真正掌握 ✓
-          </div>
+    <h1 class="page-title">我的作业</h1>
+    <p class="page-sub">作业分为三个栏目：词汇短语作业（交卷自动批改、自行验证）、语法作业（老师批改+讲解）、雅思专项训练（文字训练，口语只出题）。</p>
+    <div class="lane-grid">${lanesHTML}</div>
+    <div class="home-bottom">
+      ${kpBlock}
+      <div class="kp-card">
+        <h3>学习循环</h3>
+        <div style="font-size:13.5px;color:var(--muted);line-height:2">
+          ① 做作业 → 交卷<br>② 老师批改 + 讲解（语法优先）<br>③ 针对薄弱点再出题验证<br>④ 错题本申请重练 → 下次额外加题<br>⑤ 全对 = 真正掌握 ✓
         </div>
-      </aside>
+      </div>
     </div>`;
+  bindDeleteHomework(hws);
+}
+
+/* ================================ 栏目页 ================================ */
+async function viewLane(key) {
+  const app = $("#app");
+  let data;
+  try { data = await API.state(); }
+  catch (e) { return renderError(app, e); }
+  const hws = data.homeworks || [];
+  const reqs = data.open_requests || [];
+  const meta = LANE_BY_KEY[key] || SUB_LANES[key];
+  if (!meta) {
+    app.innerHTML = '<div class="empty"><div class="big">🔍</div>栏目不存在</div>';
+    return;
+  }
+  const skills = meta.skills || (LANE_BY_KEY[key] ? LANE_BY_KEY[key].skills : []);
+  const laneHws = hws.filter((h) => skills.includes(h.skill));
+  const base = LANE_BY_KEY[key];
+  const subLaneLinks = key === "ielts" ? `
+    <div class="sub-lane-links">
+      ${Object.entries(SUB_LANES).map(([k, s]) =>
+        `<a class="btn ghost small" href="#/lane/${k}">${s.icon} ${s.title}</a>`).join("")}
+    </div>` : "";
+  const reqNotice = key === "grammar" && reqs.length
+    ? `<div class="waiting">⏳ 你已申请重练：${reqs.map((r) => esc(r.knowledge_point)).join("、")}，下次语法作业会额外增加</div>` : "";
+  const cards = laneHws.length ? laneHws.map(hwCard).join("") : empty("🕐", "这一栏还没有作业，等老师发布吧");
+  app.innerHTML = `
+    <h1 class="page-title">${meta.icon || (base && base.icon)} ${meta.title || (base && base.title)}</h1>
+    <p class="page-sub">${meta.desc || (base && base.desc)}</p>
+    ${subLaneLinks}
+    ${reqNotice}
+    <div class="hw-list">${cards}</div>
+    <div style="text-align:center;margin-top:18px"><a class="btn ghost" href="#/">← 返回首页</a></div>`;
+  bindDeleteHomework(hws);
+}
+
+function bindDeleteHomework(hws) {
   $$("[data-del-hw]").forEach((b) =>
     b.addEventListener("click", () => {
       const id = +b.dataset.delHw;
@@ -149,7 +265,7 @@ async function viewHome() {
         try {
           await API.deleteHomework(id);
           toast("已删除 ✓");
-          viewHome();
+          route();
         } catch (e) {
           toast(`❌ ${e.message}`);
         }
@@ -161,9 +277,12 @@ function hwCard(h) {
   const s = h.latest_submission;
   let statusHTML, actions;
   const badgeArch = h.status === "archived" ? '<span class="badge archived">已归档</span>' : "";
-  if (!s) {
+  if (h.skill === "ielts_speaking") {
+    statusHTML = '<span class="hw-status">🎤 口语练习 · 只出题不交卷</span>';
+    actions = `<a class="btn primary" href="#/paper/${h.id}">开始练习</a>`;
+  } else if (!s) {
     statusHTML = '<span class="hw-status">📝 未作答</span>';
-    actions = `<a class="btn primary" href="#/paper/${h.id}">开始答题</a>`;
+    actions = `<a class="btn primary" href="#/paper/${h.id}">${h.skill === "vocabulary" ? "开始练习" : "开始答题"}</a>`;
   } else if (s.status !== "graded") {
     statusHTML = `<span class="hw-status">⏳ ${SUB_STATUS[s.status] || s.status}（${fmtDate(s.submitted_at)} 提交）</span>`;
     actions = `<a class="btn ghost small" href="#/result/${s.id}">查看进度</a>`;
@@ -200,9 +319,12 @@ async function viewPaper(id) {
   try { paper = await API.paper(id); }
   catch (e) { return renderError(app, e); }
   const h = paper.homework;
+  if (h.skill === "ielts_speaking") return viewSpeaking(paper);
   const passages = new Map(paper.passages.map((p) => [p.id, p]));
   const qs = paper.questions;
 
+  const vocabNote = h.skill === "vocabulary"
+    ? `<div class="waiting" style="margin-top:10px">💡 词汇练习：交卷即自动批改，无需等老师。做完点「交卷」后直接在结果页对照答案自行验证。</div>` : "";
   const head = `
     <div class="paper-head">
       <h1>${esc(h.title)}</h1>
@@ -212,6 +334,7 @@ async function viewPaper(id) {
         <span class="badge">${qs.length} 题</span>
       </div>
       ${h.goal ? `<div class="goal">🎯 ${esc(h.goal)}</div>` : ""}
+      ${vocabNote}
     </div>`;
   const body = qs.map((q, i) => renderQuestion(q, i, passages)).join("");
   app.innerHTML = `${head}${body}${submitBarHTML()}`;
@@ -255,6 +378,11 @@ function renderQuestion(q, i, passages) {
     main = `<div class="q-prompt">${esc(q.prompt)}</div>
       <div class="q-write"><textarea data-q="${q.id}" placeholder="${ph}"></textarea>
       <div class="wc"><span data-wc="${q.id}">0</span> 词</div></div>`;
+  } else if (q.type === "phrase") {
+    const ex = q.extra || {};
+    main = phraseCardHTML(q.prompt, ex, `homework#${q.homework_id}`);
+  } else if (q.type === "speaking") {
+    main = `<div class="q-prompt">${esc(q.prompt)}</div>`;
   }
   return `
     <div class="q-card" id="qc-${q.id}">
@@ -266,6 +394,37 @@ function renderQuestion(q, i, passages) {
       ${passageHTML}
       ${main}
     </div>`;
+}
+
+/* 短语讲解卡（AI 老师教；学生可一键收藏进短语本） */
+function phraseCardHTML(phrase, ex, source) {
+  const data = JSON.stringify({ phrase, meaning_cn: ex.meaning_cn || "", example: ex.example || "", example_cn: ex.example_cn || "" })
+    .replace(/"/g, "&quot;");
+  return `
+    <div class="phrase-card">
+      <div class="phrase-main">💬 <b>${esc(phrase)}</b></div>
+      ${ex.meaning_cn ? `<div class="phrase-meaning">${esc(ex.meaning_cn)}</div>` : ""}
+      ${ex.example ? `<div class="phrase-example">${esc(ex.example)}${ex.example_cn ? `（${esc(ex.example_cn)}）` : ""}</div>` : ""}
+      <div class="phrase-foot">
+        <span class="phrase-tip">👩‍🏫 老师讲解 · 仅供学习，无需作答</span>
+        <button class="btn primary small" data-add-phrase="${data}">➕ 加入短语本</button>
+      </div>
+    </div>`;
+}
+
+function bindPhraseButtons(root) {
+  $$("[data-add-phrase]", root || document).forEach((b) =>
+    b.addEventListener("click", async () => {
+      const p = JSON.parse(b.dataset.addPhrase.replace(/&quot;/g, '"'));
+      try {
+        const r = await API.phraseAdd(Object.assign({}, p, { source: location.hash }));
+        toast(r.created ? `「${p.phrase}」已加入短语本 ✓` : `「${p.phrase}」已在短语本中`);
+        b.disabled = true;
+        b.textContent = "已收藏 ✓";
+      } catch (e) {
+        toast(`❌ ${e.message}`);
+      }
+    }));
 }
 
 function submitBarHTML() {
@@ -281,6 +440,7 @@ function submitBarHTML() {
 function collectAnswers(qs) {
   const answers = {};
   qs.forEach((q) => {
+    if (q.type === "phrase" || q.type === "speaking") return; // 展示型：无作答
     if (q.type === "choice" || q.type === "tfng") {
       const el = $(`input[name="q${q.id}"]:checked`);
       if (el) answers[q.id] = el.value;
@@ -302,10 +462,12 @@ function collectAnswers(qs) {
 }
 
 function bindPaperEvents(qs, hwId) {
+  bindPhraseButtons();
+  const answerable = qs.filter((q) => q.type !== "phrase" && q.type !== "speaking");
   const progress = () => {
     const answers = collectAnswers(qs);
     $("#prog-done").textContent = Object.keys(answers).length;
-    $("#prog-total").textContent = qs.length;
+    $("#prog-total").textContent = answerable.length;
     return answers;
   };
   $$(".q-opt input").forEach((inp) => {
@@ -327,7 +489,7 @@ function bindPaperEvents(qs, hwId) {
 
   $("#btn-submit").addEventListener("click", () => {
     const answers = collectAnswers(qs);
-    const unanswered = qs.filter((q) => !answers[q.id]).map((q, i) => i + 1);
+    const unanswered = answerable.filter((q) => !answers[q.id]).map((q) => answerable.indexOf(q) + 1);
     const doSubmit = async () => {
       const btn = $("#btn-submit");
       btn.disabled = true;
@@ -335,7 +497,16 @@ function bindPaperEvents(qs, hwId) {
       try {
         const r = await API.submit(hwId, answers);
         const app = $("#app");
-        app.innerHTML = `
+        app.innerHTML = r.auto_graded ? `
+          <div class="card" style="text-align:center;padding:50px 30px">
+            <div style="font-size:44px">⚡</div>
+            <h1 class="page-title">交卷成功，已自动批改！</h1>
+            <p class="page-sub">词汇短语练习由你自行对照答案验证。点「查看结果」看每题的对错与答案；短语讲解卡可收藏进短语本。</p>
+            <div style="margin-top:16px;display:flex;gap:10px;justify-content:center">
+              <a class="btn primary" href="#/result/${r.submission_id}">查看结果</a>
+              <a class="btn ghost" href="#/">返回首页</a>
+            </div>
+          </div>` : `
           <div class="card" style="text-align:center;padding:50px 30px">
             <div style="font-size:44px">📬</div>
             <h1 class="page-title">交卷成功！</h1>
@@ -385,6 +556,79 @@ function showModal(inner, onAction) {
   document.body.appendChild(mask);
 }
 
+/* ================================ 口语随机话题（只出题不交卷） ================================ */
+let speakIdx = 0;
+let speakQs = [];
+
+function viewSpeaking(paper) {
+  const app = $("#app");
+  const h = paper.homework;
+  speakQs = paper.questions || [];
+  speakIdx = 0;
+  app.innerHTML = `
+    <div class="paper-head">
+      <h1>${esc(h.title)}</h1>
+      <div class="hw-meta"><span class="badge skill">🎤 口语随机话题</span><span class="badge">${speakQs.length} 题</span></div>
+      ${h.goal ? `<div class="goal">🎯 ${esc(h.goal)}</div>` : ""}
+      <p class="page-sub" style="margin:10px 0 0;font-size:13px">口语只出题、不要求作答、不做批改：自己开口练（可录音回听），答得如何由你自行判断。看完点「下一题」；Part 2 按真实考试展示题目卡与要求。</p>
+    </div>
+    <div id="speak-stage"></div>`;
+  if (!speakQs.length) {
+    $("#speak-stage").innerHTML = empty("🎤", "这份口语卷还没有题目，等老师补充吧");
+    return;
+  }
+  renderSpeakCard();
+}
+
+function renderSpeakCard() {
+  const q = speakQs[speakIdx];
+  const ex = q.extra || {};
+  const p = Number(ex.part) || 1;
+  const partLabel = { 1: "Part 1 · 日常问答", 2: "Part 2 · 个人陈述", 3: "Part 3 · 深入讨论" }[p] || `Part ${p}`;
+  const isPart2 = p === 2;
+  const cardHTML = isPart2 ? `
+    <div class="speak-cue">
+      <div class="cue-top"><span class="q-type">${partLabel}</span><span class="cue-time">⌛ 准备 1 分钟 · 陈述 1-2 分钟</span></div>
+      <div class="cue-body">${esc(q.prompt)}</div>
+    </div>` : `
+    <div class="speak-card">
+      <div class="q-top"><span class="q-type">${partLabel}</span></div>
+      <div class="q-prompt">${esc(q.prompt)}</div>
+    </div>`;
+  $("#speak-stage").innerHTML = `
+    ${cardHTML}
+    <div class="speak-actions">
+      <span class="speak-progress">第 ${speakIdx + 1} / ${speakQs.length} 题</span>
+      <div>
+        <button class="btn ghost" id="btn-prev" ${speakIdx === 0 ? "disabled" : ""}>← 上一题</button>
+        <button class="btn primary" id="btn-next">${speakIdx >= speakQs.length - 1 ? "全部练完 ✓" : "下一题 →"}</button>
+      </div>
+    </div>`;
+  $("#btn-next").addEventListener("click", () => {
+    if (speakIdx >= speakQs.length - 1) {
+      $("#speak-stage").innerHTML = `
+        <div class="card" style="text-align:center;padding:40px 30px">
+          <div style="font-size:44px">🎉</div>
+          <h2>全部话题练完！</h2>
+          <p class="page-sub">想再来一轮点「重新开始」；想换话题，等老师发布新的口语卷（老师会优先从你「我的」页填写的当季话题里抽题）。</p>
+          <div style="margin-top:12px;display:flex;gap:10px;justify-content:center">
+            <button class="btn primary" id="btn-restart">重新开始</button>
+            <a class="btn ghost" href="#/">返回首页</a>
+          </div>
+        </div>`;
+      $("#btn-restart").addEventListener("click", () => { speakIdx = 0; renderSpeakCard(); });
+      return;
+    }
+    speakIdx += 1;
+    renderSpeakCard();
+    window.scrollTo(0, 0);
+  });
+  const prev = $("#btn-prev");
+  if (prev) prev.addEventListener("click", () => {
+    if (speakIdx > 0) { speakIdx -= 1; renderSpeakCard(); }
+  });
+}
+
 /* ================================ 结果页 ================================ */
 async function viewResult(sid) {
   const app = $("#app");
@@ -393,6 +637,9 @@ async function viewResult(sid) {
   catch (e) { return renderError(app, e); }
   const waiting = d.status !== "graded"
     ? `<div class="waiting">⏳ 本卷还有题目在批改中（当前状态：${SUB_STATUS[d.status] || d.status}）。批改完成后刷新页面即可看到完整结果与讲解。</div>`
+    : "";
+  const vocabNote = d.homework_skill === "vocabulary"
+    ? `<div class="waiting">📚 词汇短语练习：以下对错与参考答案供你自行对照验证（不计入语法掌握度）；短语讲解卡可一键收藏进短语本。</div>`
     : "";
   let hero = `
     <div class="score-hero">
@@ -406,8 +653,9 @@ async function viewResult(sid) {
       ${d.overall_feedback ? `<div class="score-note">💬 ${esc(d.overall_feedback)}</div>` : ""}
     </div>`;
   const items = d.items.map(renderResultItem).join("");
-  app.innerHTML = `${hero}${waiting}${items}<div style="text-align:center;margin-top:18px">
+  app.innerHTML = `${hero}${waiting}${vocabNote}${items}<div style="text-align:center;margin-top:18px">
     <a class="btn ghost" href="#/">← 返回首页</a></div>`;
+  bindPhraseButtons();
 }
 
 function clozePerBlank(it) {
@@ -423,6 +671,15 @@ function clozePerBlank(it) {
 }
 
 function renderResultItem(it) {
+  if (it.type === "phrase") {
+    // 短语讲解卡：结果页只做展示，无对错
+    const ex = it.extra || {};
+    return `
+    <div class="r-card" style="border-left-color:var(--accent)">
+      <div class="q-top"><span class="q-type">${TYPE[it.type] || it.type}</span></div>
+      ${phraseCardHTML(it.prompt, ex)}
+    </div>`;
+  }
   const isText = it.type === "writing" || it.type === "translate";
   const cls = it.correct === 1 ? "ok" : it.correct === 0 ? "bad" : "partial";
   const mark = it.correct === 1 ? "✓ 正确" : it.correct === 0 ? "✗ 错误" : "◐ 部分正确";
@@ -484,8 +741,8 @@ async function viewReview() {
         ${cards}
       </div>`;
   }).join("");
-  app.innerHTML = `<h1 class="page-title">错题本</h1>
-    <p class="page-sub">每次批改后的错题都归档在这里。点「申请重练」会排进下一次针对性练习。</p>
+  app.innerHTML = `<h1 class="page-title">错题本（语法作业专属）</h1>
+    <p class="page-sub">每次语法作业批改后的错题都归档在这里（词汇/雅思练习不计入）。点「申请重练」会排进下一次语法作业，作为额外增加的题目。</p>
     ${blocks}`;
   $$("[data-request]").forEach((b) =>
     b.addEventListener("click", async () => {
@@ -623,6 +880,7 @@ document.addEventListener("mouseup", () => {
     const node = sel.anchorNode;
     const host = node && node.nodeType === 3 ? node.parentElement : node;
     if (!host || !host.closest(".q-card, .r-card, .wrong-card, .q-passage, .q-cloze-text")) return;
+    if (host.closest(".phrase-card, .speak-cue")) return; // 短语/口语卡不走单词本收藏
     const word = text.replace(/[^A-Za-z'’-]/g, " ").trim().split(/\s+/)[0];
     if (!word || word.length < 2 || word.length > 40) return;
     const rect = sel.getRangeAt(0).getBoundingClientRect();
@@ -792,6 +1050,67 @@ async function viewWords() {
     }));
 }
 
+/* ================================ 短语本页 ================================ */
+async function viewPhrases() {
+  const app = $("#app");
+  let data;
+  try { data = await API.phrases(); } catch (e) { return renderError(app, e); }
+  const rows = data.phrases || [];
+  const table = rows.length ? `
+    <div class="v-wrap">
+      <table class="v-table phrase-table">
+        <thead><tr><th>短语</th><th>释义（老师教）</th><th>例句</th><th>来源</th><th>加入时间</th><th></th></tr></thead>
+        <tbody>${rows.map((p) => `
+          <tr>
+            <td class="v-word">${esc(p.phrase)}</td>
+            <td class="v-mean">${esc(p.meaning_cn) || "—"}</td>
+            <td class="v-detail">${esc(p.example) || ""}${p.example_cn ? `<div style="color:var(--faint);font-size:12.5px">${esc(p.example_cn)}</div>` : ""}</td>
+            <td class="v-date">${esc(p.source) || "—"}</td>
+            <td class="v-date">${fmtDate(p.added_ts)}</td>
+            <td class="v-acts"><button class="btn ghost small" data-pdel="${p.id}">删除</button></td>
+          </tr>`).join("")}
+        </tbody>
+      </table>
+    </div>` : empty("💬", "短语本还空着——词汇短语作业里的「短语讲解卡」点一下就能收藏");
+
+  app.innerHTML = `
+    <h1 class="page-title">短语本</h1>
+    <p class="page-sub">短语只由 AI 老师教：词汇短语作业里会随机展示 5 个常用口语 / 作文表达（带释义和例句），点「加入短语本」即可收藏到这里反复学习。</p>
+    <div class="card" style="margin-bottom:18px">
+      <h3 class="card-h">➕ 手动添加</h3>
+      <div class="field"><label>短语</label><input type="text" id="ph-phrase" placeholder="例如：take ... into account"></div>
+      <div class="field-row">
+        <div class="field" style="flex:1"><label>释义（中文）</label><input type="text" id="ph-meaning" placeholder="把…考虑在内"></div>
+        <div class="field" style="flex:1"><label>例句（英文）</label><input type="text" id="ph-example" placeholder="We must take safety into account."></div>
+      </div>
+      <button class="btn primary" id="btn-add-phrase">加入短语本</button>
+    </div>
+    ${table}
+    ${rows.length ? `<p class="page-sub" style="margin-top:12px">共 ${rows.length} 条短语</p>` : ""}`;
+
+  $("#btn-add-phrase").addEventListener("click", async () => {
+    const phrase = $("#ph-phrase").value.trim();
+    if (!phrase) return toast("请先填写短语");
+    try {
+      const r = await API.phraseAdd({
+        phrase, meaning_cn: $("#ph-meaning").value.trim(),
+        example: $("#ph-example").value.trim(), example_cn: "",
+        source: "手动添加",
+      });
+      toast(r.created ? "已加入短语本 ✓" : "该短语已存在");
+      viewPhrases();
+    } catch (e) { toast(`❌ ${e.message}`); }
+  });
+  $$("[data-pdel]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      try {
+        await API.phraseDelete(+b.dataset.pdel);
+        toast("已删除 ✓");
+        viewPhrases();
+      } catch (e) { toast(`❌ ${e.message}`); }
+    }));
+}
+
 document.addEventListener("click", (e) => {
   // 点词性按钮或勾选框：交给各自的处理器；点其他任何地方（含浮层空白处）都关闭
   if (e.target.closest("[data-posbtn]") || e.target.closest("[data-posc]")) return;
@@ -841,6 +1160,11 @@ async function viewMe() {
   const topics = p.topics && p.topics.length ? p.topics : TOPIC_DEFAULT;
   const qts = p.question_types && p.question_types.length ? p.question_types : QT_DEFAULT;
   const notes = p.notes || "";
+  const gReq = p.grammar_requirement || "";
+  const vReq = p.vocabulary_requirement || "";
+  const iReq = p.ielts_requirement || "";
+  const p1Topics = p.ielts_part1_topics || [];
+  const p2Topics = p.ielts_part2_topics || [];
 
   const field = (id, label, val, ph) => `
     <div class="field"><label>${label}</label>
@@ -876,7 +1200,7 @@ async function viewMe() {
       <span class="recent-score">${s.total_score}/${s.max_score}</span>
       <span class="status-tag ${pct >= 85 ? "ok" : pct < 60 ? "bad" : "warn"}">${pct}%</span>
       <span class="recent-date">${fmtDate(s.submitted_at)}</span></div>`;
-  }).join("") || '<div style="font-size:13px;color:var(--faint)">还没有已批改的作业</div>';
+  }).join("") || '<div style="font-size:13px;color:var(--faint)">还没有已批改的语法作业</div>';
 
   app.innerHTML = `
     <h1 class="page-title">我的</h1>
@@ -889,7 +1213,23 @@ async function viewMe() {
       ${field("pf-qts", "题型需求（逗号分隔）", qts, "例如：单选，填空，翻译")}
       <div class="field"><label>给老师的备注（自由填写）</label>
         <textarea id="profile-notes" rows="3" placeholder="例如：我希望多练从句；作文请给我模板；词汇想练同义替换……">${esc(notes)}</textarea></div>
-      <button class="btn primary" id="btn-save-profile">保存设置</button>
+    </div>
+
+    <div class="card" style="margin-bottom:18px">
+      <h3 class="card-h">📝 各作业类型的要求（一句话，出题时老师按此定风格与目标）</h3>
+      <div class="field"><label>语法作业要求</label>
+        <textarea id="pf-greq" rows="2" placeholder="例如：按知识图谱反复攻克语法短板，翻译中发现语法问题并纠正，错题揪着不放直到掌握。">${esc(gReq)}</textarea></div>
+      <div class="field"><label>词汇短语作业要求</label>
+        <textarea id="pf-vreq" rows="2" placeholder="例如：雅思答案词+单词本词汇随机汉英互译/拼写/词性，短语由老师讲解展示。">${esc(vReq)}</textarea></div>
+      <div class="field"><label>雅思专项训练要求</label>
+        <textarea id="pf-ireq" rows="2" placeholder="例如：贴近剑桥雅思真题：阅读节选小题、题干翻译、作文长句中译英、口语随机话题。">${esc(iReq)}</textarea></div>
+    </div>
+
+    <div class="card" style="margin-bottom:18px">
+      <h3 class="card-h">🎤 口语当季话题（Part 1 / Part 2）</h3>
+      <p class="page-sub" style="font-size:13px;margin-bottom:10px">老师出随机口语话题时<strong>优先从当季话题里选</strong>，也会少量随机追问或在同一话题下多问几题；Part 3 由老师自行出题（口语只出题、不要求作答、不批改）。</p>
+      ${field("pf-p1", "Part 1 当季话题（逗号分隔）", p1Topics, "例如：工作或学习，家乡，天气，空闲时间")}
+      ${field("pf-p2", "Part 2 当季话题（逗号分隔）", p2Topics, "例如：描述一个你钦佩的人，一次难忘的旅行，一个安静的地方")}
     </div>
 
     <div class="card" style="margin-bottom:18px">
@@ -898,13 +1238,18 @@ async function viewMe() {
         <span class="map-grade">${esc(summ.grade || "暂无数据")}</span>
         <span class="map-stat">已学 ${summ.attempted}/${summ.total} · 已掌握 ${summ.mastered} · 薄弱 ${summ.weak}${summ.counting ? ` · 计分中 ${summ.counting}` : ""} · 平均 ${summ.avg} 分</span>
       </div>
-      <p class="page-sub" style="font-size:12.5px;margin-bottom:10px">规则：作答超过 5 次才开始按正确率计分（没做过题 0 分，满分 100）。</p>
-      ${mapHTML || empty("🧭", "图谱还没导入（老师导入后显示）")}
+      <details class="map-fold">
+        <summary>展开 / 收起图谱（只统计语法作业 · 作答超过 5 次才开始计分）</summary>
+        ${mapHTML || empty("🧭", "图谱还没导入（老师导入后显示）")}
+      </details>
     </div>
 
     <div class="card">
-      <h3 class="card-h">📈 近期作业正确率</h3>
+      <h3 class="card-h">📈 近期语法作业正确率（只统计语法作业）</h3>
       ${recentHTML}
+      <div style="text-align:right;margin-top:14px">
+        <button class="btn primary" id="btn-save-profile">保存全部设置</button>
+      </div>
     </div>`;
 
   $("#btn-save-profile").addEventListener("click", async () => {
@@ -914,6 +1259,11 @@ async function viewMe() {
         topics: parseInput($("#pf-topics").value),
         question_types: parseInput($("#pf-qts").value),
         notes: $("#profile-notes").value.trim(),
+        grammar_requirement: $("#pf-greq").value.trim(),
+        vocabulary_requirement: $("#pf-vreq").value.trim(),
+        ielts_requirement: $("#pf-ireq").value.trim(),
+        ielts_part1_topics: parseInput($("#pf-p1").value),
+        ielts_part2_topics: parseInput($("#pf-p2").value),
       });
       toast("已保存 ✓ 老师出题时会读取这些设置");
     } catch (e) { toast(`❌ ${e.message}`); }

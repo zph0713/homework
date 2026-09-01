@@ -22,10 +22,17 @@ from agent import settings
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_DB = settings.DEFAULT_DB
 
-QUESTION_TYPES = {"choice", "fill", "cloze", "tfng", "writing", "translate"}
+QUESTION_TYPES = {"choice", "fill", "cloze", "tfng", "writing", "translate", "speaking", "phrase"}
 OBJECTIVE_TYPES = {"choice", "tfng"}      # 自动批改即可定论
 REVIEW_TYPES = {"fill", "cloze"}         # 未命中参考答案时需 AI 复核
 MANUAL_TYPES = {"writing", "translate"}  # 必须 AI 批改
+NO_GRADE_TYPES = {"speaking", "phrase"}  # 展示型：口语只出题、短语只讲解，不批改不计分
+
+# 自批改作业类型（交卷即自动批改完成，学生自行对照答案验证，不等老师）
+SELF_GRADED_SKILLS = {"vocabulary"}
+
+# 语法作业 skill 值（掌握度/错题本/近期成绩只统计这些作业；旧库 mixed/writing/listening 会迁移为 grammar）
+GRAMMAR_SKILLS = {"grammar"}
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS homeworks (
@@ -59,6 +66,7 @@ CREATE TABLE IF NOT EXISTS questions (
                                                 --   tfng   -> "TRUE"|"FALSE"|"NOT GIVEN"
                                                 --   writing-> {"rubric": "评分要点"}
   explanation    TEXT NOT NULL DEFAULT '',
+  extra          TEXT,                          -- JSON 扩展字段（phrase: {meaning_cn, example, ...}；speaking: {part, ...}）
   knowledge_point TEXT NOT NULL DEFAULT '',
   score          REAL NOT NULL DEFAULT 1,
   sort_order     INTEGER NOT NULL DEFAULT 0
@@ -151,9 +159,18 @@ CREATE TABLE IF NOT EXISTS vocabulary (
   updated_ts     TEXT NOT NULL DEFAULT (datetime('now','localtime'))
 );
 CREATE TABLE IF NOT EXISTS student_profile (
-  key        TEXT PRIMARY KEY,             -- goals|topics|question_types|notes
+  key        TEXT PRIMARY KEY,             -- goals|topics|question_types|notes|grammar_requirement|...
   value      TEXT NOT NULL DEFAULT '[]',   -- JSON
   updated_ts TEXT NOT NULL DEFAULT (datetime('now','localtime'))
+);
+CREATE TABLE IF NOT EXISTS phrases (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  phrase     TEXT NOT NULL UNIQUE,
+  meaning_cn TEXT NOT NULL DEFAULT '',     -- AI 老师给的释义
+  example    TEXT NOT NULL DEFAULT '',     -- 例句（英文）
+  example_cn TEXT NOT NULL DEFAULT '',     -- 例句中文
+  source     TEXT NOT NULL DEFAULT '',     -- 来源，如 homework#3
+  added_ts   TEXT NOT NULL DEFAULT (datetime('now','localtime'))
 );
 CREATE TABLE IF NOT EXISTS knowledge_map (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -211,6 +228,15 @@ def _migrate(conn):
     for r in conn.execute("SELECT id, pos FROM vocabulary WHERE pos != '' AND pos NOT LIKE '[%'"):
         conn.execute("UPDATE vocabulary SET pos=? WHERE id=?",
                      (json.dumps([r["pos"]]), r["id"]))
+    # questions.extra：展示型题型（phrase/speaking）的扩展字段
+    try:
+        qcols = [r["name"] for r in conn.execute("PRAGMA table_info(questions)")]
+        if qcols and "extra" not in qcols:
+            conn.execute("ALTER TABLE questions ADD COLUMN extra TEXT")
+    except sqlite3.OperationalError:
+        pass
+    # 旧 skill 语义归一：mixed/writing/listening 在本系统中都是语法练习 → grammar
+    conn.execute("UPDATE homeworks SET skill='grammar' WHERE skill IN ('mixed','writing','listening')")
 
 
 def init_db(path=None):
@@ -293,6 +319,11 @@ def perform_setup(payload: dict) -> dict:
         profile_set(conn, "topics", profile.get("topics") or [])
         profile_set(conn, "question_types", profile.get("question_types") or [])
         profile_set(conn, "notes", profile.get("notes") or "")
+        profile_set(conn, "grammar_requirement", profile.get("grammar_requirement") or "")
+        profile_set(conn, "vocabulary_requirement", profile.get("vocabulary_requirement") or "")
+        profile_set(conn, "ielts_requirement", profile.get("ielts_requirement") or "")
+        profile_set(conn, "ielts_part1_topics", profile.get("ielts_part1_topics") or [])
+        profile_set(conn, "ielts_part2_topics", profile.get("ielts_part2_topics") or [])
     return {"db_path": db_path, "host": host, "port": port, "initialized": True}
 
 
@@ -329,6 +360,8 @@ def check_answer(qtype, answer_spec, user_ans):
     """返回 (correct, needs_review)。
     correct: 1 / 0 / 0..1（cloze 按空格比例）；needs_review: 是否需 AI 复核。
     """
+    if qtype in NO_GRADE_TYPES:
+        return (None, False)  # 展示型题目（口语/短语）不批改
     if qtype == "choice":
         u, c = choice_letter(user_ans), choice_letter(answer_spec)
         return (1.0, False) if u == c else (0.0, False)
@@ -383,6 +416,8 @@ def validate_paper(data):
             if not q.get("prompt"):
                 errors.append(f"第{i}题({t}): 缺少 prompt")
             ans = q.get("answer")
+            if t in NO_GRADE_TYPES:
+                continue  # 展示型题目：answer 可省略（口语只出题 / 短语只讲解）
             if ans is None or ans == "":
                 errors.append(f"第{i}题({t}): 缺少 answer")
                 continue
@@ -444,18 +479,21 @@ def create_paper(conn, data, status="published"):
         if p.get("ref"):
             ref_to_pid[p["ref"]] = cur.lastrowid
     for i, q in enumerate(data["questions"]):
+        display = q["type"] in NO_GRADE_TYPES
         conn.execute(
             """INSERT INTO questions
                (homework_id, passage_id, type, prompt, passage, options, answer,
-                explanation, knowledge_point, score, sort_order)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
+                explanation, extra, knowledge_point, score, sort_order)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?)""",
             (hw_id,
              ref_to_pid.get(q.get("passage_ref")),
              q["type"], q["prompt"], q.get("passage"),
              json.dumps(q["options"], ensure_ascii=False) if q.get("options") is not None else None,
-             json.dumps(q["answer"], ensure_ascii=False),
-             q.get("explanation", ""), q.get("knowledge_point", ""),
-             float(q.get("score", 1)), i),
+             json.dumps(q.get("answer") or "", ensure_ascii=False),
+             q.get("explanation", ""),
+             json.dumps(q["extra"], ensure_ascii=False) if q.get("extra") is not None else None,
+             q.get("knowledge_point", ""),
+             0.0 if display else float(q.get("score", 1)), i),
         )
     add_log(conn, "assign",
             summary=f"发布《{data['title']}》（{len(data['questions'])} 题，skill={data.get('skill', 'mixed')}）",
@@ -464,8 +502,12 @@ def create_paper(conn, data, status="published"):
 
 
 # ---------------------------------------------------------------- 自动批改
-def autograde_submission(conn, sub_id):
-    """自动批改一个提交的客观题/半主观题命中项，返回摘要 dict。"""
+def autograde_submission(conn, sub_id, review_misses=True):
+    """自动批改一个提交的客观题/半主观题命中项，返回摘要 dict。
+
+    review_misses=False：自批改模式（vocabulary 作业）——未命中/未作答一律判 0 分、
+    不交 AI 复核，提交可直接定稿；学生自行对照答案验证（老师不参与批改）。
+    """
     sub = conn.execute("SELECT * FROM submissions WHERE id=?", (sub_id,)).fetchone()
     if not sub:
         raise ValueError(f"提交 #{sub_id} 不存在")
@@ -476,13 +518,30 @@ def autograde_submission(conn, sub_id):
     ).fetchall()
     graded, need_review = [], []
     for q in qs:
-        if q["type"] in MANUAL_TYPES:
-            continue  # 主观题留给 AI
+        if q["type"] in MANUAL_TYPES or q["type"] in NO_GRADE_TYPES:
+            continue  # 主观题留给 AI；展示题（口语/短语）不批改
         user = answers.get(str(q["id"]))
         if user is None or user == "":
+            if not review_misses:
+                # 自批改：未作答直接判 0，让提交可以定稿
+                conn.execute(
+                    """INSERT INTO grades (submission_id, question_id, user_answer, correct, score,
+                                           graded_by, needs_review)
+                       VALUES (?,?,?,?,?,?,0)
+                       ON CONFLICT(submission_id, question_id)
+                       DO UPDATE SET user_answer=excluded.user_answer, correct=excluded.correct,
+                                     score=excluded.score, graded_by='auto',
+                                     needs_review=0,
+                                     graded_at=datetime('now','localtime')""",
+                    (sub_id, q["id"], json.dumps("", ensure_ascii=False),
+                     0.0, 0.0, "auto"),
+                )
+                graded.append(q["id"])
             continue  # 未作答，留给 AI 决定是否计 0
         spec = json.loads(q["answer"])
         correct, review = check_answer(q["type"], spec, user)
+        if review and not review_misses:
+            review = False  # 自批改：未命中参考答案即判错，不交 AI 复核
         conn.execute(
             """INSERT INTO grades (submission_id, question_id, user_answer, correct, score,
                                    graded_by, needs_review)
@@ -544,34 +603,38 @@ def apply_grades(conn, sub_id, grades, note=None):
 
 def _recalc_totals(conn, sub_id):
     qs = conn.execute(
-        "SELECT id, score FROM questions WHERE homework_id="
+        "SELECT id, score, type FROM questions WHERE homework_id="
         "(SELECT homework_id FROM submissions WHERE id=?)", (sub_id,)).fetchall()
+    graded_qs = [q for q in qs if q["type"] not in NO_GRADE_TYPES]
     grades = {r["question_id"]: r for r in conn.execute(
         "SELECT * FROM grades WHERE submission_id=?", (sub_id,))}
     total = sum(g["score"] or 0 for g in grades.values())
-    max_score = sum(q["score"] for q in qs)
+    max_score = sum(q["score"] for q in graded_qs)
     correct_count = sum(1 for g in grades.values() if g["correct"] == 1.0)
     conn.execute(
         "UPDATE submissions SET total_score=?, max_score=?, correct_count=?, total_count=? WHERE id=?",
-        (total, max_score, correct_count, len(qs), sub_id),
+        (total, max_score, correct_count, len(graded_qs), sub_id),
     )
-    return total, max_score, correct_count, len(qs)
+    return total, max_score, correct_count, len(graded_qs)
 
 
 def finalize_if_ready(conn, sub_id):
     """若所有题都已有 grade 且无 needs_review，则把提交置为 graded 并重算统计/知识点。
-    已 graded 的提交直接返回（幂等，避免重复记日志）。"""
+    已 graded 的提交直接返回（幂等，避免重复记日志）。
+    展示型题目（口语/短语）不需要 grade，也不计入统计。"""
     cur_status = conn.execute("SELECT status FROM submissions WHERE id=?", (sub_id,)).fetchone()
     if not cur_status or cur_status["status"] == "graded":
         return
     qs = conn.execute(
-        "SELECT id, score FROM questions WHERE homework_id="
+        "SELECT id, score, type FROM questions WHERE homework_id="
         "(SELECT homework_id FROM submissions WHERE id=?)", (sub_id,)).fetchall()
     if not qs:
         return
     grades = {r["question_id"]: r for r in conn.execute(
         "SELECT * FROM grades WHERE submission_id=?", (sub_id,))}
-    missing = [q["id"] for q in qs if q["id"] not in grades or grades[q["id"]]["needs_review"]]
+    missing = [q["id"] for q in qs
+               if q["type"] not in NO_GRADE_TYPES
+               and (q["id"] not in grades or grades[q["id"]]["needs_review"])]
     if missing:
         conn.execute("UPDATE submissions SET status='partial' WHERE id=?", (sub_id,))
         return
@@ -586,12 +649,15 @@ def finalize_if_ready(conn, sub_id):
 
 
 def recompute_knowledge_points(conn):
-    """从所有已批改提交的 grades 重建知识点掌握度表（幂等，杜绝重复累计）。"""
+    """从所有已批改提交的 grades 重建知识点掌握度表（幂等，杜绝重复累计）。
+    只统计语法作业（skill=grammar）——词汇/雅思训练不计入语法掌握度。"""
     rows = conn.execute(
         """SELECT q.knowledge_point AS kp, g.correct
            FROM grades g JOIN questions q ON q.id = g.question_id
            JOIN submissions s ON s.id = g.submission_id
-           WHERE s.status='graded' AND q.knowledge_point != ''""").fetchall()
+           JOIN homeworks h ON h.id = q.homework_id
+           WHERE s.status='graded' AND q.knowledge_point != ''
+             AND h.skill='grammar'""").fetchall()
     agg = {}
     for r in rows:
         kp = r["kp"]
@@ -637,6 +703,19 @@ def list_homeworks(conn):
     return out
 
 
+def _q_dict(row):
+    """questions 行 → dict；options/answer/extra 从 JSON 解析。"""
+    d = dict(row)
+    for key in ("options", "answer", "extra"):
+        raw = d.get(key)
+        if isinstance(raw, str) and raw:
+            try:
+                d[key] = json.loads(raw)
+            except ValueError:
+                pass
+    return d
+
+
 def paper_full(conn, hw_id):
     h = conn.execute("SELECT * FROM homeworks WHERE id=?", (hw_id,)).fetchone()
     if not h:
@@ -646,7 +725,7 @@ def paper_full(conn, hw_id):
     qs = conn.execute("SELECT * FROM questions WHERE homework_id=? ORDER BY sort_order, id",
                       (hw_id,)).fetchall()
     return {"homework": dict(h), "passages": [dict(p) for p in ps],
-            "questions": [dict(q) for q in qs]}
+            "questions": [_q_dict(q) for q in qs]}
 
 
 def paper_for_student(conn, hw_id):
@@ -657,8 +736,6 @@ def paper_for_student(conn, hw_id):
     qs = []
     for q in full["questions"]:
         q = {k: v for k, v in q.items() if k not in ("answer", "explanation")}
-        if isinstance(q.get("options"), str):
-            q["options"] = json.loads(q["options"])
         qs.append(q)
     return {"homework": full["homework"], "passages": full["passages"], "questions": qs}
 
@@ -676,6 +753,7 @@ def submission_detail(conn, sub_id):
     answers = json.loads(sub["answers"])
     items = []
     for q in qs:
+        qd = _q_dict(q)
         g = gs.get(q["id"])
         passage = None
         if q["passage_id"]:
@@ -683,7 +761,8 @@ def submission_detail(conn, sub_id):
             passage = dict(p) if p else None
         items.append({
             "question_id": q["id"], "type": q["type"], "prompt": q["prompt"],
-            "passage": q["passage"], "options": json.loads(q["options"]) if q["options"] else None,
+            "passage": q["passage"], "options": qd.get("options"),
+            "extra": qd.get("extra"),
             "passage_info": passage,
             "user_answer": answers.get(str(q["id"])),
             "correct_answer": json.loads(q["answer"]) if q["answer"] else None,
@@ -697,6 +776,7 @@ def submission_detail(conn, sub_id):
         })
     return {
         "id": sub["id"], "homework_id": sub["homework_id"], "homework_title": h["title"],
+        "homework_skill": h["skill"],
         "submitted_at": sub["submitted_at"], "status": sub["status"],
         "total_score": sub["total_score"], "max_score": sub["max_score"],
         "correct_count": sub["correct_count"], "total_count": sub["total_count"],
@@ -744,7 +824,7 @@ def pending_submissions(conn):
 
 
 def wrong_items(conn, kp=None, limit=200):
-    """错题集合（correct < 1 的已批改题目）。"""
+    """错题集合（correct < 1 的已批改题目）。错题本专属于语法作业，只统计 skill=grammar。"""
     sql = """SELECT g.id AS grade_id, g.user_answer, g.correct, g.feedback, g.graded_at,
                     q.id AS question_id, q.type, q.prompt, q.passage, q.options,
                     q.answer, q.explanation, q.knowledge_point,
@@ -753,7 +833,7 @@ def wrong_items(conn, kp=None, limit=200):
              JOIN questions q ON q.id = g.question_id
              JOIN submissions s ON s.id = g.submission_id
              JOIN homeworks h ON h.id = q.homework_id
-             WHERE s.status='graded' AND g.correct < 1"""
+             WHERE s.status='graded' AND g.correct < 1 AND h.skill='grammar'"""
     params = []
     if kp:
         sql += " AND q.knowledge_point = ?"
@@ -811,7 +891,8 @@ def state_snapshot(conn):
         """SELECT s.id, s.total_score, s.max_score, s.correct_count, s.total_count,
                   s.submitted_at, h.title
            FROM submissions s JOIN homeworks h ON h.id = s.homework_id
-           WHERE s.status='graded' ORDER BY s.id DESC LIMIT 5""").fetchall()
+           WHERE s.status='graded' AND h.skill='grammar'
+           ORDER BY s.id DESC LIMIT 5""").fetchall()
     return {
         "homeworks": list_homeworks(conn),
         "knowledge": knowledge_table(conn),
@@ -1020,6 +1101,30 @@ def vocab_apply_check(conn, sub_id):
         )
         (correct if ok else wrong).append(word)
     return {"correct": correct, "wrong": wrong}
+
+
+# ---------------------------------------------------------------- 短语本（AI 老师教、学生收藏）
+def phrase_add(conn, phrase, meaning_cn="", example="", example_cn="", source=""):
+    """加入短语本。已存在则返回既有行（created=False），不重复插入。"""
+    phrase = (phrase or "").strip()
+    if not phrase:
+        raise ValueError("短语不能为空")
+    cur = conn.execute(
+        "INSERT OR IGNORE INTO phrases (phrase, meaning_cn, example, example_cn, source) VALUES (?,?,?,?,?)",
+        (phrase, meaning_cn or "", example or "", example_cn or "", source or ""),
+    )
+    created = cur.rowcount > 0
+    row = conn.execute("SELECT * FROM phrases WHERE phrase=?", (phrase,)).fetchone()
+    return dict(row), created
+
+
+def phrase_list(conn):
+    return [dict(r) for r in conn.execute(
+        "SELECT * FROM phrases ORDER BY added_ts DESC, id DESC")]
+
+
+def phrase_delete(conn, pid):
+    conn.execute("DELETE FROM phrases WHERE id=?", (pid,))
 
 
 # ---------------------------------------------------------------- 学生画像

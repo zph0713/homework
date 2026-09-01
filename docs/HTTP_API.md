@@ -118,11 +118,13 @@
 | 端点 | 内容 |
 |---|---|
 | GET `/api/agent/state` | 总览：试卷、知识点、画像、待办 |
-| GET `/api/agent/weakpoints` | 知识点掌握度表 |
+| GET `/api/agent/weakpoints` | 知识点掌握度表（**只统计语法作业**） |
 | GET `/api/agent/kmap?next=1` | 图谱下一个未掌握点（不带参数=全图谱+总评） |
 | GET `/api/agent/profile` | 学生画像 |
-| POST `/api/agent/profile` | 更新画像：`{"goals": [...], "topics": [...], "question_types": [...], "notes": "..."}` |
-| GET `/api/agent/wronglist` | 错题集合（出变式题用） |
+| POST `/api/agent/profile` | 更新画像：`{"goals": [...], "topics": [...], "question_types": [...], "notes": "...", "grammar_requirement": "...", "vocabulary_requirement": "...", "ielts_requirement": "...", "ielts_part1_topics": [...], "ielts_part2_topics": [...]}`（三类作业要求为字符串，话题为数组） |
+| GET `/api/agent/wronglist` | 错题集合（**语法作业专属**，出变式题用） |
+| GET `/api/agent/phrases` | 短语本列表（AI 老师教的短语） |
+| POST `/api/agent/phrases` | 加入短语：`{"phrase": "...", "meaning_cn": "...", "example": "...", "example_cn": "...", "source": "..."}` |
 | POST `/api/agent/exec` | 兜底：执行 CLI 子命令，`{"args": ["vocab", "dictation", "--limit", "10"]}`（结构化端点未覆盖时用） |
 
 ## 3. 接入示例（AI 服务的工具/动作配置）

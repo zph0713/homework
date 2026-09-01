@@ -98,6 +98,9 @@ class Handler(BaseHTTPRequestHandler):
             if path == "/api/profile":
                 with db.connect() as conn:
                     return self._send_json(200, db.profile_get(conn))
+            if path == "/api/phrases":
+                with db.connect() as conn:
+                    return self._send_json(200, {"phrases": db.phrase_list(conn)})
             if path == "/api/knowledge-map":
                 with db.connect() as conn:
                     return self._send_json(200, {"stages": db.kmap_list(conn),
@@ -172,9 +175,20 @@ class Handler(BaseHTTPRequestHandler):
                                                 source=(body.get("source") or "").strip())
                 return self._send_json(200, {"id": row["id"], "created": created,
                                              "word": row["word"]})
+            if path == "/api/phrases":
+                with db.connect() as conn:
+                    row, created = db.phrase_add(
+                        conn, body.get("phrase") or "",
+                        meaning_cn=body.get("meaning_cn") or "",
+                        example=body.get("example") or "",
+                        example_cn=body.get("example_cn") or "",
+                        source=(body.get("source") or "").strip())
+                return self._send_json(200, {"id": row["id"], "created": created,
+                                             "phrase": row["phrase"]})
             if path == "/api/profile":
                 with db.connect() as conn:
-                    for key in ("goals", "topics", "question_types"):
+                    for key in ("goals", "topics", "question_types",
+                                "ielts_part1_topics", "ielts_part2_topics"):
                         if key in body:
                             val = body[key]
                             if not isinstance(val, list):
@@ -182,6 +196,10 @@ class Handler(BaseHTTPRequestHandler):
                             db.profile_set(conn, key, val)
                     if "notes" in body:
                         db.profile_set(conn, "notes", str(body["notes"]))
+                    for key in ("grammar_requirement", "vocabulary_requirement",
+                                "ielts_requirement"):
+                        if key in body:
+                            db.profile_set(conn, key, str(body[key]))
                 return self._send_json(200, {"saved": True})
             if path == "/api/settings":
                 return self._handle_save_settings(body)
@@ -222,6 +240,11 @@ class Handler(BaseHTTPRequestHandler):
             if m:
                 with db.connect() as conn:
                     db.vocab_delete(conn, int(m.group(1)))
+                return self._send_json(200, {"deleted": True})
+            m = re.fullmatch(r"/api/phrases/(\d+)", path)
+            if m:
+                with db.connect() as conn:
+                    db.phrase_delete(conn, int(m.group(1)))
                 return self._send_json(200, {"deleted": True})
             m = re.fullmatch(r"/api/homeworks/(\d+)", path)
             if m:
@@ -304,8 +327,15 @@ class Handler(BaseHTTPRequestHandler):
             )
             db.add_log(conn, "submit", summary=f"交卷《{hw['title']}》（{len(clean)} 题已作答）",
                        ref_type="submission", ref_id=cur.lastrowid)
+            auto = False
+            if hw["skill"] in db.SELF_GRADED_SKILLS:
+                # 词汇短语作业：交卷即自动批改定稿，学生自行对照答案验证（老师不参与）
+                db.autograde_submission(conn, cur.lastrowid, review_misses=False)
+                auto = True
         return self._send_json(200, {"submission_id": cur.lastrowid,
-                                     "message": "已交卷，等待批改"})
+                                     "auto_graded": auto,
+                                     "message": "已交卷，等待批改" if not auto
+                                     else "已交卷并自动批改 ✓ 请对照答案自行验证"})
 
     def _handle_save_settings(self, body):
         cfg = load_config()

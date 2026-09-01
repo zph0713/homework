@@ -25,6 +25,9 @@ from agent import db, settings  # noqa: E402
 SKILL_LABELS = {
     "grammar": "语法", "vocabulary": "词汇", "reading": "阅读",
     "writing": "写作", "listening": "听力", "mixed": "综合",
+    # 雅思专项训练四个栏目（与前端导航一致）
+    "ielts_reading": "雅思·阅读节选小题", "ielts_stem": "雅思·题干翻译",
+    "ielts_essay": "雅思·作文中译英", "ielts_speaking": "雅思·口语话题",
 }
 KP_STATUS_LABELS = {"new": "未练过", "weak": "薄弱⚠", "learning": "学习中", "mastered": "已掌握✓"}
 SUB_STATUS_LABELS = {"pending": "待批改", "partial": "部分批改", "graded": "已批改"}
@@ -429,6 +432,8 @@ def cmd_vocab(args):
         cmd_vocab_check(args)
     elif args.vocab_cmd == "check-result":
         cmd_vocab_check_result(args)
+    elif args.vocab_cmd == "homework":
+        cmd_vocab_homework(args)
 
 
 def _vocab_question(w, tag):
@@ -513,6 +518,142 @@ def cmd_vocab_check_result(args):
     print(f"   错 → 留池待重抽：{len(r['wrong'])} 个 {r['wrong']}")
     if r["wrong"]:
         print("   错词会在下次抽查中再次出现，直到写对为止。")
+
+
+# ---------------------------------------------------------------- 词汇短语作业生成器
+IELTS_BANK_FILE = Path(__file__).resolve().parent.parent / "curriculum" / "ielts_answer_words.json"
+PHRASE_BANK_FILE = Path(__file__).resolve().parent.parent / "curriculum" / "phrase_bank.json"
+POS_OPTIONS = ["n.", "v.", "adj.", "adv.", "prep.", "conj.", "phr."]
+
+
+def _vocab_hw_question(item, distractors):
+    """把词转成随机形式的词汇题：拼写 / 汉译英 / 英译汉 / 词性。"""
+    import random
+    word, pos, cn = item["word"], (item.get("pos") or "n."), (item.get("cn") or "")
+    other_cns = [d for d in distractors if d and d != cn]
+    form = random.choice(["spell", "cn2en", "en2cn", "pos"])
+    if form == "spell":
+        return {"type": "fill",
+                "prompt": f"拼写：{cn}（{pos}）首字母 {word[0]} ____",
+                "answer": [word],
+                "explanation": f"{word} {pos} {cn}",
+                "knowledge_point": "", "score": 1}
+    if form == "cn2en":
+        return {"type": "fill",
+                "prompt": f"汉译英：{cn}（{pos}）____",
+                "answer": [word],
+                "explanation": f"{word} {pos} {cn}",
+                "knowledge_point": "", "score": 1}
+    if form == "en2cn":
+        opts = [cn] + random.sample(other_cns, min(3, len(other_cns)))
+        random.shuffle(opts)
+        letter = "ABCD"[opts.index(cn)]
+        return {"type": "choice",
+                "prompt": f"选出 {word}（{pos}）的中文意思：",
+                "options": [f"{'ABCD'[i]}. {o}" for i, o in enumerate(opts)],
+                "answer": letter,
+                "explanation": f"{word} {pos} {cn}",
+                "knowledge_point": "", "score": 1}
+    # form == "pos"
+    other_pos = [p for p in POS_OPTIONS if p != pos]
+    opts = [pos] + random.sample(other_pos, 3)
+    random.shuffle(opts)
+    letter = "ABCD"[opts.index(pos)]
+    return {"type": "choice",
+            "prompt": f"选出 {word}（{cn}）的词性：",
+            "options": [f"{'ABCD'[i]}. {o}" for i, o in enumerate(opts)],
+            "answer": letter,
+            "explanation": f"{word} {pos} {cn}",
+            "knowledge_point": "", "score": 1}
+
+
+def cmd_vocab_homework(args):
+    """生成「词汇短语作业」卷：雅思听力阅读答案词 + 单词本词汇（随机拼写/汉英互译/词性）
+    + 常用口语作文短语讲解卡（AI 老师教，学生可收藏进短语本）。skill=vocabulary，
+    学生交卷即自动批改、自行对照答案验证，老师不参与批改。"""
+    import random
+    if not IELTS_BANK_FILE.is_file():
+        print(f"❌ 缺少词库 {IELTS_BANK_FILE}")
+        sys.exit(1)
+    if not PHRASE_BANK_FILE.is_file():
+        print(f"❌ 缺少短语库 {PHRASE_BANK_FILE}")
+        sys.exit(1)
+    bank = json.loads(IELTS_BANK_FILE.read_text(encoding="utf-8"))
+    phrase_bank = json.loads(PHRASE_BANK_FILE.read_text(encoding="utf-8"))
+    with db.connect() as conn:
+        words = db.vocab_list(conn)
+    ready = [{"word": w["word"],
+              "pos": "/".join(w["pos"]) if w.get("pos") else "",
+              "cn": w.get("meaning_cn") or ""}
+             for w in words if w.get("meaning_cn") and w.get("pos")]
+
+    n_ielts = min(args.ielts, len(bank))
+    n_wb = min(args.wordbook, len(ready))
+    n_ph = min(args.phrases, len(phrase_bank))
+    ielts_picked = random.sample(bank, n_ielts)
+    wb_picked = random.sample(ready, n_wb) if n_wb else []
+    ph_picked = random.sample(phrase_bank, n_ph)
+    distractors = [b.get("cn") for b in bank] + [w.get("cn") for w in ready]
+
+    questions = []
+    for w in ielts_picked + wb_picked:
+        questions.append(_vocab_hw_question(w, distractors))
+    for ph in ph_picked:
+        questions.append({
+            "type": "phrase",
+            "prompt": ph["phrase"],
+            "answer": "",
+            "extra": {"meaning_cn": ph.get("meaning_cn", ""),
+                      "example": ph.get("example", ""),
+                      "example_cn": ph.get("example_cn", "")},
+            "explanation": "",
+            "knowledge_point": "",
+            "score": 0,
+        })
+    paper = {
+        "title": f"词汇短语作业 · 雅思答案词 {n_ielts} + 单词本 {n_wb} + 短语讲解 {n_ph}",
+        "skill": "vocabulary",
+        "topic": "词汇短语练习",
+        "goal": "词汇题交卷后自动批改，请自行对照答案验证；短语卡由老师讲解，可一键收藏进短语本。",
+        "questions": questions,
+    }
+    out = Path(args.out)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(paper, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(f"✅ 已生成词汇短语作业（雅思词 {n_ielts} + 词本词 {n_wb} + 短语 {n_ph}）→ {out}")
+    if len(ready) < args.wordbook:
+        print(f"⚠ 单词本只有 {len(ready)} 个带中文+词性的词可用（需求 {args.wordbook}），已全部使用")
+    if len(bank) < args.ielts:
+        print(f"⚠ 雅思词库只有 {len(bank)} 词（需求 {args.ielts}），已全部使用")
+    print("   发布：python3 agent/cli.py create " + str(out))
+    print("   说明：词汇部分学生自验证（无需批改）；短语部分无需作答，学生自行收藏")
+
+
+# ---------------------------------------------------------------- 短语本
+def cmd_phrase(args):
+    if args.phrase_cmd == "list":
+        with db.connect() as conn:
+            rows = db.phrase_list(conn)
+        if not rows:
+            print("（短语本为空：词汇短语作业里的短语讲解卡可一键收藏）")
+            return
+        print(f"共 {len(rows)} 条短语")
+        print(f"{'ID':>4}  {'短语':<30} {'释义':<24} 例句")
+        print("-" * 100)
+        for p in rows:
+            print(f"{p['id']:>4}  {p['phrase']:<30} {(p['meaning_cn'] or ''):<24} {(p['example'] or '')[:40]}")
+    elif args.phrase_cmd == "add":
+        with db.connect() as conn:
+            row, created = db.phrase_add(conn, args.phrase,
+                                         meaning_cn=args.meaning or "",
+                                         example=args.example or "",
+                                         example_cn=args.example_cn or "",
+                                         source=args.source or "")
+        print(f"{'已加入' if created else '已存在'}：{row['phrase']}（#{row['id']}）")
+    elif args.phrase_cmd == "delete":
+        with db.connect() as conn:
+            db.phrase_delete(conn, args.pid)
+        print(f"已删除短语 #{args.pid}")
 
 
 def cmd_profile(args):
@@ -707,6 +848,23 @@ def main(argv=None):
     pvc.add_argument("--out", default="papers/vocab_check.json", help="输出路径")
     pvcr = pvs.add_parser("check-result", help="批改后回写抽查池（对→出池，错→留池）")
     pvcr.add_argument("--sub", dest="sub_id", type=int, required=True, help="抽查卷的提交 id")
+    pvhw = pvs.add_parser("homework", help="生成「词汇短语作业」卷（雅思答案词+单词本词+短语讲解卡）")
+    pvhw.add_argument("--ielts", type=int, default=20, help="雅思听力阅读答案词数（默认 20）")
+    pvhw.add_argument("--wordbook", type=int, default=5, help="单词本词汇数（默认 5）")
+    pvhw.add_argument("--phrases", type=int, default=5, help="短语讲解卡数（默认 5）")
+    pvhw.add_argument("--out", default="papers/vocab_homework.json", help="输出路径")
+
+    pph = sub.add_parser("phrase", help="短语本（AI 老师教、学生收藏）")
+    pphs = pph.add_subparsers(dest="phrase_cmd", required=True)
+    pphs.add_parser("list", help="列出短语")
+    ppha = pphs.add_parser("add", help="加入短语")
+    ppha.add_argument("--phrase", required=True)
+    ppha.add_argument("--meaning", default="", help="中文释义")
+    ppha.add_argument("--example", default="", help="英文例句")
+    ppha.add_argument("--example-cn", default="", help="例句中文")
+    ppha.add_argument("--source", default="")
+    pphd = pphs.add_parser("delete", help="删除短语")
+    pphd.add_argument("pid", type=int)
 
     ppf = sub.add_parser("profile", help="学生画像（学习目标/话题/题型，出题前必读）")
     ppfs = ppf.add_subparsers(dest="profile_cmd", required=True)
@@ -738,6 +896,7 @@ def main(argv=None):
         "weekly": lambda a: cmd_weekly_status(a) if a.weekly_cmd == "status"
         else cmd_weekly_record(a),
         "vocab": cmd_vocab, "profile": cmd_profile, "kmap": cmd_kmap,
+        "phrase": cmd_phrase,
         "delete": cmd_delete,
     }
     try:
