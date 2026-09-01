@@ -368,16 +368,19 @@ async function viewPaper(id) {
       ${h.goal ? `<div class="goal">🎯 ${esc(h.goal)}</div>` : ""}
       ${vocabNote}
     </div>`;
-  const body = qs.map((q, i) => renderQuestion(q, i, passages)).join("");
-  app.innerHTML = `${head}${body}${submitBarHTML()}`;
+  // 阅读材料只在试卷开头展示一次（按题目引用顺序去重），题目卡片不再重复整篇文章
+  const used = new Set();
+  const passageBlocks = qs
+    .map((q) => (q.passage_id ? passages.get(q.passage_id) : null))
+    .filter((p) => p && !used.has(p.id) && (used.add(p.id), true))
+    .map((p) => `<div class="q-passage"><div class="p-title">📄 ${esc(p.title || "阅读材料")}</div><p>${esc(p.body)}</p></div>`)
+    .join("");
+  const body = qs.map((q, i) => renderQuestion(q, i)).join("");
+  app.innerHTML = `${head}${passageBlocks}${body}${submitBarHTML()}`;
   bindPaperEvents(qs, id);
 }
 
-function renderQuestion(q, i, passages) {
-  const pi = q.passage_id ? passages.get(q.passage_id) : null;
-  const passageHTML = pi
-    ? `<div class="q-passage"><div class="p-title">📄 ${esc(pi.title || "阅读材料")}</div><p>${esc(pi.body)}</p></div>`
-    : "";
+function renderQuestion(q, i) {
   let main = "";
   if (q.type === "choice") {
     main = `<div class="q-prompt">${esc(q.prompt)}</div>
@@ -423,7 +426,6 @@ function renderQuestion(q, i, passages) {
         ${q.knowledge_point ? `<span class="badge">${esc(q.knowledge_point)}</span>` : ""}
         ${q.score !== 1 ? `<span class="badge">${q.score} 分</span>` : ""}
       </div>
-      ${passageHTML}
       ${main}
     </div>`;
 }
