@@ -26,7 +26,7 @@ SKILL_LABELS = {
     "grammar": "语法", "vocabulary": "词汇", "reading": "阅读",
     "writing": "写作", "listening": "听力", "mixed": "综合",
     # 雅思专项训练四个栏目（与前端导航一致）
-    "ielts_reading": "雅思·阅读节选小题", "ielts_stem": "雅思·题干翻译",
+    "ielts_reading": "雅思·阅读节选小题", "ielts_stem": "雅思·英译汉",
     "ielts_essay": "雅思·作文中译英", "ielts_speaking": "雅思·口语话题",
 }
 KP_STATUS_LABELS = {"new": "未练过", "weak": "薄弱⚠", "learning": "学习中", "mastered": "已掌握✓"}

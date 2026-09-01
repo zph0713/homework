@@ -25,7 +25,7 @@
 |---|---|---|
 | 🔧 语法作业（skill=grammar） | **主战场**：按图谱出语法题 + 翻译纠错题；错题申请重练→下次额外加题 | 全部由老师批改、讲解、纠正 |
 | 📚 词汇短语作业（skill=vocabulary） | 只出题：`vocab homework` 一键生成（雅思答案词+单词本词随机互译/拼写/词性+短语讲解卡） | **不批改**：交卷自动批改，学生自行对照答案验证 |
-| 🎯 雅思专项训练（ielts_reading / ielts_stem / ielts_essay / ielts_speaking） | 贴近剑桥真题出题：阅读节选小题（各题型）、听力阅读题干翻译、作文长句中译英（大作文模版句+小作文图表例句）、口语随机话题 | 阅读节选小题批改附**答案讲解**；作文句翻译批改**纠正语法**；口语**只出题不批改**（Part2 模拟真题卡，优先当季话题，Part3 老师自行出题） |
+| 🎯 雅思专项训练（ielts_reading / ielts_stem / ielts_essay / ielts_speaking） | 贴近剑桥真题出题：阅读节选小题（各题型）、听力阅读题干英译汉（多用真题节选，附语法和单词提示，练考试时快速理解题意）、作文长句中译英（大作文模版句+小作文图表例句）、口语随机话题 | 阅读节选小题批改附**答案讲解**；作文句翻译批改**纠正语法**；口语**只出题不批改**（Part2 模拟真题卡，优先当季话题，Part3 老师自行出题） |
 
 统计口径：掌握度/图谱/错题本/近期正确率**只算 skill=grammar**。
 
@@ -95,7 +95,7 @@ python3 agent/cli.py weekly record --sampled "kp1,kp2" --wrong "kp1" --hw <id>
 6. 错题本重练申请（`requests`）→ 下次语法作业额外增加对应知识点题目
 7. 写作路线推进（`docs/WRITING_CURRICULUM.md`）或画像勾选的翻译/阅读训练
 8. 词汇短语作业 → `python3 agent/cli.py vocab homework --ielts 20 --wordbook 5 --phrases 5`（一键生成，勿手写 JSON；交卷自批改，老师不批）
-9. 雅思专项训练：按学生指定子栏目出卷（阅读节选小题 / 题干翻译 / 作文中译英 / 口语话题），口语卷参考画像当季话题（Part3 老师自行出题）
+9. 雅思专项训练：按学生指定子栏目出卷（阅读节选小题 / 题干英译汉 / 作文中译英 / 口语话题），口语卷参考画像当季话题（Part3 老师自行出题）
 10. 学生要求默写 → `python3 agent/cli.py vocab dictation --limit 10`（一键生成，勿手写）
 11. 抽查单词 → `python3 agent/cli.py vocab check --limit 3`（随机抽池中词；可整卷发布，也可把 questions 并入任何作业混考）
 

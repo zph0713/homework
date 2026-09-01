@@ -83,7 +83,7 @@ function applyTheme(t) {
 
 const SKILL = {
   grammar: "语法", vocabulary: "词汇", reading: "阅读", writing: "写作", listening: "听力", mixed: "综合",
-  ielts_reading: "阅读节选小题", ielts_stem: "题干翻译", ielts_essay: "作文中译英", ielts_speaking: "口语话题",
+  ielts_reading: "阅读节选小题", ielts_stem: "英译汉", ielts_essay: "作文中译英", ielts_speaking: "口语话题",
 };
 const TYPE = {
   choice: "单选", fill: "填空", cloze: "语法填空", tfng: "判断 TFNG",
@@ -94,19 +94,19 @@ const SUB_STATUS = { pending: "已交卷 · 待批改", partial: "已交卷 · �
 /* 三大作业栏目（与顶部导航一致） */
 const LANES = [
   {
-    key: "vocabulary", icon: "📚", title: "词汇短语作业",
+    key: "vocabulary", icon: "📚", title: "词汇短语",
     desc: "雅思听力阅读答案词 + 单词本词汇随机汉英互译 / 拼写 / 词性；短语由老师讲解展示，可收藏进短语本。",
     note: "交卷即自动批改，自行对照答案验证（老师不批改词汇）",
     skills: ["vocabulary"],
   },
   {
-    key: "grammar", icon: "🔧", title: "语法作业",
+    key: "grammar", icon: "🔧", title: "语法",
     desc: "按知识图谱反复攻克语法短板，翻译中发现语法问题并反复纠正；错题本专属于语法作业。",
     skills: ["grammar"],
   },
   {
-    key: "ielts", icon: "🎯", title: "雅思专项训练",
-    desc: "阅读节选小题 · 听力阅读题干翻译 · 作文长句中译英 · 口语随机话题（文字训练，贴近剑桥真题）。",
+    key: "ielts", icon: "🎯", title: "雅思专项",
+    desc: "阅读节选小题 · 听力阅读英译汉 · 作文长句中译英 · 口语随机话题（文字训练，贴近剑桥真题）。",
     skills: ["ielts_reading", "ielts_stem", "ielts_essay", "ielts_speaking"],
   },
 ];
@@ -114,8 +114,8 @@ const LANE_BY_KEY = Object.fromEntries(LANES.map((l) => [l.key, l]));
 const SUB_LANES = {
   "ielts-reading": { icon: "📰", title: "阅读节选小题训练", skills: ["ielts_reading"],
     desc: "剑桥真题风格的阅读节选 + 各类小题（选择 / TFNG / 填空 / 配对）。批改由老师完成并附答案讲解。" },
-  "ielts-stem": { icon: "🔤", title: "听力阅读题干翻译练习", skills: ["ielts_stem"],
-    desc: "翻译听力 / 阅读的题干（instruction + questions），扫清审题障碍。老师批改译文。" },
+  "ielts-stem": { icon: "🔤", title: "听力阅读英译汉练习", skills: ["ielts_stem"],
+    desc: "剑桥真题节选：听力 / 阅读题干英译汉（附语法和单词提示），练考试时快速理解题意、扫清审题障碍。老师批改译文。" },
   "ielts-essay": { icon: "✒️", title: "作文长句中译英", skills: ["ielts_essay"],
     desc: "大作文各题型模版句 + 小作文图表描述例句的中译英训练。老师纠正语法问题。" },
   "ielts-speaking": { icon: "🎤", title: "口语随机话题", skills: ["ielts_speaking"],
@@ -1255,8 +1255,8 @@ async function viewMe() {
         <textarea id="pf-greq" rows="2" placeholder="例如：按知识图谱反复攻克语法短板，翻译中发现语法问题并纠正，错题揪着不放直到掌握。">${esc(gReq)}</textarea></div>
       <div class="field"><label>词汇短语作业要求</label>
         <textarea id="pf-vreq" rows="2" placeholder="例如：雅思答案词+单词本词汇随机汉英互译/拼写/词性，短语由老师讲解展示。">${esc(vReq)}</textarea></div>
-      <div class="field"><label>雅思专项训练要求</label>
-        <textarea id="pf-ireq" rows="2" placeholder="例如：贴近剑桥雅思真题：阅读节选小题、题干翻译、作文长句中译英、口语随机话题。">${esc(iReq)}</textarea></div>
+      <div class="field"><label>雅思专项要求</label>
+        <textarea id="pf-ireq" rows="2" placeholder="例如：贴近剑桥雅思真题：阅读节选小题、题干英译汉（多用真题节选，附语法和单词提示，练快速理解题意）、作文长句中译英、口语随机话题。">${esc(iReq)}</textarea></div>
     </div>
 
     <div class="card" style="margin-bottom:18px">
