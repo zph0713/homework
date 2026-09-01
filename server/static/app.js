@@ -70,6 +70,17 @@ function toast(msg, ms = 2600) {
   toastTimer = setTimeout(() => (t.hidden = true), ms);
 }
 
+/* ================================ 主题（设置页切换，localStorage 记忆） ================================ */
+function currentTheme() {
+  return localStorage.getItem("hwl_theme") === "dark" ? "dark" : "light";
+}
+function applyTheme(t) {
+  t = t === "dark" ? "dark" : "light";
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem("hwl_theme", t);
+  $$(".theme-btn").forEach((b) => b.classList.toggle("on-theme", b.dataset.theme === t));
+}
+
 const SKILL = {
   grammar: "语法", vocabulary: "词汇", reading: "阅读", writing: "写作", listening: "听力", mixed: "综合",
   ielts_reading: "阅读节选小题", ielts_stem: "题干翻译", ielts_essay: "作文中译英", ielts_speaking: "口语话题",
@@ -168,6 +179,8 @@ function route() {
 window.addEventListener("hashchange", route);
 
 /* ================================ 首页 ================================ */
+let HW_FILTER = "all"; // 首页作业筛选：all=全部 | todo=只显示未做
+
 async function viewHome() {
   const app = $("#app");
   let data;
@@ -176,12 +189,16 @@ async function viewHome() {
   const hws = data.homeworks || [];
   const kps = data.knowledge || [];
   const reqs = data.open_requests || [];
+  const filterList = (list) => (HW_FILTER === "todo"
+    ? list.filter((h) => !h.latest_submission)
+    : list);
 
   const lanesHTML = LANES.map((lane) => {
     const laneHws = hws.filter((h) => lane.skills.includes(h.skill));
-    const cards = laneHws.length
-      ? laneHws.slice(0, 6).map(hwCard).join("")
-      : empty("🕐", "这一栏还没有作业，等老师发布吧");
+    const shown = filterList(laneHws);
+    const cards = shown.length
+      ? shown.slice(0, 6).map(hwCard).join("")
+      : empty("🕐", HW_FILTER === "todo" ? "这一栏没有未做的作业 ✓" : "这一栏还没有作业，等老师发布吧");
     const reqNotice = lane.key === "grammar" && reqs.length
       ? `<div class="waiting" style="margin-bottom:10px">⏳ 你已申请重练：${reqs.map((r) => esc(r.knowledge_point)).join("、")}，下次语法作业会额外增加</div>` : "";
     return `
@@ -200,8 +217,16 @@ async function viewHome() {
   const kpBlock = kpBlockHTML(kps.slice(0, 8), "语法掌握度概览（只统计语法作业）", "#/kp");
 
   app.innerHTML = `
-    <h1 class="page-title">我的作业</h1>
-    <p class="page-sub">作业分为三个栏目：词汇短语作业（交卷自动批改、自行验证）、语法作业（老师批改+讲解）、雅思专项训练（文字训练，口语只出题）。</p>
+    <div class="home-head">
+      <div>
+        <h1 class="page-title">我的作业</h1>
+        <p class="page-sub">作业分为三个栏目：词汇短语作业（交卷自动批改、自行验证）、语法作业（老师批改+讲解）、雅思专项训练（文字训练，口语只出题）。<span style="color:var(--faint)">淡蓝=未做 · 淡绿=已写</span></p>
+      </div>
+      <div class="seg">
+        <button class="seg-btn ${HW_FILTER === "all" ? "on" : ""}" data-hwf="all">全部</button>
+        <button class="seg-btn ${HW_FILTER === "todo" ? "on" : ""}" data-hwf="todo">未做</button>
+      </div>
+    </div>
     <div class="lane-grid">${lanesHTML}</div>
     <div class="home-bottom">
       ${kpBlock}
@@ -212,6 +237,13 @@ async function viewHome() {
         </div>
       </div>
     </div>`;
+  $$("[data-hwf]").forEach((b) =>
+    b.addEventListener("click", () => {
+      if (b.dataset.hwf === HW_FILTER) return;
+      HW_FILTER = b.dataset.hwf;
+      viewHome();
+      window.scrollTo(0, 0);
+    }));
   bindDeleteHomework(hws);
 }
 
@@ -293,7 +325,7 @@ function hwCard(h) {
                <a class="btn ghost small" href="#/paper/${h.id}">再练一次</a>`;
   }
   return `
-    <div class="hw-card">
+    <div class="hw-card ${s ? "done" : "todo"}">
       <div class="hw-head">
         <div>
           <div class="hw-title">${esc(h.title)}</div>
@@ -1289,6 +1321,15 @@ async function viewSettings() {
     <p class="page-sub">修改后需重启服务生效。数据库路径对网页和 AI 老师同时生效（读同一份 config.json）。</p>
 
     <div class="card" style="margin-bottom:18px">
+      <h3 class="card-h">🎨 主题外观</h3>
+      <p class="page-sub" style="margin-bottom:12px">切换亮色 / 暗色主题：立即生效并自动保存在本浏览器（无需重启服务，只影响你的浏览器显示）。</p>
+      <div class="theme-row">
+        <button class="btn ghost theme-btn" data-theme="light">☀️ 亮色背景</button>
+        <button class="btn ghost theme-btn" data-theme="dark">🌙 黑色背景</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:18px">
       <h3 class="card-h">⚙️ 服务配置</h3>
       <div class="field"><label>数据库文件路径</label>
         <input type="text" id="set-db" value="${esc(saved.db_path || cfg.db_path)}" placeholder="默认 data/homework.db"></div>
@@ -1396,6 +1437,12 @@ async function viewSettings() {
       } catch (e) { toast(`❌ ${e.message}`); }
     });
   });
+  applyTheme(currentTheme());
+  $$(".theme-btn").forEach((b) =>
+    b.addEventListener("click", () => {
+      applyTheme(b.dataset.theme);
+      toast(b.dataset.theme === "dark" ? "已切换暗色主题 🌙" : "已切换亮色主题 ☀️");
+    }));
 }
 
 /* ================================ 首次初始化向导 ================================ */
@@ -1407,6 +1454,7 @@ function joinList(arr) {
 }
 
 async function boot() {
+  applyTheme(currentTheme()); // 主题在路由前应用，避免闪白
   let status;
   try {
     status = await API.setupStatus();
