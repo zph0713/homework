@@ -1,0 +1,35 @@
+{
+  "title": "雅思题干翻译 #1 · 听力 / 阅读题干",
+  "skill": "ielts_stem",
+  "topic": "IELTS 听力 & 阅读题干翻译",
+  "goal": "把雅思听力 / 阅读的真实题干从中文翻回英文，熟悉真题指令句式（Which TWO / Complete the sentences / Do the following statements...）。",
+  "questions": [
+    {
+      "type": "translate",
+      "prompt": "翻译成英文（听力 Section 2 题干）：\n游客在游客中心可以参加哪两种免费活动？\n要求：①疑问句语序 ②Which TWO 大写 ③用上 free activities",
+      "answer": {
+        "rubric": "①Which TWO free activities can visitors join at the visitor centre? ②can 提前的疑问语序；③介词 at the visitor centre 位置正确；④忠实原题指令风格"
+      },
+      "explanation": "示范句：Which TWO free activities can visitors join at the visitor centre?（雅思听力 Section 2 多选题的经典指令句式）",
+      "knowledge_point": "题干翻译-听力"
+    },
+    {
+      "type": "translate",
+      "prompt": "翻译成英文（听力 Section 4 完成句子题指令）：\n完成句子：在 1980 年代，这种鸟的数量下降到了不到一千只。\n要求：①Complete the sentences 标准指令 ②用 fall to fewer than ③时态用一般过去时",
+      "answer": {
+        "rubric": "①Complete the sentences: ...；②In the 1980s, the population of this bird fell to fewer than 1,000.；③一般过去时 fell（fall-fell-fallen）；④忠实原文"
+      },
+      "explanation": "示范句：Complete the sentences: In the 1980s, the population of this bird fell to fewer than 1,000.（Section 4 常考数字 + 趋势动词 fell）",
+      "knowledge_point": "题干翻译-听力"
+    },
+    {
+      "type": "translate",
+      "prompt": "翻译成英文（阅读 TRUE/FALSE/NOT GIVEN 题干）：\n判断以下陈述是 TRUE、FALSE 还是 NOT GIVEN：水污染是这条河面临的最严重的问题。\n要求：①用 Do the following statements 标准句式 ②用上 agree with the information ③保留原文关键词",
+      "answer": {
+        "rubric": "①Do the following statements agree with the information given in the passage? ②陈述句：Water pollution is the most serious problem facing this river.；③TRUE/FALSE/NOT GIVEN 三词大写；④忠实原题指令风格"
+      },
+      "explanation": "示范句：Do the following statements agree with the information given in the passage? Water pollution is the most serious problem facing this river.（剑桥阅读判断题的标准指令）",
+      "knowledge_point": "题干翻译-阅读"
+    }
+  ]
+}

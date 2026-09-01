@@ -1,0 +1,107 @@
+{
+  "title": "验证卷 #15 · 语态开关 + 主谓一致 + 时态标志词（诊断关闭）",
+  "skill": "grammar",
+  "topic": "IELTS 环保 / 城市 / 科技语境",
+  "goal": "关闭三个未解决诊断：①语态选择（该主动时别加被动）②被动结构里的复数主谓一致 ③时间标志词定态 + 不规则过去分词。最后两题翻译综合运用。预计 15 分钟。",
+  "questions": [
+    {
+      "type": "fill",
+      "prompt": "The population of the city ____ (grow) rapidly since 2010, when the new university opened.",
+      "answer": ["has grown"],
+      "explanation": "grow（增长）是主语自己发生的变化，没有「被谁增长」——不是被动。判定：先问「主语是动作的承受者吗？有 by 施动者吗？」——population 自己增长 → 主动。since 2010 → 现在完成时 has grown。",
+      "knowledge_point": "被动语态"
+    },
+    {
+      "type": "fill",
+      "prompt": "The international conference ____ (start) at 9 a.m. last Monday and lasted for three days.",
+      "answer": ["started"],
+      "explanation": "start（开始）由会议自己发生 → 主动。last Monday 是已结束的过去时段 → 一般过去时 started。只有「被某人开启」（The conference was started by the mayor）才用被动，本题没有施动者。",
+      "knowledge_point": "被动语态"
+    },
+    {
+      "type": "fill",
+      "prompt": "Every year, thousands of tourists ____ (attract) by the ancient temples in this region.",
+      "answer": ["are attracted"],
+      "explanation": "有 by 施动者（the ancient temples），且 tourists 是「被吸引」的对象 → 被动。every year → 一般现在时 → are attracted。对照：The city attracts millions of visitors（主动，主语是吸引者）。",
+      "knowledge_point": "被动语态"
+    },
+    {
+      "type": "choice",
+      "prompt": "The new subway line ___ last year, and since then the number of daily passengers ___ steadily.",
+      "options": [
+        "A. was opened / has increased",
+        "B. opened / has increased",
+        "C. was opened / increased",
+        "D. opened / increased"
+      ],
+      "answer": "A",
+      "explanation": "两个开关分开判断：①subway line 是「被」开通（人开通它）→ was opened；②passengers 数量自己增长，无施动者 → 主动，且 since then 是现在完成时标志 → has increased。B 前半错（该被动却用主动）；C 后半错（since then 不能用一般过去时）；D 两处都错。",
+      "knowledge_point": "被动语态"
+    },
+    {
+      "type": "fill",
+      "prompt": "Last year, two new bike lanes ____ (widen) in the city centre to encourage cycling.",
+      "answer": ["were widened"],
+      "explanation": "三层一起判断：主语 two bike lanes 是复数 → were；bike lanes 是「被拓宽」的对象 → 被动；last year → 一般过去时。= were widened。复数主语绝不能写 has been widened（诊断 #16 复现）。",
+      "knowledge_point": "主谓一致"
+    },
+    {
+      "type": "fill",
+      "prompt": "The old bridge ____ (rebuild) since 2024, and traffic has been seriously affected.",
+      "answer": ["has been rebuilt"],
+      "explanation": "主语 the old bridge 是单数 → has；bridge 是「被重建」的对象 → 被动；since 2024 → 现在完成时。= has been rebuilt。对照上一题：复数用 have/were，单数用 has/was。",
+      "knowledge_point": "主谓一致"
+    },
+    {
+      "type": "fill",
+      "prompt": "A number of proposals ____ (come) from young entrepreneurs last year.",
+      "answer": ["came"],
+      "explanation": "last year 是已结束的过去时段 → 一般过去时，不是现在完成时（诊断 #14 复现）。come 的三态：come-came-come，这里用过去式 came。注意别和 have came 混——过去分词是 come 不是 came。",
+      "knowledge_point": "现在完成时"
+    },
+    {
+      "type": "fill",
+      "prompt": "Since the new policy was introduced, the number of cyclists ____ (grow) to over 10,000.",
+      "answer": ["has grown"],
+      "explanation": "三层：since + 过去时间点 → 现在完成时；grow 是不规则动词 grow-grew-grown，过去分词是 grown（不是 growed，诊断 #18 复现）；the number of + 名词 → 中心词 number 单数 → has。= has grown。",
+      "knowledge_point": "现在完成时"
+    },
+    {
+      "type": "fill",
+      "prompt": "Several new policies ____ (introduce) by the local government last month to reduce air pollution.",
+      "answer": ["were introduced"],
+      "explanation": "有 by 施动者（the local government）→ 被动；主语 several policies 是复数 → were；last month → 一般过去时。= were introduced。与第 1、2 题对照：有施动者 + 主语是承受者才用被动。",
+      "knowledge_point": "被动语态"
+    },
+    {
+      "type": "cloze",
+      "prompt": "阅读短文，用括号内单词的正确形式填空（__1__ __2__ __3__）。",
+      "passage": "Urban farming is becoming popular in many cities. In Shanghai, rooftop gardens __1__ (set up) on more than 200 buildings since 2020, and the number of gardeners __2__ (grow) every year. Last year alone, volunteers __3__ (plant) over 50,000 vegetables on these roofs.",
+      "answer": {
+        "1": ["have been set up"],
+        "2": ["has grown"],
+        "3": ["planted"]
+      },
+      "explanation": "①rooftop gardens 是「被」搭建（人搭建）→ 被动；主语复数 + since 2020 → have been set up。②the number of gardeners 中心词是 number（单数）→ has grown（grow-grew-grown）。③last year alone → 一般过去时 planted，标志词定态。",
+      "knowledge_point": "时态语态综合"
+    },
+    {
+      "type": "translate",
+      "prompt": "翻译成英文：\n去年，这条河流的污染问题终于被当地政府解决了，从那以后鱼类的数量一直在增加。\n要求：①「被解决」用被动语态 ②用 since then 连接后半句 ③用上 the number of 结构",
+      "answer": {
+        "rubric": "①「被解决」用被动 was solved (by the local government)；②since then → 后半句用现在完成时（has been increasing / has increased）；③the number of + 名词 → 谓语用单数 has；④忠实原文 + 前后时态一致"
+      },
+      "explanation": "示范句：Last year, the pollution of this river was finally solved by the local government, and since then the number of fish has been increasing.",
+      "knowledge_point": "被动语态"
+    },
+    {
+      "type": "translate",
+      "prompt": "翻译成英文：\n近年来，越来越多的人选择在线学习，因为这种方式既节省时间又节省金钱。\n要求：①「选择」用现在完成时 ②用 because 从句解释原因 ③用上 a growing number of",
+      "answer": {
+        "rubric": "①现在完成时 have chosen / has been choosing（in recent years 是完成时标志）；②because 原因从句时态正确（一般现在时 saves）；③a growing number of + 复数名词；④忠实原文"
+      },
+      "explanation": "示范句：In recent years, a growing number of people have chosen online learning because it saves both time and money.",
+      "knowledge_point": "时态语态综合"
+    }
+  ]
+}

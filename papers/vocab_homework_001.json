@@ -1,0 +1,343 @@
+{
+  "title": "词汇短语作业 · 雅思答案词 20 + 单词本 3 + 短语讲解 5",
+  "skill": "vocabulary",
+  "topic": "词汇短语练习",
+  "goal": "词汇题交卷后自动批改，请自行对照答案验证；短语卡由老师讲解，可一键收藏进短语本。",
+  "questions": [
+    {
+      "type": "choice",
+      "prompt": "选出 region（n.）的中文意思：",
+      "options": [
+        "A. 地区",
+        "B. 证据",
+        "C. 志愿者",
+        "D. 卫星"
+      ],
+      "answer": "A",
+      "explanation": "region n. 地区",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 theatre（剧院）的词性：",
+      "options": [
+        "A. phr.",
+        "B. n.",
+        "C. adj.",
+        "D. conj."
+      ],
+      "answer": "B",
+      "explanation": "theatre n. 剧院",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 uniform（n.）的中文意思：",
+      "options": [
+        "A. 制服",
+        "B. 村庄",
+        "C. 工厂",
+        "D. 证书；证明"
+      ],
+      "answer": "A",
+      "explanation": "uniform n. 制服",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "汉译英：环境（n.）____",
+      "answer": [
+        "environment"
+      ],
+      "explanation": "environment n. 环境",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "汉译英：展览（n.）____",
+      "answer": [
+        "exhibition"
+      ],
+      "explanation": "exhibition n. 展览",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "拼写：讲座；演讲（n.）首字母 l ____",
+      "answer": [
+        "lecture"
+      ],
+      "explanation": "lecture n. 讲座；演讲",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 capacity（容量；能力）的词性：",
+      "options": [
+        "A. phr.",
+        "B. v.",
+        "C. n.",
+        "D. adj."
+      ],
+      "answer": "C",
+      "explanation": "capacity n. 容量；能力",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 population（人口）的词性：",
+      "options": [
+        "A. v.",
+        "B. prep.",
+        "C. adv.",
+        "D. n."
+      ],
+      "answer": "D",
+      "explanation": "population n. 人口",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "汉译英：餐馆（n.）____",
+      "answer": [
+        "restaurant"
+      ],
+      "explanation": "restaurant n. 餐馆",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "拼写：行人（n.）首字母 p ____",
+      "answer": [
+        "pedestrian"
+      ],
+      "explanation": "pedestrian n. 行人",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "拼写：摄影师（n.）首字母 p ____",
+      "answer": [
+        "photographer"
+      ],
+      "explanation": "photographer n. 摄影师",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "汉译英：标准（n.）____",
+      "answer": [
+        "standard"
+      ],
+      "explanation": "standard n. 标准",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "拼写：村庄（n.）首字母 v ____",
+      "answer": [
+        "village"
+      ],
+      "explanation": "village n. 村庄",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 talent（n.）的中文意思：",
+      "options": [
+        "A. 症状",
+        "B. 天赋；人才",
+        "C. 解决方案；溶液",
+        "D. 食谱；配方"
+      ],
+      "answer": "B",
+      "explanation": "talent n. 天赋；人才",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "汉译英：受害者（n.）____",
+      "answer": [
+        "victim"
+      ],
+      "explanation": "victim n. 受害者",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 museum（n.）的中文意思：",
+      "options": [
+        "A. 森林",
+        "B. 肖像；描绘",
+        "C. 博物馆",
+        "D. 温度"
+      ],
+      "answer": "C",
+      "explanation": "museum n. 博物馆",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 accommodation（n.）的中文意思：",
+      "options": [
+        "A. 工业；行业",
+        "B. 走廊",
+        "C. 住宿；住处",
+        "D. 设施"
+      ],
+      "answer": "C",
+      "explanation": "accommodation n. 住宿；住处",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "汉译英：知识（n.）____",
+      "answer": [
+        "knowledge"
+      ],
+      "explanation": "knowledge n. 知识",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 mechanic（n.）的中文意思：",
+      "options": [
+        "A. 肖像；描绘",
+        "B. 参考；引用",
+        "C. 机械师",
+        "D. 旅程"
+      ],
+      "answer": "C",
+      "explanation": "mechanic n. 机械师",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "拼写：情况；环境（n.）首字母 c ____",
+      "answer": [
+        "circumstance"
+      ],
+      "explanation": "circumstance n. 情况；环境",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "汉译英：投诉（n.）____",
+      "answer": [
+        "complaints"
+      ],
+      "explanation": "complaints n. 投诉",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 distraction（干扰）的词性：",
+      "options": [
+        "A. adv.",
+        "B. adj.",
+        "C. n.",
+        "D. v."
+      ],
+      "answer": "C",
+      "explanation": "distraction n. 干扰",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "拼写：担心（n./v.）首字母 c ____",
+      "answer": [
+        "concern"
+      ],
+      "explanation": "concern n./v. 担心",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "phrase",
+      "prompt": "keep ... in mind",
+      "answer": "",
+      "extra": {
+        "meaning_cn": "牢记；记住",
+        "example": "Keep the deadline in mind when planning your study schedule.",
+        "example_cn": "安排学习计划时要牢记截止日期。"
+      },
+      "explanation": "",
+      "knowledge_point": "",
+      "score": 0
+    },
+    {
+      "type": "phrase",
+      "prompt": "run out of",
+      "answer": "",
+      "extra": {
+        "meaning_cn": "用完；耗尽",
+        "example": "The world is slowly running out of fresh water.",
+        "example_cn": "世界的淡水资源正在慢慢耗尽。"
+      },
+      "explanation": "",
+      "knowledge_point": "",
+      "score": 0
+    },
+    {
+      "type": "phrase",
+      "prompt": "make ends meet",
+      "answer": "",
+      "extra": {
+        "meaning_cn": "收支相抵；勉强维持生计",
+        "example": "Many families struggle to make ends meet in big cities.",
+        "example_cn": "大城市里许多家庭难以维持生计。"
+      },
+      "explanation": "",
+      "knowledge_point": "",
+      "score": 0
+    },
+    {
+      "type": "phrase",
+      "prompt": "in accordance with",
+      "answer": "",
+      "extra": {
+        "meaning_cn": "依照；符合",
+        "example": "The building was designed in accordance with safety regulations.",
+        "example_cn": "这座建筑是按照安全规定设计的。"
+      },
+      "explanation": "",
+      "knowledge_point": "",
+      "score": 0
+    },
+    {
+      "type": "phrase",
+      "prompt": "look forward to",
+      "answer": "",
+      "extra": {
+        "meaning_cn": "期待",
+        "example": "I look forward to hearing from you.",
+        "example_cn": "我期待收到你的回复。"
+      },
+      "explanation": "",
+      "knowledge_point": "",
+      "score": 0
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "title": "雅思口语 #1 · 家乡 / 学习 / 城市话题",
+  "skill": "ielts_speaking",
+  "topic": "IELTS 口语 Part 1 / 2 / 3",
+  "goal": "口语随机话题训练：Part 1 日常问答 ×3、Part 2 人物卡片 ×1、Part 3 延伸讨论 ×2。只出题不批改，自行开口练习（准备 1 分钟 · 陈述 1-2 分钟）。",
+  "questions": [
+    {
+      "type": "speaking",
+      "prompt": "Let's talk about your hometown.\n- Do you like the place where you live now? Why or why not?\n- What is the most interesting part of your hometown?\n- Would you like to live there in the future?",
+      "answer": "",
+      "extra": { "part": 1 },
+      "knowledge_point": "口语Part1",
+      "score": 0
+    },
+    {
+      "type": "speaking",
+      "prompt": "Let's talk about work or study.\n- Do you work or are you a student?\n- What do you like most about your job or studies?\n- Do you prefer studying in the morning or in the evening? Why?",
+      "answer": "",
+      "extra": { "part": 1 },
+      "knowledge_point": "口语Part1",
+      "score": 0
+    },
+    {
+      "type": "speaking",
+      "prompt": "Let's talk about the weather.\n- What kind of weather do you like most? Why?\n- Does the weather affect your mood?\n- What do you usually do when it rains?",
+      "answer": "",
+      "extra": { "part": 1 },
+      "knowledge_point": "口语Part1",
+      "score": 0
+    },
+    {
+      "type": "speaking",
+      "prompt": "Describe a city you have visited that you remember well.\n\nYou should say:\n- where the city is\n- when you visited it\n- what you did there\n\nand explain why you remember this city so well.",
+      "answer": "",
+      "extra": { "part": 2 },
+      "knowledge_point": "口语Part2",
+      "score": 0
+    },
+    {
+      "type": "speaking",
+      "prompt": "Part 3 延伸讨论（基于「城市」话题）：\n- How has tourism changed in your country in recent years?\n- Do you think cities are becoming too crowded? Why?\n- What could governments do to improve life in big cities?",
+      "answer": "",
+      "extra": { "part": 3 },
+      "knowledge_point": "口语Part3",
+      "score": 0
+    },
+    {
+      "type": "speaking",
+      "prompt": "Part 3 延伸讨论（基于「城市」话题）：\n- Why do many young people prefer living in cities to living in the countryside?\n- Do you think the advantages of city life outweigh the disadvantages? Why?\n- How might cities change in the next 50 years?",
+      "answer": "",
+      "extra": { "part": 3 },
+      "knowledge_point": "口语Part3",
+      "score": 0
+    }
+  ]
+}

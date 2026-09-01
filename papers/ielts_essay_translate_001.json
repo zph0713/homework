@@ -1,0 +1,35 @@
+{
+  "title": "雅思作文 #1 · 长句中译英（Task 1 & Task 2 模板句）",
+  "skill": "ielts_essay",
+  "topic": "IELTS 写作 Task 1 & Task 2",
+  "goal": "作文长句中译英：大作文观点句 + 小作文图表句，批改时纠正语法。每句一个高频结构。",
+  "questions": [
+    {
+      "type": "translate",
+      "prompt": "翻译成英文：\n一些人认为政府应该把更多资金投入到公共交通上，而不是修建更多的高速公路。\n要求：①「资金被投入」用被动语态 ②用 rather than 对比 ③用上 invest...in 搭配",
+      "answer": {
+        "rubric": "①被动 be invested in public transport；②rather than building more motorways（平行结构）；③时态一致（should 情态 + 原形）；④忠实原文"
+      },
+      "explanation": "示范句：Some people believe that more money should be invested in public transport rather than building more motorways.",
+      "knowledge_point": "写作 Task 2 观点句"
+    },
+    {
+      "type": "translate",
+      "prompt": "翻译成英文：\n从 2010 年到 2020 年，上网课的学生数量稳步上升，而传统课堂的出勤率则略有下降。\n要求：①图表过去时（period 已结束）②用 while 对比两个趋势 ③用上趋势词汇 steadily / slightly",
+      "answer": {
+        "rubric": "①一般过去时 rose/increased/declined；②while 对比从句；③趋势词汇：steadily increased / slightly declined；④the number of 主谓一致"
+      },
+      "explanation": "示范句：Between 2010 and 2020, the number of students taking online courses increased steadily, while attendance at traditional classes declined slightly.",
+      "knowledge_point": "写作 Task 1 趋势描述"
+    },
+    {
+      "type": "translate",
+      "prompt": "翻译成英文：\n过度依赖社交媒体可能会导致年轻人失去面对面交流的能力。\n要求：①用 over-reliance on 开头 ②用 lead to ③用上 lose the ability to do 结构",
+      "answer": {
+        "rubric": "①over-reliance on social media 作主语；②lead to + 名词/动名词；③lose the ability to communicate face to face；④may 情态 + 原形"
+      },
+      "explanation": "示范句：Over-reliance on social media may lead to young people losing the ability to communicate face to face.",
+      "knowledge_point": "写作 Task 2 因果句"
+    }
+  ]
+}
