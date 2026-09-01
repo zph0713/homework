@@ -1,0 +1,40 @@
+{
+  "title": "验证卷 #14 · 语态开关：同一主语主动/被动对照",
+  "skill": "grammar",
+  "topic": "IELTS 城市 / 教育话题",
+  "goal": "专打语态选择：主动 vs 被动怎么判。用同一主语对照法——同一座桥，自己塌=主动，被人重建=被动；再加自然发生类动词（rise）和双空主动/被动对照确认。",
+  "questions": [
+    {
+      "type": "fill",
+      "prompt": "The old bridge ____ (collapse) during the storm in 2022.",
+      "answer": ["collapsed"],
+      "explanation": "桥自己塌的（不是被谁塌的）→ 主动语态，一般过去时 collapsed。检验：「桥被塌」不通——没有「谁」在塌桥，动作是主语自己发生的。",
+      "knowledge_point": "被动语态"
+    },
+    {
+      "type": "fill",
+      "prompt": "The old bridge ____ (rebuild) by the local government last year.",
+      "answer": ["was rebuilt"],
+      "explanation": "同一座桥，但这次有 by the local government——桥是被政府重建的，主语是承受者 → 被动语态 was rebuilt。对比第一题：主语自己干 = 主动；主语被干 = 被动。",
+      "knowledge_point": "被动语态"
+    },
+    {
+      "type": "fill",
+      "prompt": "Online course enrolment ____ (rise) sharply since 2020.",
+      "answer": ["has risen"],
+      "explanation": "报名人数自己上升（没人「把人数上升」）→ 主动语态 has risen。since 2020 → 现在完成时；rise 的不规则分词是 risen（rise-rose-risen）。",
+      "knowledge_point": "时态与语态"
+    },
+    {
+      "type": "cloze",
+      "prompt": "两个空先判语态（主语自己干还是被干），再判时态（点还是线），最后写形式。",
+      "passage": "The new swimming pool __1__ (open) in 2021, and it __2__ (visit) by over 50,000 people every year since.",
+      "answer": {
+        "1": ["opened"],
+        "2": ["has been visited"]
+      },
+      "explanation": "①泳池自己开放（开放是自发的）→ 主动 opened，in 2021 点 → 过去时。②泳池被人参观（by over 50,000 people 明确施动者）→ 被动 has been visited，since → 完成时。同一个主语，空1 主动、空2 被动——语态跟主语角色走，跟时态无关。",
+      "knowledge_point": "被动语态"
+    }
+  ]
+}

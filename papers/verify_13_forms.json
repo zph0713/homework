@@ -1,0 +1,40 @@
+{
+  "title": "验证卷 #13 · 形式产出攻坚：被动链条 + 不规则分词（单点拆练）",
+  "skill": "grammar",
+  "topic": "IELTS 城市 / 环保 / 工作话题",
+  "goal": "上轮三个错全在「形式产出」，这轮拆开单点练：① 被动 = be + 过去分词（先简单场景，再叠加 since）② 不规则动词过去分词 ③ 线/点判断换词再确认。",
+  "questions": [
+    {
+      "type": "fill",
+      "prompt": "The new hospital ____ (build) in 2023.",
+      "answer": ["was built"],
+      "explanation": "in 2023 是关掉的点 → 一般过去时；医院是被建造 → 被动。被动链条：be（was，过去时）+ 过去分词（built）。be 后面永远跟过去分词，不能跟原形。",
+      "knowledge_point": "被动语态"
+    },
+    {
+      "type": "fill",
+      "prompt": "A recycling programme ____ (launch) by the city council since 2020.",
+      "answer": ["has been launched"],
+      "explanation": "since 2020 → 现在完成时；programme 单数 → has；被推出 → 被动。被动链条完整版：has（完成时）+ been（be 的过去分词）+ launched（launch 的过去分词）。注意 be 之后还是跟过去分词，只是这个 be 自己先变成了 been。",
+      "knowledge_point": "被动语态"
+    },
+    {
+      "type": "fill",
+      "prompt": "Tourism ____ (grow) steadily in this city since the new airport opened.",
+      "answer": ["has grown"],
+      "explanation": "since + 过去时间点（从句 opened 一般过去时）→ 主句现在完成时；Tourism 不可数 → has。grow 的不规则过去分词是 grown（grow-grew-grown），不是 growed。",
+      "knowledge_point": "时态与语态"
+    },
+    {
+      "type": "cloze",
+      "prompt": "两个空各由哪个时间标志词决定？先判断是「关掉的点」还是「连到现在的线」，再写动词形式。",
+      "passage": "The film festival __1__ (start) in 2015, and it __2__ (attract) thousands of visitors every year since.",
+      "answer": {
+        "1": ["started"],
+        "2": ["has attracted"]
+      },
+      "explanation": "①in 2015 是关掉的点 → 一般过去时 started。②since（连到现在的线）→ 现在完成时 has attracted。点用过去时，线用完成时——各管各的。",
+      "knowledge_point": "时态与语态"
+    }
+  ]
+}

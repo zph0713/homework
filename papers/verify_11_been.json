@@ -1,0 +1,36 @@
+{
+  "title": "验证卷 #11 · been 的两条路 + 时态标志词收尾",
+  "skill": "grammar",
+  "topic": "IELTS 城市 / 健康话题",
+  "goal": "本次验证三个漏洞：① been 的用法（被动 has been done / 状态 has been + 形容词）② ago 反向确认一般过去时 ③ 不规则动词过去分词",
+  "questions": [
+    {
+      "type": "fill",
+      "prompt": "The cycling lanes in the city centre ____ (widen) twice since 2021.",
+      "answer": ["have been widened"],
+      "explanation": "since 2021 → 现在完成时；lanes 复数 → have；车道是被市政拓宽的（自己不会拓宽）→ 被动语态 have been widened。注意 been 在这里是 be 的过去分词，帮助构成「被动态的完成时」。",
+      "knowledge_point": "现在完成时-被动语态"
+    },
+    {
+      "type": "fill",
+      "prompt": "The lecture hall ____ (be) empty since the university moved to online classes.",
+      "answer": ["has been"],
+      "explanation": "since + 过去时间点 → 现在完成时；主语 lecture hall 单数 → has。这里 be 是系动词，has been + empty 表示「一直处于空着的状态」——been 是 be 的过去分词，它自己不带动作，只负责状态。",
+      "knowledge_point": "现在完成时"
+    },
+    {
+      "type": "fill",
+      "prompt": "Construction of the new stadium ____ (finish) in 2024, and it has been in use ever since.",
+      "answer": ["finished"],
+      "explanation": "in 2024 是已经结束的过去时间点 → 第一空用一般过去时 finished；后半句的 ever since 才配现在完成时（has been in use）。两个时间标志词各管各的句子：in 2024 管第一空，ever since 管第二空。",
+      "knowledge_point": "时态与语态"
+    },
+    {
+      "type": "fill",
+      "prompt": "Volunteers ____ (bring) warm clothes to the shelter every winter since 2019.",
+      "answer": ["have brought"],
+      "explanation": "since 2019 → 现在完成时；Volunteers 复数 → have。bring 是不规则动词，过去分词是 brought（bring-brought-brought），不是 bringed。",
+      "knowledge_point": "时态与语态"
+    }
+  ]
+}

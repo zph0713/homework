@@ -1,0 +1,44 @@
+{
+  "title": "验证卷 #10 · since / for 起点定现在完成时",
+  "skill": "grammar",
+  "topic": "IELTS 话题语境变式（第十轮·单点攻坚：since/for + 过去时间点 → 现在完成时，主动+被动混合）",
+  "goal": "只剩一个洞：since/for 表示'从某起点延续到现在'时必须用现在完成时，不能写一般过去时。本轮 5 题全部围绕这个规则（2 道 since、1 道 for、1 道 since 干扰项对比、1 道 ago 反向确认）。全对即关闭 #14。",
+  "questions": [
+    {
+      "type": "fill",
+      "prompt": "The city council ____ (hold) public meetings about the new housing plan since March.",
+      "answer": ["has held"],
+      "explanation": "since March（从三月延续到现在）→ 现在完成时；council 单数 → has held。held 是 hold 的过去分词（hold-held-held）。",
+      "knowledge_point": "现在完成时"
+    },
+    {
+      "type": "fill",
+      "prompt": "A number of residents in the area ____ (complain) about the noise since the factory opened.",
+      "answer": ["have complained"],
+      "explanation": "since the factory opened（延续到现在）→ 现在完成时；裸 a number of + 复数名词 → have；complain 规则动词，过去分词 complained：have complained。",
+      "knowledge_point": "现在完成时"
+    },
+    {
+      "type": "fill",
+      "prompt": "The old museum in the town centre ____ (close) to visitors for two years while it is being renovated.",
+      "answer": ["has been closed"],
+      "explanation": "for two years（持续到现在）→ 现在完成时；museum 单数 → has；'处于关闭状态'用 be closed，过去分词 closed：has been closed。注意不是 has closed（那是'它把…关掉了'的主动动作）。",
+      "knowledge_point": "现在完成时"
+    },
+    {
+      "type": "choice",
+      "prompt": "The bridge ____ (repair) many times. It was first built in 1950, and it was repaired again last month.",
+      "options": ["has been repaired", "was repaired"],
+      "answer": "A",
+      "explanation": "第一句没有具体时间、强调'到现在为止被修过很多次'→ 现在完成时被动 has been repaired。第二句的 last month（已结束）才用一般过去时 was repaired——两句时态不同，各看各的时间标志词。",
+      "knowledge_point": "现在完成时"
+    },
+    {
+      "type": "fill",
+      "prompt": "The new library ____ (open) three years ago, and it has been open ever since.",
+      "answer": ["opened"],
+      "explanation": "反向确认：three years ago（已结束的过去时间点）→ 一般过去时 opened；后半句的 ever since 才用现在完成时。两个时间标志词各管各的句子，别互相带偏。",
+      "knowledge_point": "现在完成时"
+    }
+  ]
+}
