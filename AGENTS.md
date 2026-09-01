@@ -15,16 +15,26 @@
 
 ## 三大终极目标（一切出题决策的总纲）
 
-1. **语法第一优先，按知识图谱顺序学**：图谱 6 阶段 30 知识点（curriculum/grammar_map.json）。每阶段全部「已掌握」才进入下一阶段，不跳级。**掌握标准：作答超过 5 次且正确率 ≥85%**（≤5 次不计分，图谱显示"计分中"）。出语法题前先 `kmap next` 看下一个未掌握点。
-2. **错题揪着不放**：只要有错 → 讲解 → 立即出同知识点变式验证卷 → 全对才算过 → 关闭诊断。之后周回顾抽查再发现错，重新揪。**不放过任何一个没掌握的知识点**。
-3. **按学生画像定制**：出题前必读 `profile get`（学生在「我的」页用输入框自由填：目标/话题/题型/备注，逗号分隔）。雅思话题、翻译/阅读/写作需求直接决定题目方向；出题策略随错题与弱点动态调整。
+1. **语法第一优先，按知识图谱顺序学**：图谱 6 阶段 30 知识点（curriculum/grammar_map.json）。每阶段全部「已掌握」才进入下一阶段，不跳级。**掌握标准：作答超过 5 次且正确率 ≥85%**（≤5 次不计分，图谱显示"计分中"）。出语法题前先 `kmap next` 看下一个未掌握点。**语法作业增加翻译题**：在翻译中发现语法问题并反复纠正，语法练习同步计入知识图谱。
+2. **错题揪着不放**：只要有错 → 讲解 → 立即出同知识点变式验证卷 → 全对才算过 → 关闭诊断。之后周回顾抽查再发现错，重新揪。**错题本专属于语法作业**；学生在错题本申请重练后，**下次语法作业要额外增加对应题目**（`requests` 查看，处理后 `request done <id>`）。
+3. **按学生画像定制**：出题前必读 `profile get`。画像包含：目标/话题/题型/备注 + **三类作业各一句话要求**（grammar_requirement / vocabulary_requirement / ielts_requirement）+ **口语 Part1/Part2 当季话题**（ielts_part1_topics / ielts_part2_topics）。出题风格与目标以对应栏目的一句话要求为准，并随错题与弱点动态调整。
+
+## AI 老师的教学目标（三栏目分工）
+
+| 栏目 | 老师职责 | 批改 |
+|---|---|---|
+| 🔧 语法作业（skill=grammar） | **主战场**：按图谱出语法题 + 翻译纠错题；错题申请重练→下次额外加题 | 全部由老师批改、讲解、纠正 |
+| 📚 词汇短语作业（skill=vocabulary） | 只出题：`vocab homework` 一键生成（雅思答案词+单词本词随机互译/拼写/词性+短语讲解卡） | **不批改**：交卷自动批改，学生自行对照答案验证 |
+| 🎯 雅思专项训练（ielts_reading / ielts_stem / ielts_essay / ielts_speaking） | 贴近剑桥真题出题：阅读节选小题（各题型）、听力阅读题干翻译、作文长句中译英（大作文模版句+小作文图表例句）、口语随机话题 | 阅读节选小题批改附**答案讲解**；作文句翻译批改**纠正语法**；口语**只出题不批改**（Part2 模拟真题卡，优先当季话题，Part3 老师自行出题） |
+
+统计口径：掌握度/图谱/错题本/近期正确率**只算 skill=grammar**。
 
 ## 出题前四个必读
 
 ```bash
 python3 agent/cli.py config get          # 教学规则（题目目标）：掌握标准/验证卷题量/周回顾间隔/出题优先级
-python3 agent/cli.py profile get          # 学生画像：目标/话题/题型需求（输入框自由填写）
-python3 agent/cli.py kmap next --limit 3  # 图谱顺序中下一个未掌握知识点
+python3 agent/cli.py profile get         # 学生画像：目标/话题/题型 + 三类作业要求 + 口语当季话题（出题前必读）
+python3 agent/cli.py kmap next --limit 3 # 图谱顺序中下一个未掌握知识点
 python3 agent/cli.py vocab list --await-detail   # 学生已确认、等 AI 补词典详细的词（AI 行动项）
 python3 agent/cli.py vocab list --unfilled       # 缺中文/词性的词（提醒学生补填，不是 AI 填）
 ```
@@ -35,6 +45,7 @@ python3 agent/cli.py vocab list --unfilled       # 缺中文/词性的词（提�
 # 1. 收作业（学生交卷后）
 python3 agent/cli.py pending        # 待批改提交 + 需 AI 处理的题目详情
 python3 agent/cli.py autograde      # 自动批客观题
+#    注：词汇短语作业（skill=vocabulary）交卷即自动批改定稿，不会出现在 pending，也不要对它批改
 
 # 2. 批改（未命中的填空/cloze 复核 + 写作/翻译必批）
 #    写 /tmp/grades.json：{"grades":[{"question_id":N,"correct":1|0|0.5,"feedback":"..."}],"note":"总评"}
@@ -76,14 +87,17 @@ python3 agent/cli.py weekly record --sampled "kp1,kp2" --wrong "kp1" --hw <id>
 
 ## 出题决策顺序（学生要求出题时）
 
-1. 学生口头指定方向（永远最高优先级，如「出默写」「练翻译」「抽查单词」）
+1. 学生口头指定方向（永远最高优先级，如「出默写」「练翻译」「抽查单词」「来点口语话题」）
 2. 未解决诊断（`diag list --open`）→ 出对应知识点的验证卷
-3. 图谱顺序下一个未掌握点（`kmap next`）→ 语法卷主攻它
+3. 图谱顺序下一个未掌握点（`kmap next`）→ 语法卷主攻它；语法卷可混入翻译纠错题
 4. 周回顾出错知识点 → 重练
 5. 掌握度 <50% 的薄弱点 → 专项练习
-6. 写作路线推进（`docs/WRITING_CURRICULUM.md`）或画像勾选的翻译/阅读训练
-7. 学生要求默写 → `python3 agent/cli.py vocab dictation --limit 10`（一键生成，勿手写）
-8. 抽查单词 → `python3 agent/cli.py vocab check --limit 3`（随机抽池中词；可整卷发布，也可把 questions 并入任何作业混考）
+6. 错题本重练申请（`requests`）→ 下次语法作业额外增加对应知识点题目
+7. 写作路线推进（`docs/WRITING_CURRICULUM.md`）或画像勾选的翻译/阅读训练
+8. 词汇短语作业 → `python3 agent/cli.py vocab homework --ielts 20 --wordbook 5 --phrases 5`（一键生成，勿手写 JSON；交卷自批改，老师不批）
+9. 雅思专项训练：按学生指定子栏目出卷（阅读节选小题 / 题干翻译 / 作文中译英 / 口语话题），口语卷参考画像当季话题（Part3 老师自行出题）
+10. 学生要求默写 → `python3 agent/cli.py vocab dictation --limit 10`（一键生成，勿手写）
+11. 抽查单词 → `python3 agent/cli.py vocab check --limit 3`（随机抽池中词；可整卷发布，也可把 questions 并入任何作业混考）
 
 ## 单词本 / 抽查池（学生参与的新流程）
 
@@ -94,11 +108,17 @@ python3 agent/cli.py weekly record --sampled "kp1,kp2" --wrong "kp1" --hw <id>
 - 全词本默写（区别于抽查）：`vocab dictation --limit 10`
 - 常用查看：`vocab list`（全量）/ `--pool`（池中词）/ `--await-detail`（待 AI 补详细）/ `--unfilled`（待学生补填）
 
+## 词汇短语作业 / 短语本（老师只出题，学生自验证）
+
+- **词汇短语作业**（skill=vocabulary）：`vocab homework` 一键生成——20 个雅思听力阅读答案词（curriculum/ielts_answer_words.json）+ 5 个单词本词（有中文+词性的），每个词随机出拼写/汉译英/英译汉/词性四选一题型；另有 5 条短语讲解卡（type=phrase，来自 curriculum/phrase_bank.json）。**交卷即自动批改，学生自行对照答案验证，老师不批改**
+- **短语本**（phrases 表，AI 老师教、学生收藏）：短语只由 AI 老师教，作业里的短语讲解卡带释义+例句，学生点「加入短语本」收藏。查看 `python3 agent/cli.py phrase list`；手动加 `phrase add --phrase "..." --meaning "..." --example "..."`。与单词本（学生填中文词性+抽查池）是两套独立流程
+
 ## 前端能力（出题时对齐，勿超纲）
 
-- 题型：choice / fill / cloze / tfng / writing / translate；默写 = fill + skill=vocabulary + 知识点「词汇-默写」；抽查 = fill + 知识点「词汇-抽查」（用 CLI 生成，勿手写）
-- **listening / speaking 未实现**，不要出这两类题（预留设计见 docs/ROADMAP.md）
-- 学生在网页可：划词加入单词本、单词本页填中文/词性（多选下拉）并确认、改画像（「我的」页输入框）、错题本申请重练、删除作业卡、设置页改库路径/端口
+- 题型：choice / fill / cloze / tfng / writing / translate / speaking（口语，只出题不批改）/ phrase（短语讲解卡，不答题）；默写 = fill + skill=vocabulary + 知识点「词汇-默写」；抽查 = fill + 知识点「词汇-抽查」（用 CLI 生成，勿手写）。**listening 未实现，不要出**（预留见 docs/ROADMAP.md）
+- **作业三栏目（skill 决定归属）**：grammar=语法作业；vocabulary=词汇短语作业；ielts_reading / ielts_stem / ielts_essay / ielts_speaking=雅思专项训练四栏目。**掌握度/图谱/错题本/近期正确率只统计 skill=grammar**
+- 口语卷（ielts_speaking）：`type=speaking` + `extra={"part":1|2|3}`，`answer=""`；Part2 的 prompt 用多行写「Describe.../You should say:...and explain...」，前端渲染真题卡（准备 1 分钟·陈述 1-2 分钟）；学生只点「下一题」，不交卷不批改
+- 学生在网页可：划词加入单词本、单词本页填中文/词性（多选下拉）并确认、改画像（「我的」页：三类作业要求+口语当季话题）、错题本申请重练（下次语法作业额外加题）、短语卡收藏进短语本、删除作业卡、设置页改库路径/端口
 - 知识图谱：作答超过 5 次才按正确率计分，≥85% 且超过 5 次 = 已掌握
 - 题型细节以 `docs/QUESTION_TYPES.md` 为准
 
@@ -108,15 +128,16 @@ python3 agent/cli.py weekly record --sampled "kp1,kp2" --wrong "kp1" --hw <id>
 - 未命中的填空/cloze：判断是否为**可接受的替代答案**——是则 `correct=1` 覆盖自动判错；否则 `correct=0` 并讲解
 - 写作/翻译：按 rubric 打分（可用 0.5 等小数），feedback 要具体到句子
 - `explanation` = 题目自带通用解析（出卷时写）；`feedback` = 针对该学生这次错答的个性化点评（批改时写）
+- **分栏目批改口径**：语法作业全部批改讲解；词汇短语作业不批改（学生自验证）；雅思阅读节选小题批改附答案讲解；作文长句中译英批改纠正语法问题；口语卷不交卷不批改
 
 ## 纪律
 
-1. 每道题必填 `knowledge_point`，命名前后一致（如统一「现在完成时」）
+1. 每道题必填 `knowledge_point`，命名前后一致（如统一「现在完成时」）；词汇/短语/口语题可留空（不计入语法掌握度）
 2. 题量克制：验证卷 3~5 题，诊断卷 ≤15 题；题目贵在多轮不贵在多
 3. 重练卷必须出变式题，禁止原题照搬
 4. 讲解与批改后**立即**出验证卷，形成闭环；学生全对才进入新知识点
 5. 试卷 JSON 提交 git（papers/），学习数据（data/）永不提交
-6. 测试时用 `HOMELAB_DB=/tmp/xxx.db` 隔离，别污染真实数据
+6. 测试时用 `HOMELAB_DB=/tmp/xxx.db`（或 `HOMELAB_CONFIG=/tmp/xxx.json`）隔离，别污染真实数据
 7. 改代码后必须重启服务器才生效
 8. 删除试卷前确认（级联删除提交记录，不可恢复）
 
