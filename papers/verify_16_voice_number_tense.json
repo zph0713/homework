@@ -1,0 +1,49 @@
+{
+  "title": "验证卷 #16 · 语态开关 + the number of 单数 + 时态标志词（二轮）",
+  "skill": "grammar",
+  "topic": "IELTS 环保 / 城市 / 教育语境",
+  "goal": "二轮闭环验证四个未解决诊断：①语态选择（该主动别加 been、该被动别漏）②the number of 中心词单数 + a growing number of 复数镜像 ③last year/since then 标志词定态 ④规则动词过去分词 -ed。全部换语境变式，最后翻译题综合三连考点。",
+  "questions": [
+    {
+      "type": "fill",
+      "prompt": "The number of electric vehicles on the roads ____ (increase) rapidly since 2018.",
+      "answer": ["has increased"],
+      "explanation": "三层一起判：①increase（增长）是主语自己发生的变化，没有谁在「被增长」它 → 主动，绝不加 been；②since 2018 → 现在完成时 → has increased；③the number of + 名词，中心词是 number（单数）→ has。检验：试着说「数量被增长」——不通，说明不该被动。",
+      "knowledge_point": "被动语态"
+    },
+    {
+      "type": "fill",
+      "prompt": "Last year, the city council ____ (build) three new charging stations for electric vehicles.",
+      "answer": ["built"],
+      "explanation": "①主语 the city council（市议会）是施动者——它自己建了充电站，有宾语 three new charging stations → 主动 built，不是 was built；②last year 是已结束的过去时段 → 一般过去时 built，不是 has built。build 是不规则动词 build-built-built。",
+      "knowledge_point": "时态与语态"
+    },
+    {
+      "type": "cloze",
+      "prompt": "同一话题两个空：先分别判断每个主语是自己干还是被干，再定态，最后写形式（注意规则动词 +ed）。",
+      "passage": "In 2022, the government __1__ (construct) a new recycling plant near the airport, and since then the plant __2__ (use) by three local companies.",
+      "answer": {
+        "1": ["constructed"],
+        "2": ["has been used"]
+      },
+      "explanation": "空1：主语 the government 是施动者，construct 带了宾语 plant → 主动；in 2022 过去点 → constructed（规则动词 +ed，construct 结尾已有一个 t，直接 +ed，不要写成 constructted）。空2：主语 the plant 是承受者（by three local companies 施动者明确）→ 被动；since then → 现在完成时 → has been used（单数 plant → has）。",
+      "knowledge_point": "被动语态"
+    },
+    {
+      "type": "fill",
+      "prompt": "A growing number of university graduates ____ (prefer) remote work these days.",
+      "answer": ["prefer"],
+      "explanation": "镜像对照：a growing number of + 复数名词，谓语跟后面的复数名词走 → prefer（they prefer）。只有 the number of 才是中心词单数（The number of graduates is growing）。these days → 一般现在时。别把 a growing number of 误当单数写 prefers。",
+      "knowledge_point": "主谓一致"
+    },
+    {
+      "type": "translate",
+      "prompt": "翻译成英文：\n2015 年，市政府在河边建了一座新公园，从那以后公园的游客数量一直在增长。\n要求：①以 the city government 为主语，用主动语态（政府自己建，不是被建）②用 since then 连接后半句，用现在完成时 ③后半句用上 the number of 结构，谓语用单数",
+      "answer": {
+        "rubric": "①主动 built（政府作主语带宾语，不用被动）；②since then → 后半句现在完成时 has been growing / has grown；③the number of visitors → 单数 has；④忠实原文：河边 by the river、一直在增长 has been growing"
+      },
+      "explanation": "示范句：In 2015, the city government built a new park by the river, and since then the number of its visitors has been growing.",
+      "knowledge_point": "时态语态综合"
+    }
+  ]
+}
