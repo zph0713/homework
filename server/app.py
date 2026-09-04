@@ -162,6 +162,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self._handle_setup(body)
             if path == "/api/submit":
                 return self._handle_submit(body)
+            if path == "/api/speaking-done":
+                return self._handle_speaking_done(body)
             if path == "/api/request":
                 kp = (body.get("knowledge_point") or "").strip()
                 if not kp:
@@ -336,6 +338,16 @@ class Handler(BaseHTTPRequestHandler):
                                      "auto_graded": auto,
                                      "message": "已交卷，等待批改" if not auto
                                      else "已交卷并自动批改 ✓ 请对照答案自行验证"})
+
+    def _handle_speaking_done(self, body):
+        """口语卷「完成练习」→ 记录为已做过（status='done'），不批改。"""
+        hw_id = body.get("homework_id")
+        if not isinstance(hw_id, int):
+            raise ValueError("需要 homework_id(int)")
+        with db.connect() as conn:
+            sub_id = db.mark_speaking_done(conn, hw_id)
+        return self._send_json(200, {"submission_id": sub_id,
+                                     "message": "已记录为完成（无需批改）"})
 
     def _handle_save_settings(self, body):
         cfg = load_config()

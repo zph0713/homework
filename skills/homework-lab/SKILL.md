@@ -156,11 +156,18 @@ python3 agent/cli.py vocab list --unfilled       # 缺中文/词性的词（提�
 - 查看：`python3 agent/cli.py phrase list`；手动加：`phrase add --phrase "..." --meaning "..." --example "..."`
 - 短语本与单词本是两个独立本子（单词=学生填中文词性+抽查池；短语=老师教+收藏）
 
+## 雅思四栏目常备（时刻补齐）
+
+- 目标：雅思 4 子栏目（ielts_reading / ielts_stem / ielts_essay / ielts_speaking）**每栏时刻 ≥1 张未做作业卡**。
+- 判定：`python3 agent/cli.py ielts status`（缺哪栏一目了然）；巡检脚本 `scripts/ielts_topup_status.py` 输出恒定 OK=不用补 / 缺口行=要补（供 Hermes cron monitor 用）。
+- 补齐动作：会话中每次批改/收尾后顺手检查，缺哪栏当场出 1 张新卷（按画像 ielts_requirement 与当季口语话题、参考 papers/ 历史卷风格、话题不与最近重复）；会话外定时巡检兜底（缺口出现才唤醒，补齐后静默）。
+- 口语卷练完 = 网页端「完成练习」记 status=done（不进待批改、不批改）→ 卡片变「已练完」→ 该栏目触发补新卷。
+
 ## 前端能力速查（出题时对齐前端，勿超纲）
 
 - 题型：choice / fill / cloze / tfng / writing / translate / speaking（口语，只出题不批改）/ phrase（短语讲解卡，不答题）；默写=fill+skill=vocabulary+知识点「词汇-默写」；抽查=fill+知识点「词汇-抽查」（用 CLI 生成，勿手写）。**listening 未实现，不要出**（预留见 docs/ROADMAP.md）
 - **作业三栏目（skill 决定归属）**：grammar=语法作业；vocabulary=词汇短语作业；ielts_reading / ielts_stem / ielts_essay / ielts_speaking=雅思专项训练四栏目。**掌握度/图谱/错题本/近期正确率只统计 skill=grammar**
-- 口语卷（ielts_speaking）：`type=speaking` + `extra={"part":1|2|3}`，`answer=""`；Part2 的 prompt 用多行写「Describe.../You should say:...and explain...」前端渲染真题卡；学生只点「下一题」，不交卷不批改
+- 口语卷（ielts_speaking）：`type=speaking` + `extra={"part":1|2|3}`，`answer=""`；Part2 的 prompt 用多行写「Describe.../You should say:...and explain...」前端渲染真题卡；学生点「下一题」逐题练，全部练完点「完成练习」→ 记录为已做过（status=done，不进待批改、不批改），卡片显示「已练完」
 - 学生在网页可：划词加入单词本、单词本页填中文/词性（多选下拉）并确认、错题本申请重练（下次语法作业额外加题）、删除作业卡（有确认弹窗）、「我的」页填三类作业要求+口语当季话题+画像、短语卡收藏进短语本、设置页改库路径/端口/教学规则
 - 知识图谱：作答超过 `mastery_min_attempts` 次才按正确率计分，≥ `mastery_threshold`% 且次数足够 = 已掌握
 - 出题能力不匹配前端时先查 `docs/QUESTION_TYPES.md`，别让 AI 自定义新题型
@@ -184,4 +191,4 @@ python3 agent/cli.py vocab list --unfilled       # 缺中文/词性的词（提�
 - 讲解用中文，一次聚焦 ≤3 个知识点；验证卷题量遵守 rules（默认 3~5 题），诊断卷 ≤ rules.diag_max_questions（默认 15 题）
 - 学生目标：彻底解决语法 + 雅思词汇短语；语境用雅思话题（教育/环保/科技/城市/健康/工作）
 - 删除试卷前确认（`delete <id>` 级联删除全部提交记录，不可恢复）
-- 统计口径：掌握度/图谱/错题本/近期正确率**只算 skill=grammar**；词汇作业自验证不批改；口语卷不交卷不批改
+- 统计口径：掌握度/图谱/错题本/近期正确率**只算 skill=grammar**；词汇作业自验证不批改；口语卷「完成练习」记 status=done（不批改）

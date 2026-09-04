@@ -34,6 +34,9 @@ SELF_GRADED_SKILLS = {"vocabulary"}
 # 语法作业 skill 值（掌握度/错题本/近期成绩只统计这些作业；旧库 mixed/writing/listening 会迁移为 grammar）
 GRAMMAR_SKILLS = {"grammar"}
 
+# 雅思专项四栏目（时刻保持每栏 ≥1 张未做作业，见 ielts_gaps / `cli.py ielts status`）
+IELTS_TOPUP_SKILLS = ("ielts_reading", "ielts_stem", "ielts_essay", "ielts_speaking")
+
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS homeworks (
   id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -76,7 +79,7 @@ CREATE TABLE IF NOT EXISTS submissions (
   homework_id      INTEGER NOT NULL REFERENCES homeworks(id) ON DELETE CASCADE,
   answers          TEXT NOT NULL,               -- JSON {qid: answer}
   submitted_at     TEXT NOT NULL DEFAULT (datetime('now','localtime')),
-  status           TEXT NOT NULL DEFAULT 'pending', -- pending|partial|graded
+  status           TEXT NOT NULL DEFAULT 'pending', -- pending|partial|graded|done（口语完成，不批改）
   total_score      REAL,
   max_score        REAL,
   correct_count    INTEGER,
@@ -738,6 +741,48 @@ def paper_for_student(conn, hw_id):
         q = {k: v for k, v in q.items() if k not in ("answer", "explanation")}
         qs.append(q)
     return {"homework": full["homework"], "passages": full["passages"], "questions": qs}
+
+
+def mark_speaking_done(conn, hw_id):
+    """口语卷「完成练习」：记录一次已做过（submission status='done'），无需批改。
+
+    前端口语流程练完全部话题点「完成练习」时调用；每次练完记一条，
+    学习路径可见，作业卡显示「已练完」。不进待批改队列（pending 只取 pending/partial）。
+    """
+    hw = conn.execute("SELECT * FROM homeworks WHERE id=?", (hw_id,)).fetchone()
+    if not hw:
+        raise ValueError(f"试卷 #{hw_id} 不存在")
+    if hw["skill"] != "ielts_speaking":
+        raise ValueError("只有口语卷能标记完成（这张不是口语卷）")
+    if hw["status"] not in ("published", "archived"):
+        raise ValueError("该试卷当前不可作答")
+    cur = conn.execute(
+        "INSERT INTO submissions (homework_id, answers, status) VALUES (?,?, 'done')",
+        (hw_id, "{}"))
+    add_log(conn, "submit", summary=f"口语练习完成《{hw['title']}》（已记录，无需批改）",
+            ref_type="submission", ref_id=cur.lastrowid)
+    return cur.lastrowid
+
+
+def ielts_gaps(conn):
+    """雅思四栏目常备检查：返回缺「未做作业卡」的 skill 列表。
+
+    目标：ielts_reading / ielts_stem / ielts_essay / ielts_speaking 每栏
+    时刻保持 ≥1 张未做作业（published 且无任何提交）。学生做完 / 删掉卡片后，
+    会话内老师即时补齐，会话外由定时巡检（scripts/ielts_topup_status.py）兜底。
+    """
+    missing = []
+    for skill in IELTS_TOPUP_SKILLS:
+        rows = conn.execute(
+            "SELECT id FROM homeworks WHERE status='published' AND skill=? ORDER BY id DESC",
+            (skill,)).fetchall()
+        available = any(
+            conn.execute("SELECT 1 FROM submissions WHERE homework_id=? LIMIT 1",
+                         (h["id"],)).fetchone() is None
+            for h in rows)
+        if not available:
+            missing.append(skill)
+    return missing
 
 
 def submission_detail(conn, sub_id):

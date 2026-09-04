@@ -723,6 +723,29 @@ def cmd_kmap_next(args):
         print(f"（共 {len(todo)} 个未掌握；按图谱顺序学完当前再往后，先不跳级）")
 
 
+def cmd_ielts(args):
+    """雅思四栏目常备检查：阅读节选小题 / 英译汉 / 作文中译英 / 口语话题，
+    每栏都要时刻保持 ≥1 张「未做」作业卡。缺了就出 1 张新卷补齐
+    （会话内老师即时补，会话外由 scripts/ielts_topup_status.py 巡检兜底）。"""
+    with db.connect() as conn:
+        missing = db.ielts_gaps(conn)
+    names = {"ielts_reading": "📰 阅读节选小题", "ielts_stem": "🔤 英译汉（听力/阅读题干）",
+             "ielts_essay": "✒️ 作文中译英", "ielts_speaking": "🎤 口语话题"}
+    if args.json:
+        print(json.dumps({"missing": missing, "all_ready": not missing,
+                          "columns": {s: (s not in missing) for s in db.IELTS_TOPUP_SKILLS}},
+                         ensure_ascii=False))
+        return
+    if not missing:
+        print("🎯 雅思四栏目常备 ✓ 每栏都有未做的作业")
+        return
+    print("⚠️ 以下雅思栏目没有「未做」的作业卡，需要补齐：")
+    for s in missing:
+        print(f"  · {names.get(s, s)}")
+    print("补齐动作：出 1 张该栏目新卷（papers/xxx.json → `python3 agent/cli.py create <file>`），"
+          "话题不要与最近几张重复")
+
+
 def cmd_delete(args):
     with db.connect() as conn:
         h = db.delete_homework(conn, args.hw_id)
@@ -880,6 +903,11 @@ def main(argv=None):
     pkn = pks.add_parser("next", help="按图谱顺序列出下一个未掌握知识点")
     pkn.add_argument("--limit", type=int, default=3)
 
+    pie = sub.add_parser("ielts", help="雅思四栏目常备检查（每栏都要有一张未做作业）")
+    pies = pie.add_subparsers(dest="ielts_cmd", required=True)
+    pis = pies.add_parser("status", help="列出缺「未做作业卡」的雅思栏目")
+    pis.add_argument("--json", action="store_true", help="输出 JSON（供巡检脚本）")
+
     pdel = sub.add_parser("delete", help="删除试卷（级联删除提交与批改）")
     pdel.add_argument("hw_id", type=int)
 
@@ -896,7 +924,7 @@ def main(argv=None):
         "weekly": lambda a: cmd_weekly_status(a) if a.weekly_cmd == "status"
         else cmd_weekly_record(a),
         "vocab": cmd_vocab, "profile": cmd_profile, "kmap": cmd_kmap,
-        "phrase": cmd_phrase,
+        "phrase": cmd_phrase, "ielts": cmd_ielts,
         "delete": cmd_delete,
     }
     try:

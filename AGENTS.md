@@ -25,7 +25,7 @@
 |---|---|---|
 | 🔧 语法作业（skill=grammar） | **主战场**：按图谱出语法题 + 翻译纠错题；错题申请重练→下次额外加题 | 全部由老师批改、讲解、纠正 |
 | 📚 词汇短语作业（skill=vocabulary） | 只出题：`vocab homework` 一键生成（雅思答案词+单词本词随机互译/拼写/词性+短语讲解卡） | **不批改**：交卷自动批改，学生自行对照答案验证 |
-| 🎯 雅思专项训练（ielts_reading / ielts_stem / ielts_essay / ielts_speaking） | 贴近剑桥真题出题：阅读节选小题（各题型）、听力阅读题干英译汉（多用真题节选，附语法和单词提示，练考试时快速理解题意）、作文长句中译英（大作文模版句+小作文图表例句）、口语随机话题 | 阅读节选小题批改附**答案讲解**；作文句翻译批改**纠正语法**；口语**只出题不批改**（Part2 模拟真题卡，优先当季话题，Part3 老师自行出题） |
+| 🎯 雅思专项训练（ielts_reading / ielts_stem / ielts_essay / ielts_speaking） | 贴近剑桥真题出题：阅读节选小题（各题型）、听力阅读题干英译汉（多用真题节选，附语法和单词提示，练考试时快速理解题意）、作文长句中译英（大作文模版句+小作文图表例句）、口语随机话题；**四栏目时刻补齐（见下节）** | 阅读节选小题批改附**答案讲解**；作文句翻译批改**纠正语法**；口语**只出题不批改**（练完前端记「完成」=已做过；Part2 模拟真题卡，优先当季话题，Part3 老师自行出题） |
 
 统计口径：掌握度/图谱/错题本/近期正确率**只算 skill=grammar**。
 
@@ -74,6 +74,7 @@ python3 agent/cli.py create papers/verify_xxx.json
 python3 agent/cli.py weakpoints     # 掌握度：超过 5 次且 ≥85% = 已掌握，之后降频
 python3 agent/cli.py kmap next      # 图谱顺序下一个未掌握点（目标 1）
 python3 agent/cli.py requests       # 学生重练申请，处理后 request done <id>
+python3 agent/cli.py ielts status   # 雅思四栏目常备：缺哪栏当场补一张（见「雅思四栏目常备」节）
 
 # 6. 周期性重练
 python3 agent/cli.py wronglist --json /tmp/wrong.json   # 导出错题 → 按知识点出变式卷
@@ -117,10 +118,18 @@ python3 agent/cli.py weekly record --sampled "kp1,kp2" --wrong "kp1" --hw <id>
 
 - 题型：choice / fill / cloze / tfng / writing / translate / speaking（口语，只出题不批改）/ phrase（短语讲解卡，不答题）；默写 = fill + skill=vocabulary + 知识点「词汇-默写」；抽查 = fill + 知识点「词汇-抽查」（用 CLI 生成，勿手写）。**listening 未实现，不要出**（预留见 docs/ROADMAP.md）
 - **作业三栏目（skill 决定归属）**：grammar=语法作业；vocabulary=词汇短语作业；ielts_reading / ielts_stem / ielts_essay / ielts_speaking=雅思专项训练四栏目。**掌握度/图谱/错题本/近期正确率只统计 skill=grammar**
-- 口语卷（ielts_speaking）：`type=speaking` + `extra={"part":1|2|3}`，`answer=""`；Part2 的 prompt 用多行写「Describe.../You should say:...and explain...」，前端渲染真题卡（准备 1 分钟·陈述 1-2 分钟）；学生只点「下一题」，不交卷不批改
+- 口语卷（ielts_speaking）：`type=speaking` + `extra={"part":1|2|3}`，`answer=""`；Part2 的 prompt 用多行写「Describe.../You should say:...and explain...」，前端渲染真题卡（准备 1 分钟·陈述 1-2 分钟）；学生点「下一题」逐题练，全部练完点「完成练习」→ 记录为已做过（submission status=`done`，不进待批改、不批改），卡片显示「已练完」，可「再来一轮」反复练
 - 学生在网页可：划词加入单词本、单词本页填中文/词性（多选下拉）并确认、改画像（「我的」页：三类作业要求+口语当季话题）、错题本申请重练（下次语法作业额外加题）、短语卡收藏进短语本、删除作业卡、设置页改库路径/端口
 - 知识图谱：作答超过 5 次才按正确率计分，≥85% 且超过 5 次 = 已掌握
 - 题型细节以 `docs/QUESTION_TYPES.md` 为准
+
+## 雅思四栏目常备（时刻补齐）
+
+- **目标**：雅思专项 4 个子栏目（`ielts_reading` 阅读节选小题 / `ielts_stem` 英译汉 / `ielts_essay` 作文中译英 / `ielts_speaking` 口语话题）**每栏时刻保持 ≥1 张「未做」作业卡**，学生任何时候打开都有得练。
+- **判定**：`python3 agent/cli.py ielts status`——缺哪栏一目了然（每栏有 published 且无任何提交的卡 = 充足）；定时巡检脚本 `scripts/ielts_topup_status.py`（输出恒定 OK 行=不用补，出现缺口行=要补，供 Hermes cron monitor 使用）。
+- **补齐动作**：缺口出现（学生做完/删掉该栏目最后一张未做卡）→ 立即出 1 张该栏目新卷：按画像 `ielts_requirement` 与当季口语话题（`profile get`）、参照 papers/ 历史卷风格、话题不与最近几张重复、写完 `create` 发布。
+- **谁来做**：会话中老师每次批改/收尾后顺手 `ielts status`，缺就当场补齐；会话外由定时巡检兜底（自动补齐并推送到对话，平时静默）。
+- 口语卷的「完成」就靠学生网页端完成按钮记录——老师看到口语卷被做完（`state` 里 latest_submission.status=`done`），即为该栏目的补齐触发点。
 
 ## 批改原则
 
@@ -128,7 +137,7 @@ python3 agent/cli.py weekly record --sampled "kp1,kp2" --wrong "kp1" --hw <id>
 - 未命中的填空/cloze：判断是否为**可接受的替代答案**——是则 `correct=1` 覆盖自动判错；否则 `correct=0` 并讲解
 - 写作/翻译：按 rubric 打分（可用 0.5 等小数），feedback 要具体到句子
 - `explanation` = 题目自带通用解析（出卷时写）；`feedback` = 针对该学生这次错答的个性化点评（批改时写）
-- **分栏目批改口径**：语法作业全部批改讲解；词汇短语作业不批改（学生自验证）；雅思阅读节选小题批改附答案讲解；作文长句中译英批改纠正语法问题；口语卷不交卷不批改
+- **分栏目批改口径**：语法作业全部批改讲解；词汇短语作业不批改（学生自验证）；雅思阅读节选小题批改附答案讲解；作文长句中译英批改纠正语法问题；口语卷「完成练习」只记录为已做过（status=`done`），不进待批改、不批改
 
 ## 纪律
 

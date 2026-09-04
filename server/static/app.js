@@ -23,6 +23,7 @@ const API = {
   state: () => API._get("/api/state"),
   paper: (id) => API._get(`/api/homeworks/${id}`),
   submit: (homework_id, answers) => API._post("/api/submit", { homework_id, answers }),
+  speakingDone: (homework_id) => API._post("/api/speaking-done", { homework_id }),
   result: (sid) => API._get(`/api/submissions/${sid}`),
   review: () => API._get("/api/review"),
   knowledge: () => API._get("/api/knowledge"),
@@ -89,7 +90,7 @@ const TYPE = {
   choice: "单选", fill: "填空", cloze: "语法填空", tfng: "判断 TFNG",
   writing: "写作", translate: "翻译", speaking: "口语话题", phrase: "短语讲解",
 };
-const SUB_STATUS = { pending: "已交卷 · 待批改", partial: "已交卷 · 批改中", graded: "已批改" };
+const SUB_STATUS = { pending: "已交卷 · 待批改", partial: "已交卷 · 批改中", graded: "已批改", done: "已完成 · 无需批改" };
 
 /* 三大作业栏目（与顶部导航一致） */
 const LANES = [
@@ -119,7 +120,7 @@ const SUB_LANES = {
   "ielts-essay": { icon: "✒️", title: "作文长句中译英", skills: ["ielts_essay"],
     desc: "大作文各题型模版句 + 小作文图表描述例句的中译英训练。老师纠正语法问题。" },
   "ielts-speaking": { icon: "🎤", title: "口语随机话题", skills: ["ielts_speaking"],
-    desc: "Part 1 / Part 2 / Part 3 随机话题（优先当季话题）。只出题不要求作答、不批改，点「下一题」即可。" },
+    desc: "Part 1 / Part 2 / Part 3 随机话题（优先当季话题）。只出题不批改：自己开口练，全部练完点「完成练习」→ 记录为已做过，老师会再补新话题卷。" },
 };
 /* 子栏目 / 辅助页归属到哪个主栏目（导航高亮用） */
 const NAV_PARENT = {
@@ -220,7 +221,7 @@ async function viewHome() {
     <div class="home-head">
       <div>
         <h1 class="page-title">我的作业</h1>
-        <p class="page-sub">作业分为三个栏目：词汇短语作业（交卷自动批改、自行验证）、语法作业（老师批改+讲解）、雅思专项训练（文字训练，口语只出题）。<span style="color:var(--faint)">淡蓝=未做 · 淡绿=已写</span></p>
+        <p class="page-sub">作业分为三个栏目：词汇短语作业（交卷自动批改、自行验证）、语法作业（老师批改+讲解）、雅思专项训练（文字训练，口语只出题不批改、练完点「完成练习」记为已做过）。<span style="color:var(--faint)">淡蓝=未做 · 淡绿=已写</span></p>
       </div>
       <div class="seg">
         <button class="seg-btn ${HW_FILTER === "all" ? "on" : ""}" data-hwf="all">全部</button>
@@ -310,8 +311,14 @@ function hwCard(h) {
   let statusHTML, actions;
   const badgeArch = h.status === "archived" ? '<span class="badge archived">已归档</span>' : "";
   if (h.skill === "ielts_speaking") {
-    statusHTML = '<span class="hw-status">🎤 口语练习 · 只出题不交卷</span>';
-    actions = `<a class="btn primary" href="#/paper/${h.id}">开始练习</a>`;
+    if (!s) {
+      statusHTML = '<span class="hw-status">🎤 口语练习 · 未练过</span>';
+      actions = `<a class="btn primary" href="#/paper/${h.id}">开始练习</a>`;
+    } else {
+      statusHTML = `<span class="hw-status">✅ 已练完（无需批改）· ${fmtDate(s.submitted_at)}</span>`;
+      actions = `<a class="btn ghost small" href="#/result/${s.id}">查看记录</a>
+                 <a class="btn primary small" href="#/paper/${h.id}">再来一轮</a>`;
+    }
   } else if (!s) {
     statusHTML = '<span class="hw-status">📝 未作答</span>';
     actions = `<a class="btn primary" href="#/paper/${h.id}">${h.skill === "vocabulary" ? "开始练习" : "开始答题"}</a>`;
@@ -590,21 +597,23 @@ function showModal(inner, onAction) {
   document.body.appendChild(mask);
 }
 
-/* ================================ 口语随机话题（只出题不交卷） ================================ */
+/* ================================ 口语随机话题（只出题不批改 · 练完可标记完成） ================================ */
 let speakIdx = 0;
 let speakQs = [];
+let speakHwId = 0;
 
 function viewSpeaking(paper) {
   const app = $("#app");
   const h = paper.homework;
   speakQs = paper.questions || [];
   speakIdx = 0;
+  speakHwId = h.id;
   app.innerHTML = `
     <div class="paper-head">
       <h1>${esc(h.title)}</h1>
       <div class="hw-meta"><span class="badge skill">🎤 口语随机话题</span><span class="badge">${speakQs.length} 题</span></div>
       ${h.goal ? `<div class="goal">🎯 ${esc(h.goal)}</div>` : ""}
-      <p class="page-sub" style="margin:10px 0 0;font-size:13px">口语只出题、不要求作答、不做批改：自己开口练（可录音回听），答得如何由你自行判断。看完点「下一题」；Part 2 按真实考试展示题目卡与要求。</p>
+      <p class="page-sub" style="margin:10px 0 0;font-size:13px">口语只出题、不批改：自己开口练（可录音回听），答得如何由你自行判断。看完点「下一题」，全部练完点「完成练习」→ 记录为已做过（无需批改），老师会为这个栏目补新话题。</p>
     </div>
     <div id="speak-stage"></div>`;
   if (!speakQs.length) {
@@ -629,33 +638,45 @@ function renderSpeakCard() {
       <div class="q-top"><span class="q-type">${partLabel}</span></div>
       <div class="q-prompt">${esc(q.prompt)}</div>
     </div>`;
+  const isLast = speakIdx >= speakQs.length - 1;
   $("#speak-stage").innerHTML = `
     ${cardHTML}
     <div class="speak-actions">
       <span class="speak-progress">第 ${speakIdx + 1} / ${speakQs.length} 题</span>
       <div>
         <button class="btn ghost" id="btn-prev" ${speakIdx === 0 ? "disabled" : ""}>← 上一题</button>
-        <button class="btn primary" id="btn-next">${speakIdx >= speakQs.length - 1 ? "全部练完 ✓" : "下一题 →"}</button>
+        <button class="btn primary" id="btn-next">${isLast ? "完成练习 ✓（记录为已做）" : "下一题 →"}</button>
       </div>
     </div>`;
-  $("#btn-next").addEventListener("click", () => {
-    if (speakIdx >= speakQs.length - 1) {
+  $("#btn-next").addEventListener("click", async () => {
+    if (!isLast) {
+      speakIdx += 1;
+      renderSpeakCard();
+      window.scrollTo(0, 0);
+      return;
+    }
+    // 全部练完 → 提交「完成」：记录为已做过（status=done，无需批改，不进待批改队列）
+    const btn = $("#btn-next");
+    btn.disabled = true;
+    btn.textContent = "提交中…";
+    try {
+      await API.speakingDone(speakHwId);
       $("#speak-stage").innerHTML = `
         <div class="card" style="text-align:center;padding:40px 30px">
           <div style="font-size:44px">🎉</div>
-          <h2>全部话题练完！</h2>
-          <p class="page-sub">想再来一轮点「重新开始」；想换话题，等老师发布新的口语卷（老师会优先从你「我的」页填写的当季话题里抽题）。</p>
+          <h2>口语练习完成！</h2>
+          <p class="page-sub">这份口语卷已记录为「已练完 · 无需批改」。想再练一轮点「重新开始」；返回首页后，老师会为口语栏目补上新话题卷（优先从你「我的」页填写的当季话题里抽）。</p>
           <div style="margin-top:12px;display:flex;gap:10px;justify-content:center">
             <button class="btn primary" id="btn-restart">重新开始</button>
             <a class="btn ghost" href="#/">返回首页</a>
           </div>
         </div>`;
-      $("#btn-restart").addEventListener("click", () => { speakIdx = 0; renderSpeakCard(); });
-      return;
+      $("#btn-restart").addEventListener("click", () => { speakIdx = 0; renderSpeakCard(); window.scrollTo(0, 0); });
+    } catch (e) {
+      toast(`❌ 标记失败：${e.message}`);
+      btn.disabled = false;
+      btn.textContent = "重试：完成练习 ✓";
     }
-    speakIdx += 1;
-    renderSpeakCard();
-    window.scrollTo(0, 0);
   });
   const prev = $("#btn-prev");
   if (prev) prev.addEventListener("click", () => {
@@ -669,6 +690,8 @@ async function viewResult(sid) {
   let d;
   try { d = await API.result(sid); }
   catch (e) { return renderError(app, e); }
+  // 口语卷：只有「练习记录」，无得分无批改
+  if (d.homework_skill === "ielts_speaking") return renderSpeakingRecord(app, d);
   const waiting = d.status !== "graded"
     ? `<div class="waiting">⏳ 本卷还有题目在批改中（当前状态：${SUB_STATUS[d.status] || d.status}）。批改完成后刷新页面即可看到完整结果与讲解。</div>`
     : "";
@@ -690,6 +713,33 @@ async function viewResult(sid) {
   app.innerHTML = `${hero}${waiting}${vocabNote}${items}<div style="text-align:center;margin-top:18px">
     <a class="btn ghost" href="#/">← 返回首页</a></div>`;
   bindPhraseButtons();
+}
+
+/* 口语练习记录页（完成即记录，无得分、不批改，只回顾练过的话题） */
+function renderSpeakingRecord(app, d) {
+  const items = (d.items || []).map((q) => {
+    const ex = q.extra || {};
+    const p = Number(ex.part) || 1;
+    const partLabel = { 1: "Part 1 · 日常问答", 2: "Part 2 · 个人陈述", 3: "Part 3 · 深入讨论" }[p] || `Part ${p}`;
+    return `
+    <div class="r-card" style="border-left-color:var(--accent)">
+      <div class="q-top"><span class="q-type">${partLabel}</span></div>
+      <div class="q-prompt">${esc(q.prompt)}</div>
+    </div>`;
+  }).join("");
+  app.innerHTML = `
+    <div class="score-hero">
+      <h1>${esc(d.homework_title)} · 练习记录</h1>
+      <div class="score-row">
+        <span class="score-meta">🎤 已练完 · 无需批改（${d.items.length} 个话题 · ${fmtDate(d.submitted_at)}）</span>
+      </div>
+    </div>
+    <p class="page-sub">口语练习不判对错、不批改，只记录练习轨迹。这里是本次练过的话题，方便你回顾。</p>
+    ${items}
+    <div style="text-align:center;margin-top:18px;display:flex;gap:10px;justify-content:center">
+      <a class="btn primary" href="#/paper/${d.homework_id}">再来一轮</a>
+      <a class="btn ghost" href="#/">返回首页</a>
+    </div>`;
 }
 
 function clozePerBlank(it) {
@@ -1261,7 +1311,7 @@ async function viewMe() {
 
     <div class="card" style="margin-bottom:18px">
       <h3 class="card-h">🎤 口语当季话题（Part 1 / Part 2）</h3>
-      <p class="page-sub" style="font-size:13px;margin-bottom:10px">老师出随机口语话题时<strong>优先从当季话题里选</strong>，也会少量随机追问或在同一话题下多问几题；Part 3 由老师自行出题（口语只出题、不要求作答、不批改）。</p>
+      <p class="page-sub" style="font-size:13px;margin-bottom:10px">老师出随机口语话题时<strong>优先从当季话题里选</strong>，也会少量随机追问或在同一话题下多问几题；Part 3 由老师自行出题；口语只出题不批改，练完全部话题点「完成练习」即可记录为已做过。</p>
       ${field("pf-p1", "Part 1 当季话题（逗号分隔）", p1Topics, "例如：工作或学习，家乡，天气，空闲时间")}
       ${field("pf-p2", "Part 2 当季话题（逗号分隔）", p2Topics, "例如：描述一个你钦佩的人，一次难忘的旅行，一个安静的地方")}
     </div>
