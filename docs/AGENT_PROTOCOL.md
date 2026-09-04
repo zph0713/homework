@@ -152,14 +152,21 @@ CLI 会自动建库，无需手工初始化。
   "type": "speaking",
   "prompt": "Describe a memorable trip you have taken.\n\nYou should say:\n- where you went\n- who you went with\n- what you did there\n\nand explain why this trip was memorable for you.",
   "answer": "",
-  "extra": { "part": 2 },
+  "extra": {
+    "part": 2,
+    "suggestions": [
+      { "en": "It was a real eye-opener for me.", "zh": "那次旅行真让我大开眼界" },
+      { "en": "It left a lasting impression on me.", "zh": "它给我留下了深刻的印象" }
+    ]
+  },
   "knowledge_point": "口语Part2",
   "score": 0
 }
 ```
 
 - `answer` 留空；`extra.part` 为 1/2/3；Part 2 的 prompt 用多行写「Describe ... / You should say: ... and explain ...」，前端渲染成真题风格题目卡
-- 口语卷没有提交与批改，不计入任何统计；话题优先取学生「我的」页的当季话题（`profile get`）
+- **`extra.suggestions`（推荐每题配 6~10 条）**：该话题的地道词汇/短语/短句 + 中文，练完点「完成练习」后前端按话题展示，供学生对照优化后续回答；可直接收藏进短语本
+- 口语卷的提交仅作「完成记录」（status=done），没有批改、不计入任何统计；话题优先取学生「我的」页的当季话题（`profile get`）
 
 **⑦ phrase 短语讲解卡（AI 老师教 · 学生收藏）**
 

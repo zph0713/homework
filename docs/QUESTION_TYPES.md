@@ -86,17 +86,18 @@ python3 agent/cli.py vocab check-result --sub <提交id>
 
 ## speaking · 口语话题（纯文字 · 只出题不批改）
 
-**用途**：雅思口语 Part 1 / Part 2 / Part 3 随机话题训练。**只出题，不要求作答、不做批改**，学生自行开口练习、自行判断，前端只提供「下一题」按钮。
+**用途**：雅思口语 Part 1 / Part 2 / Part 3 随机话题训练。**只出题，不要求作答、不做批改**：学生自己开口练、自行判断，点「下一题」逐题过；全部练完点「完成练习」→ 前端记录为已做过（status=done），并展示本卷的**参考表达**供对照优化。
 
 **出题要点**：
-- 试卷 `skill` 必须为 `ielts_speaking`（前端识别后进入口语流程页，不显示交卷栏）
-- 每道题：`type=speaking`，`prompt`=题目文本，`answer` 留空 `""`，`extra={"part": 1|2|3}`，`score=0`
+- 试卷 `skill` 必须为 `ielts_speaking`（前端识别后进入口语流程页，无交卷栏，只有完成记录）
+- 每道题：`type=speaking`，`prompt`=题目文本，`answer` 留空 `""`，`extra={"part": 1|2|3, "suggestions": [...]}`，`score=0`
+- **`extra.suggestions`：每题配 6~10 条该话题的地道表达**（词/短语/短句 + 中文），`[{ "en": "...", "zh": "..." }]`——按话题给足可直接替换的素材：如 hometown 给衣食住行短句（street food / within walking distance / public transport...）、Part 2 地点卡给场景描述句（breathtaking / soak up the atmosphere...）；练完点「完成」后按话题逐卡展示，可收藏进短语本
 - **Part 2 尽量模拟真实考试**：prompt 用多行文本写「Describe ... / You should say: - 要点1 - 要点2 ... and explain ...」，前端会渲染成真题风格的题目卡（含「准备 1 分钟 · 陈述 1-2 分钟」提示）
 - **话题来源优先级**：① 学生「我的」页填写的 Part 1 / Part 2 当季话题（`profile get` 的 `ielts_part1_topics` / `ielts_part2_topics`）② 少量随机追问或在同一话题下多问几题 ③ Part 3 由老师自行出题（基于 Part 2 话题延伸）
 - 一份口语卷建议 6~12 题（Part 1 若干 + Part 2 一题 + Part 3 追问若干）
 - 贴近剑桥真题：Part 1 日常问答（hometown / work or study / weather / leisure...），Part 2 人物 / 地点 / 事件 / 物品 / 活动类卡片题
 
-**实现说明**：口语卷没有提交、没有批改、不计入任何统计；`knowledge_point` 写「口语Part1」等仅作标注。
+**实现说明**：口语卷练完只记「完成」（submission status=`done`），无批改、不计入任何统计；`knowledge_point` 写「口语Part1」等仅作标注。
 
 ## phrase · 短语讲解卡（AI 老师教 · 学生收藏）
 

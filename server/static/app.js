@@ -613,7 +613,7 @@ function viewSpeaking(paper) {
       <h1>${esc(h.title)}</h1>
       <div class="hw-meta"><span class="badge skill">🎤 口语随机话题</span><span class="badge">${speakQs.length} 题</span></div>
       ${h.goal ? `<div class="goal">🎯 ${esc(h.goal)}</div>` : ""}
-      <p class="page-sub" style="margin:10px 0 0;font-size:13px">口语只出题、不批改：自己开口练（可录音回听），答得如何由你自行判断。看完点「下一题」，全部练完点「完成练习」→ 记录为已做过（无需批改），老师会为这个栏目补新话题。</p>
+      <p class="page-sub" style="margin:10px 0 0;font-size:13px">口语只出题、不批改：自己开口练（可录音回听），答得如何由你自行判断。看完点「下一题」，全部练完点「完成练习」→ 记录为已做过，并附上本卷话题的地道表达参考（可收藏进短语本）。</p>
     </div>
     <div id="speak-stage"></div>`;
   if (!speakQs.length) {
@@ -621,6 +621,44 @@ function viewSpeaking(paper) {
     return;
   }
   renderSpeakCard();
+}
+
+/* 口语卷参考表达（完成/记录页展示：每话题 → 地道词/短语/短句 + 中文，可收藏进短语本）
+   suggestions 由出卷老师写在每题 extra.suggestions=[{en,zh},...]，展示型、不批改。 */
+function speakRefHTML(qs) {
+  let topicNo = 0;
+  const blocks = (qs || []).map((q) => {
+    const ex = q.extra || {};
+    const sug = Array.isArray(ex.suggestions) ? ex.suggestions.filter((s) => s && s.en) : [];
+    if (!sug.length) return "";
+    topicNo += 1;
+    const p = Number(ex.part) || 1;
+    const partLabel = { 1: "Part 1", 2: "Part 2", 3: "Part 3" }[p] || `Part ${p}`;
+    const firstLine = esc(String(q.prompt || "").split("\n")[0].trim()).slice(0, 70);
+    const items = sug.map((s) => {
+      const data = JSON.stringify({ phrase: s.en, meaning_cn: s.zh || "" })
+        .replace(/"/g, "&quot;");
+      return `
+      <div class="sr-item">
+        <span class="sr-en">${esc(s.en)}</span>
+        ${s.zh ? `<span class="sr-zh">${esc(s.zh)}</span>` : ""}
+        <button class="btn ghost small sr-add" data-add-phrase="${data}" title="收藏进短语本">＋收藏</button>
+      </div>`;
+    }).join("");
+    return `
+    <div class="sr-topic">
+      <div class="sr-head"><span class="q-type">${partLabel}</span>
+        <span class="sr-no">话题 ${topicNo}</span><span class="sr-title">${firstLine}</span></div>
+      <div class="sr-list">${items}</div>
+    </div>`;
+  }).join("");
+  if (!blocks) return "";
+  return `
+    <div class="card speak-ref">
+      <h3 style="margin:0 0 4px">📚 参考表达 · 本卷话题的地道说法</h3>
+      <p class="page-sub" style="font-size:13px;margin:0 0 10px">练完对照看看：这些词 / 短语 / 短句可以直接替换你刚才的回答，点「＋收藏」进短语本反复背。</p>
+      ${blocks}
+    </div>`;
 }
 
 function renderSpeakCard() {
@@ -661,17 +699,21 @@ function renderSpeakCard() {
     btn.textContent = "提交中…";
     try {
       await API.speakingDone(speakHwId);
+      const refBlock = speakRefHTML(speakQs)
+        || '<div class="card speak-ref" style="margin-top:14px"><h3 style="margin:0 0 4px">📚 参考表达</h3><p class="page-sub" style="font-size:13px;margin:0">这份口语卷还没配参考表达（老师补配后这里会展示地道词 / 短语 / 短句）。新口语卷都会自带。</p></div>';
       $("#speak-stage").innerHTML = `
-        <div class="card" style="text-align:center;padding:40px 30px">
+        <div class="card" style="text-align:center;padding:40px 30px 26px">
           <div style="font-size:44px">🎉</div>
           <h2>口语练习完成！</h2>
-          <p class="page-sub">这份口语卷已记录为「已练完 · 无需批改」。想再练一轮点「重新开始」；返回首页后，老师会为口语栏目补上新话题卷（优先从你「我的」页填写的当季话题里抽）。</p>
+          <p class="page-sub">这份口语卷已记录为「已练完 · 无需批改」。下面这份参考表达来自本卷话题，供你对照优化后续回答；想再练一轮点「重新开始」。</p>
           <div style="margin-top:12px;display:flex;gap:10px;justify-content:center">
             <button class="btn primary" id="btn-restart">重新开始</button>
             <a class="btn ghost" href="#/">返回首页</a>
           </div>
-        </div>`;
+        </div>
+        ${refBlock}`;
       $("#btn-restart").addEventListener("click", () => { speakIdx = 0; renderSpeakCard(); window.scrollTo(0, 0); });
+      bindPhraseButtons();
     } catch (e) {
       toast(`❌ 标记失败：${e.message}`);
       btn.disabled = false;
@@ -734,12 +776,14 @@ function renderSpeakingRecord(app, d) {
         <span class="score-meta">🎤 已练完 · 无需批改（${d.items.length} 个话题 · ${fmtDate(d.submitted_at)}）</span>
       </div>
     </div>
-    <p class="page-sub">口语练习不判对错、不批改，只记录练习轨迹。这里是本次练过的话题，方便你回顾。</p>
+    <p class="page-sub">口语练习不判对错、不批改，只记录练习轨迹。这里是本次练过的话题与参考表达，方便你回顾和优化回答。</p>
     ${items}
+    ${speakRefHTML(d.items)}
     <div style="text-align:center;margin-top:18px;display:flex;gap:10px;justify-content:center">
       <a class="btn primary" href="#/paper/${d.homework_id}">再来一轮</a>
       <a class="btn ghost" href="#/">返回首页</a>
     </div>`;
+  bindPhraseButtons();
 }
 
 function clozePerBlank(it) {

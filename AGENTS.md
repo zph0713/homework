@@ -118,7 +118,7 @@ python3 agent/cli.py weekly record --sampled "kp1,kp2" --wrong "kp1" --hw <id>
 
 - 题型：choice / fill / cloze / tfng / writing / translate / speaking（口语，只出题不批改）/ phrase（短语讲解卡，不答题）；默写 = fill + skill=vocabulary + 知识点「词汇-默写」；抽查 = fill + 知识点「词汇-抽查」（用 CLI 生成，勿手写）。**listening 未实现，不要出**（预留见 docs/ROADMAP.md）
 - **作业三栏目（skill 决定归属）**：grammar=语法作业；vocabulary=词汇短语作业；ielts_reading / ielts_stem / ielts_essay / ielts_speaking=雅思专项训练四栏目。**掌握度/图谱/错题本/近期正确率只统计 skill=grammar**
-- 口语卷（ielts_speaking）：`type=speaking` + `extra={"part":1|2|3}`，`answer=""`；Part2 的 prompt 用多行写「Describe.../You should say:...and explain...」，前端渲染真题卡（准备 1 分钟·陈述 1-2 分钟）；学生点「下一题」逐题练，全部练完点「完成练习」→ 记录为已做过（submission status=`done`，不进待批改、不批改），卡片显示「已练完」，可「再来一轮」反复练
+- 口语卷（ielts_speaking）：`type=speaking` + `extra={"part":1|2|3, "suggestions":[...]}`，`answer=""`；Part2 的 prompt 用多行写「Describe.../You should say:...and explain...」，前端渲染真题卡（准备 1 分钟·陈述 1-2 分钟）；学生点「下一题」逐题练，全部练完点「完成练习」→ 记录为已做过（submission status=`done`，不进待批改、不批改），卡片显示「已练完」，可「再来一轮」反复练；**每题 extra.suggestions 配 6~10 条该话题地道表达（{en,zh}）**，练完点「完成」后按话题展示参考表达、可收藏进短语本（旧口语卷可用 scripts/backfill_speaking_suggestions.py 回写补配）
 - 学生在网页可：划词加入单词本、单词本页填中文/词性（多选下拉）并确认、改画像（「我的」页：三类作业要求+口语当季话题）、错题本申请重练（下次语法作业额外加题）、短语卡收藏进短语本、删除作业卡、设置页改库路径/端口
 - 知识图谱：作答超过 5 次才按正确率计分，≥85% 且超过 5 次 = 已掌握
 - 题型细节以 `docs/QUESTION_TYPES.md` 为准

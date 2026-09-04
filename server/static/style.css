@@ -451,6 +451,22 @@ code { background: var(--soft); border-radius: 6px; padding: 2px 7px; font-size:
   gap: 12px; margin: 18px 0 30px; flex-wrap: wrap; }
 .speak-progress { font-size: 13.5px; color: var(--muted); }
 
+/* ---------- 口语卷参考表达（练完展示，可收藏） ---------- */
+.speak-ref { margin-top: 14px; }
+.sr-topic { margin-bottom: 14px; }
+.sr-topic:last-child { margin-bottom: 0; }
+.sr-head { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; flex-wrap: wrap; }
+.sr-no { font-size: 12px; font-weight: 700; color: var(--accent); }
+.sr-title { font-size: 13px; color: var(--muted); overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap; max-width: 70%; }
+.sr-list { display: flex; flex-direction: column; gap: 6px; }
+.sr-item { display: flex; align-items: baseline; gap: 10px;
+  background: var(--bg, rgba(127, 127, 127, .05)); border: 1px solid var(--line);
+  border-radius: 9px; padding: 7px 12px; }
+.sr-item .sr-en { font-weight: 600; flex: 0 0 auto; }
+.sr-item .sr-zh { color: var(--muted); font-size: 13px; flex: 1 1 auto; }
+.sr-add { flex: none; margin-left: auto; }
+
 /* ---------- 我的页图谱折叠 ---------- */
 details.map-fold { margin-top: 4px; }
 details.map-fold summary { cursor: pointer; color: var(--muted); font-size: 13px;

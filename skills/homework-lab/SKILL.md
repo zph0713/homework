@@ -167,7 +167,7 @@ python3 agent/cli.py vocab list --unfilled       # 缺中文/词性的词（提�
 
 - 题型：choice / fill / cloze / tfng / writing / translate / speaking（口语，只出题不批改）/ phrase（短语讲解卡，不答题）；默写=fill+skill=vocabulary+知识点「词汇-默写」；抽查=fill+知识点「词汇-抽查」（用 CLI 生成，勿手写）。**listening 未实现，不要出**（预留见 docs/ROADMAP.md）
 - **作业三栏目（skill 决定归属）**：grammar=语法作业；vocabulary=词汇短语作业；ielts_reading / ielts_stem / ielts_essay / ielts_speaking=雅思专项训练四栏目。**掌握度/图谱/错题本/近期正确率只统计 skill=grammar**
-- 口语卷（ielts_speaking）：`type=speaking` + `extra={"part":1|2|3}`，`answer=""`；Part2 的 prompt 用多行写「Describe.../You should say:...and explain...」前端渲染真题卡；学生点「下一题」逐题练，全部练完点「完成练习」→ 记录为已做过（status=done，不进待批改、不批改），卡片显示「已练完」
+- 口语卷（ielts_speaking）：`type=speaking` + `extra={"part":1|2|3, "suggestions":[{en,zh},...]}`，`answer=""`；Part2 的 prompt 用多行写「Describe.../You should say:...and explain...」前端渲染真题卡；学生点「下一题」逐题练，全部练完点「完成练习」→ 记录为已做过（status=done，不进待批改、不批改），卡片显示「已练完」；出题时每题 suggestions 配 6~10 条该话题地道表达（词/短语/短句+中文），练完点「完成」按话题展示参考表达、可收藏进短语本（旧卷回写见 scripts/backfill_speaking_suggestions.py）
 - 学生在网页可：划词加入单词本、单词本页填中文/词性（多选下拉）并确认、错题本申请重练（下次语法作业额外加题）、删除作业卡（有确认弹窗）、「我的」页填三类作业要求+口语当季话题+画像、短语卡收藏进短语本、设置页改库路径/端口/教学规则
 - 知识图谱：作答超过 `mastery_min_attempts` 次才按正确率计分，≥ `mastery_threshold`% 且次数足够 = 已掌握
 - 出题能力不匹配前端时先查 `docs/QUESTION_TYPES.md`，别让 AI 自定义新题型

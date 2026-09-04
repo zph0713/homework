@@ -2,13 +2,27 @@
   "title": "雅思口语 #1 · 家乡 / 学习 / 城市话题",
   "skill": "ielts_speaking",
   "topic": "IELTS 口语 Part 1 / 2 / 3",
-  "goal": "口语随机话题训练：Part 1 日常问答 ×3、Part 2 人物卡片 ×1、Part 3 延伸讨论 ×2。只出题不批改，自行开口练习（准备 1 分钟 · 陈述 1-2 分钟）。",
+  "goal": "口语随机话题训练：Part 1 日常问答 ×3、Part 2 人物卡片 ×1、Part 3 延伸讨论 ×2。只出题不批改，自行开口练习（准备 1 分钟 · 陈述 1-2 分钟）；练完点「完成练习」，本卷会展示每个话题的地道表达参考供优化回答。",
   "questions": [
     {
       "type": "speaking",
       "prompt": "Let's talk about your hometown.\n- Do you like the place where you live now? Why or why not?\n- What is the most interesting part of your hometown?\n- Would you like to live there in the future?",
       "answer": "",
-      "extra": { "part": 1 },
+      "extra": {
+        "part": 1,
+        "suggestions": [
+          { "en": "The street food here is cheap and tasty.", "zh": "这边的小吃便宜又好吃（食）" },
+          { "en": "I live in a flat in the city centre.", "zh": "我住在市中心的一套公寓里（住）" },
+          { "en": "Public transport is really convenient — you can get anywhere by metro.", "zh": "公共交通很方便，坐地铁哪儿都能到（行）" },
+          { "en": "Everything I need is within walking distance.", "zh": "要用的东西走路就能买到（行/住）" },
+          { "en": "Renting here is more affordable than in the capital.", "zh": "这边房租比首都便宜（住）" },
+          { "en": "The pace of life here is much more relaxed.", "zh": "这里的生活节奏慢得多" },
+          { "en": "It has four distinct seasons, so there's always something to enjoy.", "zh": "四季分明，每个季节都有可看的" },
+          { "en": "It's a friendly place where neighbours know each other.", "zh": "邻里都认识，人情味浓" },
+          { "en": "I've grown up here, so it will always feel like home.", "zh": "我在这儿长大，永远觉得这里才是家" },
+          { "en": "It's a great place to settle down and bring up a family.", "zh": "很适合安定下来、成家育儿" }
+        ]
+      },
       "knowledge_point": "口语Part1",
       "score": 0
     },
@@ -16,7 +30,19 @@
       "type": "speaking",
       "prompt": "Let's talk about work or study.\n- Do you work or are you a student?\n- What do you like most about your job or studies?\n- Do you prefer studying in the morning or in the evening? Why?",
       "answer": "",
-      "extra": { "part": 1 },
+      "extra": {
+        "part": 1,
+        "suggestions": [
+          { "en": "I'm currently doing a degree in business.", "zh": "我目前在读商科学位" },
+          { "en": "I'm in my final year, so the workload is quite heavy.", "zh": "我读最后一年，课业很重" },
+          { "en": "I usually hit the books in the library after class.", "zh": "下课后我常在图书馆用功" },
+          { "en": "What I enjoy most is the group discussions in class.", "zh": "我最喜欢课堂上的小组讨论" },
+          { "en": "I prefer studying in the morning when my mind is fresh.", "zh": "我更喜欢早上脑子清醒时学习" },
+          { "en": "I'm hoping to land a job in marketing after graduation.", "zh": "毕业后我想进市场营销这一行" },
+          { "en": "A good work-life balance matters more to me than a high salary.", "zh": "对我来说，工作生活平衡比高薪更重要" },
+          { "en": "My colleagues are supportive and easy to work with.", "zh": "同事很支持，也好相处" }
+        ]
+      },
       "knowledge_point": "口语Part1",
       "score": 0
     },
@@ -24,7 +50,19 @@
       "type": "speaking",
       "prompt": "Let's talk about the weather.\n- What kind of weather do you like most? Why?\n- Does the weather affect your mood?\n- What do you usually do when it rains?",
       "answer": "",
-      "extra": { "part": 1 },
+      "extra": {
+        "part": 1,
+        "suggestions": [
+          { "en": "The weather here is mild for most of the year.", "zh": "这里一年大部分时间气候温和" },
+          { "en": "I love sunny spells after a few days of rain.", "zh": "连下几天雨后的放晴，我最喜欢" },
+          { "en": "It was pouring with rain this morning.", "zh": "今天早上下了倾盆大雨" },
+          { "en": "Gloomy days do make me feel a bit low.", "zh": "阴沉的天确实让我有点没精神" },
+          { "en": "There's nothing better than a crisp autumn morning.", "zh": "秋高气爽的早晨最舒服" },
+          { "en": "In winter you really need to wrap up warm.", "zh": "冬天必须穿得暖暖的" },
+          { "en": "I don't really mind the rain — it keeps the air fresh.", "zh": "我倒不太介意下雨，雨后空气新鲜" },
+          { "en": "The summers here are hot and humid, which can be draining.", "zh": "这里夏天湿热，挺耗人的" }
+        ]
+      },
       "knowledge_point": "口语Part1",
       "score": 0
     },
@@ -32,7 +70,21 @@
       "type": "speaking",
       "prompt": "Describe a city you have visited that you remember well.\n\nYou should say:\n- where the city is\n- when you visited it\n- what you did there\n\nand explain why you remember this city so well.",
       "answer": "",
-      "extra": { "part": 2 },
+      "extra": {
+        "part": 2,
+        "suggestions": [
+          { "en": "The old town is beautifully preserved.", "zh": "老城区保存得非常完好" },
+          { "en": "The skyline at night is absolutely breathtaking.", "zh": "夜晚的天际线美得惊人" },
+          { "en": "I spent the afternoons just wandering around the streets.", "zh": "我下午就在街上随意闲逛" },
+          { "en": "There's a lively night market where you can try local snacks.", "zh": "有个很热闹的夜市，能尝到本地小吃" },
+          { "en": "I soaked up the atmosphere from a café by the river.", "zh": "我坐在河边的咖啡店感受当地氛围" },
+          { "en": "Every corner seemed to have a story to tell.", "zh": "每个角落似乎都有故事" },
+          { "en": "It left a lasting impression on me.", "zh": "它给我留下了深刻的印象" },
+          { "en": "The locals were incredibly welcoming.", "zh": "当地人格外热情好客" },
+          { "en": "I'd recommend it to anyone who loves history and good food.", "zh": "我会把它推荐给所有爱历史、爱美食的人" },
+          { "en": "It was a real eye-opener for me.", "zh": "那次旅行真让我大开眼界" }
+        ]
+      },
       "knowledge_point": "口语Part2",
       "score": 0
     },
@@ -40,7 +92,17 @@
       "type": "speaking",
       "prompt": "Part 3 延伸讨论（基于「城市」话题）：\n- How has tourism changed in your country in recent years?\n- Do you think cities are becoming too crowded? Why?\n- What could governments do to improve life in big cities?",
       "answer": "",
-      "extra": { "part": 3 },
+      "extra": {
+        "part": 3,
+        "suggestions": [
+          { "en": "The recent travel boom has transformed the city centre.", "zh": "近年的旅游热彻底改变了市中心" },
+          { "en": "Some tourist hotspots are overcrowded at weekends.", "zh": "一些热门景点周末人满为患" },
+          { "en": "Overtourism can put a real strain on local resources.", "zh": "过度旅游会给当地资源带来实际压力" },
+          { "en": "Locals tend to get off the beaten track to avoid the crowds.", "zh": "本地人往往去小众路线避开人流" },
+          { "en": "Seasonal influxes of visitors drive up prices for residents.", "zh": "旺季游客涌入会抬高居民的生活成本" },
+          { "en": "A balance needs to be struck between tourism and daily life.", "zh": "旅游发展与日常生活之间需要取得平衡" }
+        ]
+      },
       "knowledge_point": "口语Part3",
       "score": 0
     },
@@ -48,7 +110,18 @@
       "type": "speaking",
       "prompt": "Part 3 延伸讨论（基于「城市」话题）：\n- Why do many young people prefer living in cities to living in the countryside?\n- Do you think the advantages of city life outweigh the disadvantages? Why?\n- How might cities change in the next 50 years?",
       "answer": "",
-      "extra": { "part": 3 },
+      "extra": {
+        "part": 3,
+        "suggestions": [
+          { "en": "Urban sprawl is one of the biggest challenges cities face.", "zh": "城市无序扩张是城市面临的最大挑战之一" },
+          { "en": "More green spaces would make cities far more liveable.", "zh": "更多绿地会让城市宜居得多" },
+          { "en": "Smart city initiatives could cut traffic and energy use.", "zh": "智慧城市举措能减少拥堵和能源消耗" },
+          { "en": "Affordable housing is the key to keeping young people in cities.", "zh": "可负担的住房是把年轻人留在城市的关键" },
+          { "en": "Remote working has already eased the pressure on commuting.", "zh": "远程办公已经缓解了通勤压力" },
+          { "en": "Future cities will be built around public transport, not cars.", "zh": "未来的城市会围绕公共交通而建，而不是汽车" },
+          { "en": "Cities are engines of opportunity and innovation.", "zh": "城市是机遇与创新的引擎" }
+        ]
+      },
       "knowledge_point": "口语Part3",
       "score": 0
     }

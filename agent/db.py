@@ -418,6 +418,17 @@ def validate_paper(data):
                 continue
             if not q.get("prompt"):
                 errors.append(f"第{i}题({t}): 缺少 prompt")
+            if t == "speaking":
+                # 可选：口语卷练完展示的参考表达（地道词/短语/短句 + 中文）
+                sug = (q.get("extra") or {}).get("suggestions")
+                if sug is not None:
+                    if not isinstance(sug, list) or not sug:
+                        errors.append(f"第{i}题(speaking): extra.suggestions 应为非空数组")
+                    else:
+                        for j, s in enumerate(sug, 1):
+                            if not isinstance(s, dict) or not str(s.get("en") or "").strip() \
+                                    or not str(s.get("zh") or "").strip():
+                                errors.append(f"第{i}题(speaking): extra.suggestions[{j}] 需含 en 与 zh 文本")
             ans = q.get("answer")
             if t in NO_GRADE_TYPES:
                 continue  # 展示型题目：answer 可省略（口语只出题 / 短语只讲解）
