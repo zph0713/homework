@@ -434,6 +434,31 @@ def cmd_vocab(args):
         cmd_vocab_check_result(args)
     elif args.vocab_cmd == "homework":
         cmd_vocab_homework(args)
+    elif args.vocab_cmd == "status":
+        cmd_vocab_status(args)
+
+
+def cmd_vocab_status(args):
+    """词汇短语作业栏目常备检查：vocabulary 栏目要保持 ≥1 张「未做」作业卡。
+
+    学生做完/删掉后（vocab 卷交卷即定稿）栏目会空出来 → 用
+    `vocab homework` 一键生成补一张（交卷自批改，老师不批）。
+    """
+    with db.connect() as conn:
+        missing = [s for s in db.VOCAB_TOPUP_SKILLS
+                   if not db._column_unattempted_exists(conn, s)]
+    if args.json:
+        print(json.dumps({"missing": missing, "all_ready": not missing},
+                         ensure_ascii=False))
+        return
+    if not missing:
+        print("📚 词汇短语作业常备 ✓ 有一张未做的作业")
+        return
+    print("⚠️ 词汇短语栏目没有「未做」的作业卡，需要补齐：")
+    print("   补齐动作（一键生成，勿手写）：")
+    print("   python3 agent/cli.py vocab homework --ielts 20 --wordbook 5 --phrases 5 "
+          "--out papers/vocab_homework_xxx.json")
+    print("   python3 agent/cli.py create papers/vocab_homework_xxx.json")
 
 
 def _vocab_question(w, tag):
@@ -876,6 +901,8 @@ def main(argv=None):
     pvhw.add_argument("--wordbook", type=int, default=5, help="单词本词汇数（默认 5）")
     pvhw.add_argument("--phrases", type=int, default=5, help="短语讲解卡数（默认 5）")
     pvhw.add_argument("--out", default="papers/vocab_homework.json", help="输出路径")
+    pvst = pvs.add_parser("status", help="词汇短语栏目常备检查（是否有一张未做作业）")
+    pvst.add_argument("--json", action="store_true", help="输出 JSON（供巡检脚本）")
 
     pph = sub.add_parser("phrase", help="短语本（AI 老师教、学生收藏）")
     pphs = pph.add_subparsers(dest="phrase_cmd", required=True)

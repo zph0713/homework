@@ -156,11 +156,14 @@ python3 agent/cli.py vocab list --unfilled       # 缺中文/词性的词（提�
 - 查看：`python3 agent/cli.py phrase list`；手动加：`phrase add --phrase "..." --meaning "..." --example "..."`
 - 短语本与单词本是两个独立本子（单词=学生填中文词性+抽查池；短语=老师教+收藏）
 
-## 雅思四栏目常备（时刻补齐）
+## 常备作业 · 时刻补齐（词汇短语作业 + 雅思四子栏目）
 
-- 目标：雅思 4 子栏目（ielts_reading / ielts_stem / ielts_essay / ielts_speaking）**每栏时刻 ≥1 张未做作业卡**。
-- 判定：`python3 agent/cli.py ielts status`（缺哪栏一目了然）；巡检脚本 `scripts/ielts_topup_status.py` 输出恒定 OK=不用补 / 缺口行=要补（供 Hermes cron monitor 用）。
-- 补齐动作：会话中每次批改/收尾后顺手检查，缺哪栏当场出 1 张新卷（按画像 ielts_requirement 与当季口语话题、参考 papers/ 历史卷风格、话题不与最近重复）；会话外定时巡检兜底（缺口出现才唤醒，补齐后静默）。
+- 目标：**词汇短语作业**（vocabulary）与雅思 4 子栏目（ielts_reading / ielts_stem / ielts_essay / ielts_speaking）**每栏时刻保持 ≥1 张未做作业卡**。
+- 判定：`python3 agent/cli.py vocab status`（词汇栏）+ `ielts status`（雅思四栏）——缺哪一目了然；聚合巡检脚本 `scripts/topup_status.py` 输出恒定 OK=不用补 / 缺口行=要补（供 Hermes cron monitor 用）。
+- 补齐动作：会话中每次批改/收尾后顺手 `vocab status` + `ielts status`，缺就当场补：
+  - 词汇作业栏 → `vocab homework --ielts 20 --wordbook 5 --phrases 5 --out papers/vocab_homework_xxx.json` 一键生成 → `create` 发布（交卷自批改，老师不批）
+  - 雅思栏目 → 出 1 张该栏目新卷（按画像 ielts_requirement 与当季口语话题、参考 papers/ 历史卷风格、话题不与最近重复）
+  - 会话外定时巡检兜底（缺口出现才唤醒，补齐后静默）。
 - 口语卷练完 = 网页端「完成练习」记 status=done（不进待批改、不批改）→ 卡片变「已练完」→ 该栏目触发补新卷。
 
 ## 前端能力速查（出题时对齐前端，勿超纲）

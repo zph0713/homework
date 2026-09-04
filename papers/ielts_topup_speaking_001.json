@@ -1,0 +1,130 @@
+{
+  "title": "雅思口语 #2 · 食物与健康 / 交通话题",
+  "skill": "ielts_speaking",
+  "topic": "IELTS 口语 Part 1 / 2 / 3",
+  "goal": "口语随机话题训练：Part 1 日常问答 ×3、Part 2 事件卡片 ×1、Part 3 延伸讨论 ×2。只出题不批改，自行开口练习；练完点「完成练习」，本卷展示每个话题的地道表达参考（可收藏进短语本）。",
+  "questions": [
+    {
+      "type": "speaking",
+      "prompt": "Let's talk about food and cooking.\n- Do you usually cook at home or eat out?\n- What is your favourite dish from your country?\n- Do you prefer home-cooked meals or takeaway food? Why?",
+      "answer": "",
+      "extra": {
+        "part": 1,
+        "suggestions": [
+          { "en": "I'd say I'm a decent cook, but nothing fancy.", "zh": "我做饭还凑合，但不是什么大厨" },
+          { "en": "I mostly cook at home during the week.", "zh": "工作日我基本在家做饭" },
+          { "en": "Home-cooked meals are healthier and cheaper in the long run.", "zh": "家常菜更健康，长远看也更省钱" },
+          { "en": "I grab a takeaway when I'm too tired to cook.", "zh": "累得不想做饭时我就点外卖" },
+          { "en": "I'm not a big fan of spicy food, to be honest.", "zh": "说实话我不是很喜欢辣的" },
+          { "en": "Cooking is a great way for me to unwind after work.", "zh": "做饭是我下班后放松的好方式" },
+          { "en": "My mum makes the best dumplings in the world.", "zh": "我妈包的饺子天下第一" },
+          { "en": "I usually follow recipes I find online.", "zh": "我一般照着网上找的菜谱做" }
+        ]
+      },
+      "knowledge_point": "口语Part1",
+      "score": 0
+    },
+    {
+      "type": "speaking",
+      "prompt": "Let's talk about public transport.\n- How do you usually get around your city?\n- Is public transport cheap in your country?\n- Would you like to see more bike lanes in your city? Why?",
+      "answer": "",
+      "extra": {
+        "part": 1,
+        "suggestions": [
+          { "en": "I commute by metro every day — it's about a 30-minute ride.", "zh": "我每天坐地铁通勤，大概半小时车程" },
+          { "en": "The metro system here is well-connected and easy to use.", "zh": "这里的地铁网四通八达，很好用" },
+          { "en": "Rush hour is absolutely packed, so I try to leave early.", "zh": "高峰期人挤人，所以我尽量早点出门" },
+          { "en": "Traffic jams are a nightmare during the rush hour.", "zh": "高峰期堵车简直是噩梦" },
+          { "en": "Cycling is getting more and more popular here.", "zh": "这边骑车的人越来越多了" },
+          { "en": "Fares keep going up, which is a bit frustrating.", "zh": "票价一直在涨，有点让人不爽" },
+          { "en": "I'd love to see more bike lanes and safer roads for cyclists.", "zh": "我希望有更多自行车道、对骑车人更安全的路" },
+          { "en": "Walking is actually my favourite way to get around.", "zh": "其实走路是我最喜欢的出行方式" }
+        ]
+      },
+      "knowledge_point": "口语Part1",
+      "score": 0
+    },
+    {
+      "type": "speaking",
+      "prompt": "Let's talk about sports and exercise.\n- Do you do any sports or exercise regularly?\n- What kind of exercise is popular among young people in your country?\n- Do you prefer exercising alone or with friends? Why?",
+      "answer": "",
+      "extra": {
+        "part": 1,
+        "suggestions": [
+          { "en": "I work out twice a week at the gym.", "zh": "我每周去健身房练两次" },
+          { "en": "Jogging in the park is my way of staying fit.", "zh": "去公园慢跑是我保持身材的方式" },
+          { "en": "I'm not really into team sports — I prefer going solo.", "zh": "我不太喜欢团体运动，更喜欢自己练" },
+          { "en": "It clears my head after a long day at work.", "zh": "工作一天后运动能让我头脑清醒" },
+          { "en": "A sedentary lifestyle is a real problem for office workers.", "zh": "久坐不动是上班族的真问题" },
+          { "en": "Exercising with friends keeps me motivated.", "zh": "和朋友一起练能让我更有动力" },
+          { "en": "I'm trying to get back into shape after the holidays.", "zh": "假期过后我正在努力恢复体型" },
+          { "en": "Even a short walk after dinner makes a difference.", "zh": "饭后哪怕散散步也很有用" }
+        ]
+      },
+      "knowledge_point": "口语Part1",
+      "score": 0
+    },
+    {
+      "type": "speaking",
+      "prompt": "Describe a new food or dish you tried for the first time.\n\nYou should say:\n- what it was\n- when and where you tried it\n- who you were with\n\nand explain how you felt about it.",
+      "answer": "",
+      "extra": {
+        "part": 2,
+        "suggestions": [
+          { "en": "I decided to give it a try even though I was a bit unsure.", "zh": "虽然心里没底，我还是决定试试" },
+          { "en": "It was a local delicacy that I'd never heard of before.", "zh": "那是一道我从未听说过的当地美食" },
+          { "en": "To be honest, it looked a bit unappetising at first.", "zh": "说实话，它一开始看着不太有食欲" },
+          { "en": "The first bite completely surprised me — it was packed with flavour.", "zh": "第一口完全出乎意料，味道特别足" },
+          { "en": "It was an acquired taste, but I ended up loving it.", "zh": "那个味道需要慢慢适应，但最后我爱上了它" },
+          { "en": "I've been craving it ever since we came back.", "zh": "回来之后我一直想吃那个味道" },
+          { "en": "My friend recommended it, so we ordered a big portion to share.", "zh": "朋友推荐的，我们点了一大份分着吃" },
+          { "en": "It's definitely something I'd order again.", "zh": "下次我肯定会再点" },
+          { "en": "Trying local food is the best part of travelling, in my opinion.", "zh": "我觉得旅行中最棒的部分就是尝当地食物" },
+          { "en": "The memory still makes my mouth water.", "zh": "现在想起来还流口水" }
+        ]
+      },
+      "knowledge_point": "口语Part2",
+      "score": 0
+    },
+    {
+      "type": "speaking",
+      "prompt": "Part 3 延伸讨论（基于「食物与健康」话题）：\n- How have people's eating habits changed in your country over the past few decades?\n- Why do you think fast food is so popular despite being unhealthy?\n- What should governments do to encourage people to eat more healthily?",
+      "answer": "",
+      "extra": {
+        "part": 3,
+        "suggestions": [
+          { "en": "People's eating habits have changed dramatically over the past few decades.", "zh": "过去几十年人们的饮食习惯发生了巨变" },
+          { "en": "Processed food has become a major part of the modern diet.", "zh": "加工食品已成为现代饮食的重要部分" },
+          { "en": "Fast food is cheap, quick and everywhere — that's the appeal.", "zh": "快餐便宜、快、到处都有——这就是它的吸引力" },
+          { "en": "Rising obesity rates are a growing public health concern.", "zh": "肥胖率上升是日益严重的公共健康问题" },
+          { "en": "A balanced diet is about variety and moderation, not giving everything up.", "zh": "均衡饮食在于多样和适度，不是什么都戒掉" },
+          { "en": "Governments could subsidise healthy options and tax sugary drinks.", "zh": "政府可以补贴健康食品、对含糖饮料征税" },
+          { "en": "Clear food labels would help people make informed choices.", "zh": "清晰的食品标签能帮人们做出知情选择" },
+          { "en": "Nutrition education in schools would pay off in the long run.", "zh": "学校的营养教育长期来看会很有回报" }
+        ]
+      },
+      "knowledge_point": "口语Part3",
+      "score": 0
+    },
+    {
+      "type": "speaking",
+      "prompt": "Part 3 延伸讨论（基于「交通与城市」话题）：\n- How can cities reduce traffic congestion?\n- Do you think the advantages of owning a car outweigh the disadvantages in big cities? Why?\n- How do you think transport will change in the next 20 years?",
+      "answer": "",
+      "extra": {
+        "part": 3,
+        "suggestions": [
+          { "en": "Congestion charges and car-free zones have worked well in some cities.", "zh": "拥堵费和禁车区在一些城市效果不错" },
+          { "en": "Investing in the metro encourages people to leave their cars at home.", "zh": "投资地铁能鼓励人们把车留在家里" },
+          { "en": "Bike-sharing schemes make the last mile much easier.", "zh": "共享单车让最后一公里方便多了" },
+          { "en": "In big cities, owning a car is more of a burden than a convenience.", "zh": "在大城市，养车更多是负担而非便利" },
+          { "en": "Parking is a nightmare and fuel costs keep rising.", "zh": "停车难，油价还一直涨" },
+          { "en": "Electric buses could cut both noise and air pollution.", "zh": "电动公交能同时减少噪音和空气污染" },
+          { "en": "Autonomous vehicles may transform how we commute.", "zh": "自动驾驶可能会彻底改变通勤方式" },
+          { "en": "The key is to make public transport the most convenient option.", "zh": "关键是要让公共交通成为最方便的选择" }
+        ]
+      },
+      "knowledge_point": "口语Part3",
+      "score": 0
+    }
+  ]
+}

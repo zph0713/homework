@@ -74,7 +74,8 @@ python3 agent/cli.py create papers/verify_xxx.json
 python3 agent/cli.py weakpoints     # 掌握度：超过 5 次且 ≥85% = 已掌握，之后降频
 python3 agent/cli.py kmap next      # 图谱顺序下一个未掌握点（目标 1）
 python3 agent/cli.py requests       # 学生重练申请，处理后 request done <id>
-python3 agent/cli.py ielts status   # 雅思四栏目常备：缺哪栏当场补一张（见「雅思四栏目常备」节）
+python3 agent/cli.py ielts status   # 雅思四栏目常备：缺哪栏当场补一张（见「常备作业」节）
+python3 agent/cli.py vocab status   # 词汇短语作业常备：栏目空了就用 vocab homework 补一张
 
 # 6. 周期性重练
 python3 agent/cli.py wronglist --json /tmp/wrong.json   # 导出错题 → 按知识点出变式卷
@@ -111,7 +112,7 @@ python3 agent/cli.py weekly record --sampled "kp1,kp2" --wrong "kp1" --hw <id>
 
 ## 词汇短语作业 / 短语本（老师只出题，学生自验证）
 
-- **词汇短语作业**（skill=vocabulary）：`vocab homework` 一键生成——20 个雅思听力阅读答案词（curriculum/ielts_answer_words.json）+ 5 个单词本词（有中文+词性的），每个词随机出拼写/汉译英/英译汉/词性四选一题型；另有 5 条短语讲解卡（type=phrase，来自 curriculum/phrase_bank.json）。**交卷即自动批改，学生自行对照答案验证，老师不批改**
+- **词汇短语作业**（skill=vocabulary）：`vocab homework` 一键生成——20 个雅思听力阅读答案词（curriculum/ielts_answer_words.json）+ 5 个单词本词（有中文+词性的），每个词随机出拼写/汉译英/英译汉/词性四选一题型；另有 5 条短语讲解卡（type=phrase，来自 curriculum/phrase_bank.json）。**交卷即自动批改，学生自行对照答案验证，老师不批改**；**栏目常备：`vocab status` 检查到没有未做作业卡时，按上一条命令重新生成发布一张（见「常备作业」节）**
 - **短语本**（phrases 表，AI 老师教、学生收藏）：短语只由 AI 老师教，作业里的短语讲解卡带释义+例句，学生点「加入短语本」收藏。查看 `python3 agent/cli.py phrase list`；手动加 `phrase add --phrase "..." --meaning "..." --example "..."`。与单词本（学生填中文词性+抽查池）是两套独立流程
 
 ## 前端能力（出题时对齐，勿超纲）
@@ -123,12 +124,14 @@ python3 agent/cli.py weekly record --sampled "kp1,kp2" --wrong "kp1" --hw <id>
 - 知识图谱：作答超过 5 次才按正确率计分，≥85% 且超过 5 次 = 已掌握
 - 题型细节以 `docs/QUESTION_TYPES.md` 为准
 
-## 雅思四栏目常备（时刻补齐）
+## 常备作业 · 时刻补齐（词汇短语作业 + 雅思四子栏目）
 
-- **目标**：雅思专项 4 个子栏目（`ielts_reading` 阅读节选小题 / `ielts_stem` 英译汉 / `ielts_essay` 作文中译英 / `ielts_speaking` 口语话题）**每栏时刻保持 ≥1 张「未做」作业卡**，学生任何时候打开都有得练。
-- **判定**：`python3 agent/cli.py ielts status`——缺哪栏一目了然（每栏有 published 且无任何提交的卡 = 充足）；定时巡检脚本 `scripts/ielts_topup_status.py`（输出恒定 OK 行=不用补，出现缺口行=要补，供 Hermes cron monitor 使用）。
-- **补齐动作**：缺口出现（学生做完/删掉该栏目最后一张未做卡）→ 立即出 1 张该栏目新卷：按画像 `ielts_requirement` 与当季口语话题（`profile get`）、参照 papers/ 历史卷风格、话题不与最近几张重复、写完 `create` 发布。
-- **谁来做**：会话中老师每次批改/收尾后顺手 `ielts status`，缺就当场补齐；会话外由定时巡检兜底（自动补齐并推送到对话，平时静默）。
+- **目标**：**词汇短语作业**（`vocabulary`）与雅思专项 4 个子栏目（`ielts_reading` 阅读节选小题 / `ielts_stem` 英译汉 / `ielts_essay` 作文中译英 / `ielts_speaking` 口语话题）**每栏时刻保持 ≥1 张「未做」作业卡**，学生任何时候打开都有得练。
+- **判定**：`python3 agent/cli.py vocab status`（词汇作业栏）与 `python3 agent/cli.py ielts status`（雅思四栏）——缺哪一目了然（每栏有 published 且无任何提交的卡 = 充足）；定时巡检脚本 `scripts/topup_status.py`（全部栏目聚合，输出恒定 OK 行=不用补，出现缺口行=要补，供 Hermes cron monitor 使用）。
+- **补齐动作**：缺口出现（学生做完/删掉该栏目最后一张未做卡）→
+  - 词汇作业栏：`vocab homework --ielts 20 --wordbook 5 --phrases 5 --out papers/vocab_homework_xxx.json` 一键生成 → `create` 发布（勿手写 JSON；交卷自批改，老师不批）
+  - 雅思栏目：出 1 张该栏目新卷：按画像 `ielts_requirement` 与当季口语话题（`profile get`）、参照 papers/ 历史卷风格、话题不与最近几张重复、写完 `create` 发布
+- **谁来做**：会话中老师每次批改/收尾后顺手 `vocab status` + `ielts status`，缺就当场补齐；会话外由定时巡检兜底（自动补齐并推送到对话，平时静默）。
 - 口语卷的「完成」就靠学生网页端完成按钮记录——老师看到口语卷被做完（`state` 里 latest_submission.status=`done`），即为该栏目的补齐触发点。
 
 ## 批改原则

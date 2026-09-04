@@ -1,0 +1,373 @@
+{
+  "title": "词汇短语作业 · 雅思答案词 20 + 单词本 4 + 短语讲解 5",
+  "skill": "vocabulary",
+  "topic": "词汇短语练习",
+  "goal": "词汇题交卷后自动批改，请自行对照答案验证；短语卡由老师讲解，可一键收藏进短语本。",
+  "questions": [
+    {
+      "type": "choice",
+      "prompt": "选出 similarity（n.）的中文意思：",
+      "options": [
+        "A. 数据库",
+        "B. 退休",
+        "C. 相似性",
+        "D. 纪录片"
+      ],
+      "answer": "C",
+      "explanation": "similarity n. 相似性",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "汉译英：利润（n.）____",
+      "answer": [
+        "profit"
+      ],
+      "explanation": "profit n. 利润",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 evidence（n.）的中文意思：",
+      "options": [
+        "A. 语言",
+        "B. 证据",
+        "C. 软件",
+        "D. 展览"
+      ],
+      "answer": "B",
+      "explanation": "evidence n. 证据",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 schedule（日程；时间表）的词性：",
+      "options": [
+        "A. n.",
+        "B. adv.",
+        "C. adj.",
+        "D. v."
+      ],
+      "answer": "A",
+      "explanation": "schedule n. 日程；时间表",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 species（n.）的中文意思：",
+      "options": [
+        "A. 就业；雇佣",
+        "B. 解决方案；溶液",
+        "C. 物种",
+        "D. 杂志"
+      ],
+      "answer": "C",
+      "explanation": "species n. 物种",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "汉译英：行政；管理（n.）____",
+      "answer": [
+        "administration"
+      ],
+      "explanation": "administration n. 行政；管理",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 region（n.）的中文意思：",
+      "options": [
+        "A. 助手；助理",
+        "B. 站台；平台",
+        "C. 地区",
+        "D. 段落"
+      ],
+      "answer": "C",
+      "explanation": "region n. 地区",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "汉译英：杂志（n.）____",
+      "answer": [
+        "magazine"
+      ],
+      "explanation": "magazine n. 杂志",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "拼写：马拉松（n.）首字母 m ____",
+      "answer": [
+        "marathon"
+      ],
+      "explanation": "marathon n. 马拉松",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 vocabulary（n.）的中文意思：",
+      "options": [
+        "A. 工厂",
+        "B. 词汇",
+        "C. 理论",
+        "D. 网站"
+      ],
+      "answer": "B",
+      "explanation": "vocabulary n. 词汇",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "汉译英：顾问（n.）____",
+      "answer": [
+        "consultant"
+      ],
+      "explanation": "consultant n. 顾问",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "汉译英：比例（n.）____",
+      "answer": [
+        "proportion"
+      ],
+      "explanation": "proportion n. 比例",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "汉译英：建筑学；建筑风格（n.）____",
+      "answer": [
+        "architecture"
+      ],
+      "explanation": "architecture n. 建筑学；建筑风格",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 terminal（航站楼；终端）的词性：",
+      "options": [
+        "A. adv.",
+        "B. phr.",
+        "C. adj.",
+        "D. n."
+      ],
+      "answer": "D",
+      "explanation": "terminal n. 航站楼；终端",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 mechanic（n.）的中文意思：",
+      "options": [
+        "A. 预订；保留",
+        "B. 机械师",
+        "C. 院系；全体教员",
+        "D. 目录；目录册"
+      ],
+      "answer": "B",
+      "explanation": "mechanic n. 机械师",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 shortage（n.）的中文意思：",
+      "options": [
+        "A. 短缺",
+        "B. 项目",
+        "C. 复习；修订",
+        "D. 重量；体重"
+      ],
+      "answer": "A",
+      "explanation": "shortage n. 短缺",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 symptom（症状）的词性：",
+      "options": [
+        "A. conj.",
+        "B. n.",
+        "C. v.",
+        "D. adj."
+      ],
+      "answer": "B",
+      "explanation": "symptom n. 症状",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "汉译英：评估；考核（n.）____",
+      "answer": [
+        "assessment"
+      ],
+      "explanation": "assessment n. 评估；考核",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "拼写：资源（n.）首字母 r ____",
+      "answer": [
+        "resource"
+      ],
+      "explanation": "resource n. 资源",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 circumstance（情况；环境）的词性：",
+      "options": [
+        "A. prep.",
+        "B. v.",
+        "C. adv.",
+        "D. n."
+      ],
+      "answer": "D",
+      "explanation": "circumstance n. 情况；环境",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 concern（担心）的词性：",
+      "options": [
+        "A. adj.",
+        "B. prep.",
+        "C. adv.",
+        "D. n./v."
+      ],
+      "answer": "D",
+      "explanation": "concern n./v. 担心",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 collapse（倒塌）的词性：",
+      "options": [
+        "A. adv.",
+        "B. v.",
+        "C. n./v.",
+        "D. adj."
+      ],
+      "answer": "C",
+      "explanation": "collapse n./v. 倒塌",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 complaints（n.）的中文意思：",
+      "options": [
+        "A. 制造商",
+        "B. 投诉",
+        "C. 展览",
+        "D. 签名"
+      ],
+      "answer": "B",
+      "explanation": "complaints n. 投诉",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 distraction（n.）的中文意思：",
+      "options": [
+        "A. 地毯",
+        "B. 接待；前台",
+        "C. 乘客",
+        "D. 干扰"
+      ],
+      "answer": "D",
+      "explanation": "distraction n. 干扰",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "phrase",
+      "prompt": "run out of",
+      "answer": "",
+      "extra": {
+        "meaning_cn": "用完；耗尽",
+        "example": "The world is slowly running out of fresh water.",
+        "example_cn": "世界的淡水资源正在慢慢耗尽。"
+      },
+      "explanation": "",
+      "knowledge_point": "",
+      "score": 0
+    },
+    {
+      "type": "phrase",
+      "prompt": "it goes without saying that",
+      "answer": "",
+      "extra": {
+        "meaning_cn": "不言而喻",
+        "example": "It goes without saying that health is more important than wealth.",
+        "example_cn": "不言而喻，健康比财富更重要。"
+      },
+      "explanation": "",
+      "knowledge_point": "",
+      "score": 0
+    },
+    {
+      "type": "phrase",
+      "prompt": "come up with",
+      "answer": "",
+      "extra": {
+        "meaning_cn": "想出；提出",
+        "example": "Scientists came up with a cheaper way to purify water.",
+        "example_cn": "科学家想出了一种更便宜的净水方法。"
+      },
+      "explanation": "",
+      "knowledge_point": "",
+      "score": 0
+    },
+    {
+      "type": "phrase",
+      "prompt": "attach great importance to",
+      "answer": "",
+      "extra": {
+        "meaning_cn": "高度重视",
+        "example": "The government attaches great importance to environmental protection.",
+        "example_cn": "政府高度重视环境保护。"
+      },
+      "explanation": "",
+      "knowledge_point": "",
+      "score": 0
+    },
+    {
+      "type": "phrase",
+      "prompt": "on the grounds that",
+      "answer": "",
+      "extra": {
+        "meaning_cn": "理由是；以…为由",
+        "example": "The plan was rejected on the grounds that it was too costly.",
+        "example_cn": "该计划因成本过高而被否决。"
+      },
+      "explanation": "",
+      "knowledge_point": "",
+      "score": 0
+    }
+  ]
+}

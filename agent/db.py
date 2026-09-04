@@ -34,8 +34,11 @@ SELF_GRADED_SKILLS = {"vocabulary"}
 # 语法作业 skill 值（掌握度/错题本/近期成绩只统计这些作业；旧库 mixed/writing/listening 会迁移为 grammar）
 GRAMMAR_SKILLS = {"grammar"}
 
-# 雅思专项四栏目（时刻保持每栏 ≥1 张未做作业，见 ielts_gaps / `cli.py ielts status`）
+# 雅思专项四栏目 + 词汇短语作业 —— 常备栏目（时刻保持每栏 ≥1 张未做作业，见 topup_gaps）
 IELTS_TOPUP_SKILLS = ("ielts_reading", "ielts_stem", "ielts_essay", "ielts_speaking")
+VOCAB_TOPUP_SKILLS = ("vocabulary",)
+# 常备检查总顺序（cli.py vocab status / ielts status / scripts/topup_status.py 共用）
+TOPUP_SKILLS = VOCAB_TOPUP_SKILLS + IELTS_TOPUP_SKILLS
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS homeworks (
@@ -775,25 +778,35 @@ def mark_speaking_done(conn, hw_id):
     return cur.lastrowid
 
 
+def _column_unattempted_exists(conn, skill):
+    """该栏目是否已有 ≥1 张「未做」作业卡（published 且无任何提交）。"""
+    rows = conn.execute(
+        "SELECT id FROM homeworks WHERE status='published' AND skill=? ORDER BY id DESC",
+        (skill,)).fetchall()
+    return any(
+        conn.execute("SELECT 1 FROM submissions WHERE homework_id=? LIMIT 1",
+                     (h["id"],)).fetchone() is None
+        for h in rows)
+
+
 def ielts_gaps(conn):
     """雅思四栏目常备检查：返回缺「未做作业卡」的 skill 列表。
 
     目标：ielts_reading / ielts_stem / ielts_essay / ielts_speaking 每栏
-    时刻保持 ≥1 张未做作业（published 且无任何提交）。学生做完 / 删掉卡片后，
-    会话内老师即时补齐，会话外由定时巡检（scripts/ielts_topup_status.py）兜底。
+    时刻保持 ≥1 张未做作业。学生做完 / 删掉卡片后，
+    会话内老师即时补齐，会话外由定时巡检（scripts/topup_status.py）兜底。
     """
-    missing = []
-    for skill in IELTS_TOPUP_SKILLS:
-        rows = conn.execute(
-            "SELECT id FROM homeworks WHERE status='published' AND skill=? ORDER BY id DESC",
-            (skill,)).fetchall()
-        available = any(
-            conn.execute("SELECT 1 FROM submissions WHERE homework_id=? LIMIT 1",
-                         (h["id"],)).fetchone() is None
-            for h in rows)
-        if not available:
-            missing.append(skill)
-    return missing
+    return [s for s in IELTS_TOPUP_SKILLS if not _column_unattempted_exists(conn, s)]
+
+
+def topup_gaps(conn):
+    """常备作业总检查：词汇短语作业 + 雅思四子栏目。
+
+    返回缺「未做作业卡」的 skill 列表（固定顺序：vocabulary 在前，雅思四栏目随后）。
+    词汇作业补齐 = `vocab homework` 一键生成发布（交卷自批改，老师不批）；
+    雅思栏目补齐 = 老师出 1 张该栏目新卷。
+    """
+    return [s for s in TOPUP_SKILLS if not _column_unattempted_exists(conn, s)]
 
 
 def submission_detail(conn, sub_id):
