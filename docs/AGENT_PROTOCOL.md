@@ -54,7 +54,8 @@ CLI 会自动建库，无需手工初始化。
   "skill": "grammar",        // 作业栏目（决定前端归属与统计口径）：
                              //   grammar = 语法作业（老师批改+讲解，计入掌握度/错题本/近期成绩）
                              //   vocabulary = 词汇短语作业（交卷自批改，学生自验证，老师不批改）
-                             //   ielts_reading / ielts_stem / ielts_essay / ielts_speaking = 雅思专项训练四栏目
+                             //   ielts_reading / ielts_listening / ielts_essay / ielts_speaking = 雅思专项训练四栏目
+                             //   （ielts_listening=听力精听：精听文稿+真题格式题目，见 docs/QUESTION_TYPES.md；旧 ielts_stem「题干英译汉」已废弃）
                              //   （reading/writing/listening/mixed 为旧值，新卷不要用）
   "topic": "IELTS 写作 Task 1 语境",               // 可选
   "goal": "本次考察目标（显示给学生看）",            // 可选

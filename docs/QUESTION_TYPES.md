@@ -1,7 +1,7 @@
 # 题型规范与出题指南
 
 八种题型覆盖语法 / 词汇 / 翻译 / 雅思专项训练的主要形态。所有题型统一支持 `explanation`（通用解析）与 `knowledge_point`（知识点标签）。
-听力为**预留题型，尚未实现**（见文末）；口语已实现**纯文字版**（只出题不批改，见 speaking 一节）。
+**带音频的听力题型为预留，尚未实现**（见文末）；但雅思听力精听栏目（ielts_listening）已有**纯文字版**（精听文稿 + 真题格式题目，见「雅思听力精听 / 阅读节选 · 真题格式卷」一节）；口语已实现**纯文字版**（只出题不批改，见 speaking 一节）。
 
 ## choice · 单选
 
@@ -84,6 +84,33 @@ python3 agent/cli.py vocab check-result --sub <提交id>
 # 写对 → 出池，网页标绿 🟢；拼错 → 留池，下次抽查再考，直到写对
 ```
 
+## 雅思听力精听 / 阅读节选 · 真题格式卷（skill=ielts_listening / ielts_reading）
+
+**用途**：听力卷 = 精听文稿（模拟听力音频的文字版）+ 真题格式题目；阅读卷 = 节选文章 + 标准题组。两者都以「仿真剑桥真题」格式呈现：题目按考试样式分区（Questions 1–5 / 11–15…）、带题区说明行、表格标准化渲染。**学生直接作答，交卷自动批改**（choice / tfng 即定论；fill / cloze 未命中由老师复核并讲定位句）。
+
+**出题要点**：
+- 试卷 `skill`：听力用 `ielts_listening`（前端显示「🎧 听力精听」），阅读用 `ielts_reading`。**不要再出 ielts_stem（题干英译汉栏目已废弃）**
+- 材料放 `passages`，每道题都写 `passage_ref` 引用：听力 passage 的 title 写「精听文稿 · …」，正文 = 完整文稿（**所有答案词必须在文稿中明确出现一次**，别用同义改写含糊带过）；阅读 passage = 原文节选
+- **真题题号**：每道题 `extra: {"qno": <考试题号>}`，前端按此显示题号（如 11.、12.）；题区说明行放 `extra.head`（如 `"Questions 11–15\nChoose the correct letter, A, B or C."`），同一题区只写在第一题上，前端会自动去重渲染成题区条
+- **表格标准化**：表格完成题用 `cloze` 题型 + `extra.table`（听力表格 / 阅读 summary 表都能用）：
+  ```jsonc
+  {
+    "type": "cloze",
+    "passage_ref": "l1",
+    "prompt": "Questions 16–20\nComplete the table below.\nWrite NO MORE THAN TWO WORDS for each answer.",
+    "passage": "表格文本兜底（必须含 __16__…__20__ 标记，校验器要求与 answer 键一致）",
+    "answer": { "16": ["water wheel"], "17": ["steep staircase"] },
+    "extra": { "qno": 16, "qno_end": 20,
+      "table": { "cols": ["Place", "What you can see or do", "Advice"],
+                 "rows": [ ["the watermill", "driven by the great __16__", "…"] ] } }
+  }
+  ```
+  单元格文本里用 `__N__` 标记空格 → 前端渲染真实表格、格内填空；`qno_end` 让题号显示为 16–20；可按 blank 数把 `score` 设为空数（如上例 5 空 → score 5）
+- 题量：听力卷 1 个 passage（Section 导览/讲座风格，200~300 词）配 6~11 个小题（单选 3~5 + 表格/笔记完成 5）；阅读卷 1~2 段 passage 配 8~12 题，题型可混：TFNG 组 + 单选组 + summary 完成组
+- 解析（`explanation`）写清**定位句**（引用文稿/原文原句）+ 中文讲解；TFNG 的 FALSE 必须「与原文矛盾」、NOT GIVEN 必须「原文没提」
+- 材料来源：优先原创仿真（准确、可量产、无版权顾虑）；学生贴真实真题原文时照此规范结构化，**保留原文考试题号**
+- 交互约定：听力卷作答页顶部会提示「先浏览题目 → 通读文稿 → 作答」；单选/判断自动批改，填空错漏进老师复核
+
 ## speaking · 口语话题（纯文字 · 只出题不批改）
 
 **用途**：雅思口语 Part 1 / Part 2 / Part 3 随机话题训练。**只出题，不要求作答、不做批改**：学生自己开口练、自行判断，点「下一题」逐题过；全部练完点「完成练习」→ 前端记录为已做过（status=done），并展示本卷的**参考表达**供对照优化。
@@ -126,9 +153,11 @@ python3 agent/cli.py create papers/vocab_homework.json
 - 5 条短语讲解卡（type=phrase，来自 `curriculum/phrase_bank.json`）
 - 知识点留空（不计入语法掌握度）；学生交卷后服务器自动批改定稿
 
-## 预留题型：listening（未实现）
+## 预留题型：listening（音频，未实现）
 
-> ⚠️ 当前开发目标**不包含**听力音频，以下仅为预留设计，agent 出题时不要生成带音频的题目。
+> ⚠️ 注意区分：**听力精听栏目（ielts_listening）是纯文字版**（精听文稿 + 题目，见上节），已在用；
+> 本节说的 listening 是**带音频播放**的形态，当前开发目标**不包含听力音频**，以下仅为预留设计，
+> agent 出题时不要生成带音频的题目，也不要声称有音频可听。
 
 - **listening（预留）**：question JSON 增加可选字段 `audio_url`（音频地址，支持 file:// 本地路径或 http）；前端播放按钮 + 可重复听；答题形态复用 choice/fill/cloze。
 - 服务器 API 已预留 `/api/audio` 命名空间；开发计划详见 `docs/ROADMAP.md`，当前阶段不动。

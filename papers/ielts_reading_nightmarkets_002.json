@@ -1,0 +1,90 @@
+{
+  "title": "雅思阅读 #2 · Night Markets 夜市（节选：TFNG + 单选）",
+  "skill": "ielts_reading",
+  "topic": "城市生活",
+  "goal": "仿真剑桥阅读节选（自编原文）：先通读文章 → 按题定位作答。Questions 1–5 判断 TRUE / FALSE / NOT GIVEN；6–8 单选。解析里给定位句。",
+  "passages": [
+    {
+      "ref": "p1",
+      "title": "Night markets in modern cities",
+      "body": "Night markets — temporary rows of stalls that appear after sunset — have a long history in Asia, where they grew out of street-vending traditions that were already well established in the nineteenth century. Today the idea is spreading to cities across the world. Melbourne launched its summer night market in 2010 in a former warehouse district; within five years it was attracting more than a million visitors a season.\n\nStudies suggest that night markets do more than boost tourism. Researchers in Taipei calculated that the city's night markets supported about 40,000 jobs, many of them filled by people who had struggled to find work during the day. A report on Bangkok's markets made a different point: stallholders there paid rents that were on average 30 per cent higher than those charged in permanent shopping centres.\n\nNot everyone welcomes the trend. Traders' associations in several European cities have complained that night markets draw customers away from established shops. Studies in Melbourne, however, found the opposite: shops within two streets of the market reported higher evening sales after it opened.\n\nSupporters also point to social benefits. City councils in Australia and Canada have funded night markets partly to give young people a safe, alcohol-free place to gather at weekends. Organisers in Vancouver say the market there has cut late-night anti-social behaviour in the surrounding park by about a third.\n\nNight markets are not without their costs. They require street cleaning, security and — most expensive of all — lighting. A German study calculated that a weekly night market costs a city roughly twice as much to run as a daytime market of the same size.\n\nSo what lies ahead? Some planners argue that night markets should be made permanent, while others insist that their temporary, come-and-go character is exactly what makes them attractive. For now, at least, cities continue to experiment — and market-goers keep coming back for the food, the crowds and the particular magic that only appears after dark."
+    }
+  ],
+  "questions": [
+    {
+      "type": "tfng",
+      "passage_ref": "p1",
+      "prompt": "Night markets were first introduced to Melbourne in the nineteenth century.",
+      "answer": "FALSE",
+      "explanation": "定位：Melbourne launched its summer night market in 2010…。墨尔本夜市 2010 年才开；十九世纪的是亚洲的 street-vending 传统，不是墨尔本 → 与原文直接矛盾 → FALSE。题干常把「别处的旧时间」嫁接到「本对象」上，读题时先圈主语+时间。",
+      "knowledge_point": "TFNG 判断",
+      "extra": { "qno": 1, "head": "Questions 1–5\nDo the following statements agree with the information given in the passage?\n\nTRUE — if the statement agrees with the information\nFALSE — if the statement contradicts the information\nNOT GIVEN — if there is no information on this" }
+    },
+    {
+      "type": "tfng",
+      "passage_ref": "p1",
+      "prompt": "Stallholders in Bangkok's night markets pay lower rents than shops in permanent shopping centres.",
+      "answer": "FALSE",
+      "explanation": "定位：stallholders there paid rents that were on average 30 per cent higher than those charged in permanent shopping centres。曼谷夜市摊租比商场高 30%，题干说 lower → 说反了 → FALSE（数字被明确给出时不存在 NOT GIVEN 空间）。",
+      "knowledge_point": "TFNG 判断",
+      "extra": { "qno": 2 }
+    },
+    {
+      "type": "tfng",
+      "passage_ref": "p1",
+      "prompt": "Shops near Melbourne's night market reported higher evening sales after it opened.",
+      "answer": "TRUE",
+      "explanation": "定位：Studies in Melbourne, however, found the opposite: shops within two streets of the market reported higher evening sales after it opened。near the market = within two streets，higher evening sales 原词照应 → TRUE。注意 however 表明这是对欧洲商家抱怨的反转。",
+      "knowledge_point": "TFNG 判断",
+      "extra": { "qno": 3 }
+    },
+    {
+      "type": "tfng",
+      "passage_ref": "p1",
+      "prompt": "Vancouver's night market was set up to give young people a safe place to meet at weekends.",
+      "answer": "NOT GIVEN",
+      "explanation": "定位：City councils in Australia and Canada have funded night markets partly to give young people a safe, alcohol-free place to gather… Organisers in Vancouver say the market there has cut late-night anti-social behaviour。原文只说澳大利亚和加拿大的市议会拨款时有这个目的、以及温哥华夜市减少了不良行为——温哥华夜市的「设立目的」从未被说明 → 是原文之外的新信息 → NOT GIVEN。别因为「说得通」就选 TRUE。",
+      "knowledge_point": "TFNG 判断",
+      "extra": { "qno": 4 }
+    },
+    {
+      "type": "tfng",
+      "passage_ref": "p1",
+      "prompt": "A weekly night market costs a city roughly twice as much to run as a daytime market of the same size.",
+      "answer": "TRUE",
+      "explanation": "定位：A German study calculated that a weekly night market costs a city roughly twice as much to run as a daytime market of the same size。题干几乎照抄原文（roughly twice / same size）→ TRUE。",
+      "knowledge_point": "TFNG 判断",
+      "extra": { "qno": 5 }
+    },
+    {
+      "type": "choice",
+      "passage_ref": "p1",
+      "prompt": "What does the writer say about Melbourne's night market?",
+      "options": ["A. It was the first night market in Asia.", "B. It is held in a former railway station.", "C. It attracted over a million visitors within five years.", "D. It has been running since the nineteenth century."],
+      "answer": "C",
+      "explanation": "定位：Melbourne launched its summer night market in 2010…; within five years it was attracting more than a million visitors a season。C = 原句同义改写（within five years = 2015 前）。A/D：亚洲传统与十九世纪讲的是 street-vending 历史，不是墨尔本；B：原文是 former warehouse district（旧仓库区），不是火车站。",
+      "knowledge_point": "阅读单选",
+      "extra": { "qno": 6, "head": "Questions 6–8\nChoose the correct letter, A, B, C or D." }
+    },
+    {
+      "type": "choice",
+      "passage_ref": "p1",
+      "prompt": "What did the study in Taipei find?",
+      "options": ["A. Night markets there supported around 40,000 jobs.", "B. Night markets had taken jobs away from daytime workers.", "C. Rents there were 30 per cent higher than in shopping centres.", "D. Most stallholders had never held a daytime job."],
+      "answer": "A",
+      "explanation": "定位：Researchers in Taipei calculated that the city's night markets supported about 40,000 jobs…。选 A。C 是张冠李戴：30% 是曼谷（Bangkok）报告的租金差，不是台北；B/D 都是对 many of them filled by people who had struggled to find work during the day 的过度引申——原文没说「抢走白天工作」，也没说「大多数摊主从未有过白天工作」。",
+      "knowledge_point": "阅读单选",
+      "extra": { "qno": 7 }
+    },
+    {
+      "type": "choice",
+      "passage_ref": "p1",
+      "prompt": "What conclusion does the writer draw about the future of night markets?",
+      "options": ["A. They are too expensive for most cities to run.", "B. Their temporary character may be part of their appeal.", "C. They should be made permanent as soon as possible.", "D. They will soon replace permanent shopping centres."],
+      "answer": "B",
+      "explanation": "定位：Some planners argue that night markets should be made permanent, while others insist that their temporary, come-and-go character is exactly what makes them attractive。作者两方都摆出、未偏袒，但末句市场人群照旧回流暗示 temporary charm 成立 → B 的 may be 表述最贴合作者语气。A 强加（成本高≠多数城市办不起）；C 只是部分 planners 的观点；D 无中生有。",
+      "knowledge_point": "阅读单选",
+      "extra": { "qno": 8 }
+    }
+  ]
+}

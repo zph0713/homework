@@ -26,7 +26,7 @@ SKILL_LABELS = {
     "grammar": "语法", "vocabulary": "词汇", "reading": "阅读",
     "writing": "写作", "listening": "听力", "mixed": "综合",
     # 雅思专项训练四个栏目（与前端导航一致）
-    "ielts_reading": "雅思·阅读节选小题", "ielts_stem": "雅思·英译汉",
+    "ielts_reading": "雅思·阅读节选小题", "ielts_listening": "雅思·听力精听",
     "ielts_essay": "雅思·作文中译英", "ielts_speaking": "雅思·口语话题",
 }
 KP_STATUS_LABELS = {"new": "未练过", "weak": "薄弱⚠", "learning": "学习中", "mastered": "已掌握✓"}
@@ -749,12 +749,12 @@ def cmd_kmap_next(args):
 
 
 def cmd_ielts(args):
-    """雅思四栏目常备检查：阅读节选小题 / 英译汉 / 作文中译英 / 口语话题，
+    """雅思四栏目常备检查：阅读节选小题 / 听力精听（文稿+题目）/ 作文中译英 / 口语话题，
     每栏都要时刻保持 ≥1 张「未做」作业卡。缺了就出 1 张新卷补齐
-    （会话内老师即时补，会话外由 scripts/ielts_topup_status.py 巡检兜底）。"""
+    （会话内老师即时补，会话外由 scripts/topup_status.py 巡检兜底）。"""
     with db.connect() as conn:
         missing = db.ielts_gaps(conn)
-    names = {"ielts_reading": "📰 阅读节选小题", "ielts_stem": "🔤 英译汉（听力/阅读题干）",
+    names = {"ielts_reading": "📰 阅读节选小题", "ielts_listening": "🎧 听力精听（文稿+题目）",
              "ielts_essay": "✒️ 作文中译英", "ielts_speaking": "🎤 口语话题"}
     if args.json:
         print(json.dumps({"missing": missing, "all_ready": not missing,

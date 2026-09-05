@@ -1,0 +1,379 @@
+{
+  "title": "词汇短语作业 · 雅思答案词 20 + 单词本 5 + 短语讲解 5",
+  "skill": "vocabulary",
+  "topic": "词汇短语练习",
+  "goal": "词汇题交卷后自动批改，请自行对照答案验证；短语卡由老师讲解，可一键收藏进短语本。",
+  "questions": [
+    {
+      "type": "fill",
+      "prompt": "拼写：大多数（n.）首字母 m ____",
+      "answer": [
+        "majority"
+      ],
+      "explanation": "majority n. 大多数",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 migration（迁徙；移民）的词性：",
+      "options": [
+        "A. n.",
+        "B. adj.",
+        "C. adv.",
+        "D. phr."
+      ],
+      "answer": "A",
+      "explanation": "migration n. 迁徙；移民",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "汉译英：疫苗（n.）____",
+      "answer": [
+        "vaccine"
+      ],
+      "explanation": "vaccine n. 疫苗",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 payment（付款；支付）的词性：",
+      "options": [
+        "A. v.",
+        "B. prep.",
+        "C. n.",
+        "D. phr."
+      ],
+      "answer": "C",
+      "explanation": "payment n. 付款；支付",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "汉译英：奖励；回报（n.）____",
+      "answer": [
+        "reward"
+      ],
+      "explanation": "reward n. 奖励；回报",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "拼写：身份（n.）首字母 i ____",
+      "answer": [
+        "identity"
+      ],
+      "explanation": "identity n. 身份",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "汉译英：许可；允许（n.）____",
+      "answer": [
+        "permission"
+      ],
+      "explanation": "permission n. 许可；允许",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "汉译英：昆虫（n.）____",
+      "answer": [
+        "insect"
+      ],
+      "explanation": "insect n. 昆虫",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 sculpture（n.）的中文意思：",
+      "options": [
+        "A. 雕塑",
+        "B. 污染",
+        "C. 节日",
+        "D. 关系"
+      ],
+      "answer": "A",
+      "explanation": "sculpture n. 雕塑",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 charity（慈善；慈善机构）的词性：",
+      "options": [
+        "A. n.",
+        "B. adv.",
+        "C. prep.",
+        "D. adj."
+      ],
+      "answer": "A",
+      "explanation": "charity n. 慈善；慈善机构",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 journalist（记者）的词性：",
+      "options": [
+        "A. conj.",
+        "B. adv.",
+        "C. n.",
+        "D. v."
+      ],
+      "answer": "C",
+      "explanation": "journalist n. 记者",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 dormitory（n.）的中文意思：",
+      "options": [
+        "A. 身份",
+        "B. 宿舍",
+        "C. 接待；前台",
+        "D. 机械师"
+      ],
+      "answer": "B",
+      "explanation": "dormitory n. 宿舍",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "汉译英：考古学（n.）____",
+      "answer": [
+        "archaeology"
+      ],
+      "explanation": "archaeology n. 考古学",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 species（物种）的词性：",
+      "options": [
+        "A. prep.",
+        "B. adv.",
+        "C. n.",
+        "D. phr."
+      ],
+      "answer": "C",
+      "explanation": "species n. 物种",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 catalogue（n.）的中文意思：",
+      "options": [
+        "A. 目录；目录册",
+        "B. 预测",
+        "C. 经济",
+        "D. 系统；制度"
+      ],
+      "answer": "A",
+      "explanation": "catalogue n. 目录；目录册",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 celebration（n.）的中文意思：",
+      "options": [
+        "A. 庆祝",
+        "B. 面试；采访",
+        "C. 预算",
+        "D. 科技；技术"
+      ],
+      "answer": "A",
+      "explanation": "celebration n. 庆祝",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "拼写：递送；交付（n.）首字母 d ____",
+      "answer": [
+        "delivery"
+      ],
+      "explanation": "delivery n. 递送；交付",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "汉译英：农业（n.）____",
+      "answer": [
+        "agriculture"
+      ],
+      "explanation": "agriculture n. 农业",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 festival（节日）的词性：",
+      "options": [
+        "A. n.",
+        "B. adj.",
+        "C. phr.",
+        "D. prep."
+      ],
+      "answer": "A",
+      "explanation": "festival n. 节日",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "拼写：医院（n.）首字母 h ____",
+      "answer": [
+        "hospital"
+      ],
+      "explanation": "hospital n. 医院",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "fill",
+      "prompt": "拼写：倒塌（n./v.）首字母 c ____",
+      "answer": [
+        "collapse"
+      ],
+      "explanation": "collapse n./v. 倒塌",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 complaints（n.）的中文意思：",
+      "options": [
+        "A. 保险",
+        "B. 游客",
+        "C. 投诉",
+        "D. 雕塑"
+      ],
+      "answer": "C",
+      "explanation": "complaints n. 投诉",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 concern（担心）的词性：",
+      "options": [
+        "A. n.",
+        "B. adv.",
+        "C. phr.",
+        "D. n./v."
+      ],
+      "answer": "D",
+      "explanation": "concern n./v. 担心",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 lanes（乡间小路）的词性：",
+      "options": [
+        "A. adj.",
+        "B. n.",
+        "C. adv.",
+        "D. conj."
+      ],
+      "answer": "B",
+      "explanation": "lanes n. 乡间小路",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "choice",
+      "prompt": "选出 distraction（干扰）的词性：",
+      "options": [
+        "A. phr.",
+        "B. n.",
+        "C. adj.",
+        "D. conj."
+      ],
+      "answer": "B",
+      "explanation": "distraction n. 干扰",
+      "knowledge_point": "",
+      "score": 1
+    },
+    {
+      "type": "phrase",
+      "prompt": "give rise to",
+      "answer": "",
+      "extra": {
+        "meaning_cn": "引起；导致",
+        "example": "Rapid urbanisation gives rise to housing shortages.",
+        "example_cn": "快速城市化导致了住房短缺。"
+      },
+      "explanation": "",
+      "knowledge_point": "",
+      "score": 0
+    },
+    {
+      "type": "phrase",
+      "prompt": "out of the question",
+      "answer": "",
+      "extra": {
+        "meaning_cn": "不可能；免谈",
+        "example": "Building a second airport is out of the question for now.",
+        "example_cn": "目前再建一座机场是不可能的。"
+      },
+      "explanation": "",
+      "knowledge_point": "",
+      "score": 0
+    },
+    {
+      "type": "phrase",
+      "prompt": "cut down on",
+      "answer": "",
+      "extra": {
+        "meaning_cn": "减少",
+        "example": "We should cut down on single-use plastics.",
+        "example_cn": "我们应该减少使用一次性塑料。"
+      },
+      "explanation": "",
+      "knowledge_point": "",
+      "score": 0
+    },
+    {
+      "type": "phrase",
+      "prompt": "attach great importance to",
+      "answer": "",
+      "extra": {
+        "meaning_cn": "高度重视",
+        "example": "The government attaches great importance to environmental protection.",
+        "example_cn": "政府高度重视环境保护。"
+      },
+      "explanation": "",
+      "knowledge_point": "",
+      "score": 0
+    },
+    {
+      "type": "phrase",
+      "prompt": "a sense of achievement",
+      "answer": "",
+      "extra": {
+        "meaning_cn": "成就感",
+        "example": "Finishing a marathon gives you a real sense of achievement.",
+        "example_cn": "跑完马拉松会带给你真正的成就感。"
+      },
+      "explanation": "",
+      "knowledge_point": "",
+      "score": 0
+    }
+  ]
+}

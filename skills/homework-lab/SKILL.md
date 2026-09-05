@@ -50,7 +50,7 @@ metadata:
 |---|---|---|
 | 🔧 语法作业（skill=grammar） | **主战场**：按图谱出语法题 + 翻译纠错题；错题申请重练→下次额外加题 | 全部由老师批改、讲解、纠正 |
 | 📚 词汇短语作业（skill=vocabulary） | 只出题：`vocab homework` 一键生成（雅思答案词+单词本词随机互译/拼写/词性+短语讲解卡） | **不批改**：交卷自动批改，学生自行对照答案验证 |
-| 🎯 雅思专项训练（ielts_reading / ielts_stem / ielts_essay / ielts_speaking） | 贴近剑桥真题出题：阅读节选小题（各题型）、听力阅读题干英译汉（多用真题节选，附语法和单词提示，练考试时快速理解题意）、作文长句中译英（大作文模版句+小作文图表例句）、口语随机话题 | 阅读节选小题批改附**答案讲解**；作文句翻译批改**纠正语法**；口语**只出题不批改**（Part2 模拟真题卡，优先当季话题，Part3 老师自行出题） |
+| 🎯 雅思专项训练（ielts_reading / ielts_listening / ielts_essay / ielts_speaking） | 仿真剑桥真题出题：阅读节选小题（原文+标准题组）、听力精听（**精听文稿 + 真题格式题目**：单选/表格填空，extra.head 题区行 + extra.qno 真题题号 + cloze+extra.table 标准表格，规范见 docs/QUESTION_TYPES.md「真题格式卷」）、作文长句中译英、口语随机话题 | 阅读节选小题 / 听力精听：choice/tfng 交卷自动批改即定论，fill/cloze 错漏老师复核，批改附**答案讲解（定位句）**；作文句翻译批改**纠正语法**；口语**只出题不批改**（Part2 模拟真题卡，优先当季话题，Part3 老师自行出题） |
 
 ## 前置检查
 
@@ -128,7 +128,7 @@ python3 agent/cli.py vocab list --unfilled       # 缺中文/词性的词（提�
 6. 错题本重练申请（`requests`）→ **下次语法作业额外增加对应知识点题目**
 7. 写作路线推进（`docs/WRITING_CURRICULUM.md`）或画像勾选的翻译/阅读训练（目标 3）
 8. 词汇短语作业 → `vocab homework --ielts 20 --wordbook 5 --phrases 5` 一键生成（无需手写 JSON）
-9. 雅思专项训练：按学生指定子栏目出卷（阅读节选小题 / 题干英译汉 / 作文中译英 / 口语话题），口语卷参考画像当季话题
+9. 雅思专项训练：按学生指定子栏目出卷（阅读节选小题 / 听力精听「文稿+真题格式题目」/ 作文中译英 / 口语话题），口语卷参考画像当季话题（Part3 老师自行出题）；听力/阅读卷按「真题格式卷」规范：extra.head 题区行 + extra.qno 真题题号 + 表格用 cloze+extra.table
 10. 学生要求默写 → `vocab dictation --limit 10` 生成默写卷；抽查 → `vocab check --limit 3`
 
 ## 单词本 / 抽查池（学生参与的新流程）
@@ -158,7 +158,7 @@ python3 agent/cli.py vocab list --unfilled       # 缺中文/词性的词（提�
 
 ## 常备作业 · 时刻补齐（词汇短语作业 + 雅思四子栏目）
 
-- 目标：**词汇短语作业**（vocabulary）与雅思 4 子栏目（ielts_reading / ielts_stem / ielts_essay / ielts_speaking）**每栏时刻保持 ≥1 张未做作业卡**。
+- 目标：**词汇短语作业**（vocabulary）与雅思 4 子栏目（ielts_reading / ielts_listening / ielts_essay / ielts_speaking）**每栏时刻保持 ≥1 张未做作业卡**。
 - 判定：`python3 agent/cli.py vocab status`（词汇栏）+ `ielts status`（雅思四栏）——缺哪一目了然；聚合巡检脚本 `scripts/topup_status.py` 输出恒定 OK=不用补 / 缺口行=要补（供 Hermes cron monitor 用）。
 - 补齐动作：会话中每次批改/收尾后顺手 `vocab status` + `ielts status`，缺就当场补：
   - 词汇作业栏 → `vocab homework --ielts 20 --wordbook 5 --phrases 5 --out papers/vocab_homework_xxx.json` 一键生成 → `create` 发布（交卷自批改，老师不批）
@@ -168,8 +168,8 @@ python3 agent/cli.py vocab list --unfilled       # 缺中文/词性的词（提�
 
 ## 前端能力速查（出题时对齐前端，勿超纲）
 
-- 题型：choice / fill / cloze / tfng / writing / translate / speaking（口语，只出题不批改）/ phrase（短语讲解卡，不答题）；默写=fill+skill=vocabulary+知识点「词汇-默写」；抽查=fill+知识点「词汇-抽查」（用 CLI 生成，勿手写）。**listening 未实现，不要出**（预留见 docs/ROADMAP.md）
-- **作业三栏目（skill 决定归属）**：grammar=语法作业；vocabulary=词汇短语作业；ielts_reading / ielts_stem / ielts_essay / ielts_speaking=雅思专项训练四栏目。**掌握度/图谱/错题本/近期正确率只统计 skill=grammar**
+- 题型：choice / fill / cloze / tfng / writing / translate / speaking（口语，只出题不批改）/ phrase（短语讲解卡，不答题）；默写=fill+skill=vocabulary+知识点「词汇-默写」；抽查=fill+知识点「词汇-抽查」（用 CLI 生成，勿手写）。听力精听卷=**纯文字版**（文稿放 passages + choice/cloze 真题格式，extra.head/extra.qno/extra.table 规范见 docs/QUESTION_TYPES.md）；**带音频的 listening 未实现，不要出**（预留见 docs/ROADMAP.md）
+- **作业三栏目（skill 决定归属）**：grammar=语法作业；vocabulary=词汇短语作业；ielts_reading / ielts_listening / ielts_essay / ielts_speaking=雅思专项训练四栏目（旧 ielts_stem「题干英译汉」已废弃）。**掌握度/图谱/错题本/近期正确率只统计 skill=grammar**
 - 口语卷（ielts_speaking）：`type=speaking` + `extra={"part":1|2|3, "suggestions":[{en,zh},...]}`，`answer=""`；Part2 的 prompt 用多行写「Describe.../You should say:...and explain...」前端渲染真题卡；学生点「下一题」逐题练，全部练完点「完成练习」→ 记录为已做过（status=done，不进待批改、不批改），卡片显示「已练完」；出题时每题 suggestions 配 6~10 条该话题地道表达（词/短语/短句+中文），练完点「完成」按话题展示参考表达、可收藏进短语本（旧卷回写见 scripts/backfill_speaking_suggestions.py）
 - 学生在网页可：划词加入单词本、单词本页填中文/词性（多选下拉）并确认、错题本申请重练（下次语法作业额外加题）、删除作业卡（有确认弹窗）、「我的」页填三类作业要求+口语当季话题+画像、短语卡收藏进短语本、设置页改库路径/端口/教学规则
 - 知识图谱：作答超过 `mastery_min_attempts` 次才按正确率计分，≥ `mastery_threshold`% 且次数足够 = 已掌握

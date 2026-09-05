@@ -184,6 +184,19 @@ main { max-width: 1180px; margin: 0 auto; padding: 24px 20px 120px; }
   font-size: 14.5px; padding: 1px 6px; min-width: 110px; outline: none; text-align: center; font-family: inherit; }
 .q-cloze-text input:focus { background: var(--accent-soft); border-radius: 4px; }
 
+/* ---------- 真题格式（雅思听力精听 / 阅读节选）：题区标题 + 标准化表格 ---------- */
+.exam-head { background: var(--soft-2); border: 1px solid var(--line); border-left: 3px solid var(--accent);
+  border-radius: 10px; padding: 10px 14px; margin: 22px 0 12px; font-size: 14.5px; line-height: 1.7;
+  color: var(--ink); white-space: pre-wrap; }
+.exam-head::first-line { font-weight: 700; }
+.exam-table { width: 100%; border-collapse: collapse; margin: 6px 0 4px; font-size: 14.5px; background: var(--card); }
+.exam-table th, .exam-table td { border: 1px solid var(--line); padding: 8px 10px; vertical-align: top;
+  text-align: left; line-height: 1.9; }
+.exam-table thead th { background: var(--soft); font-weight: 600; white-space: nowrap; }
+.exam-table .tcell .q-fill { margin: 0; }
+.exam-table .q-fill input { min-width: 96px; font-size: 14.5px; padding: 1px 6px; }
+.exam-table .q-fill input:focus { background: var(--accent-soft); border-radius: 4px; }
+
 .q-write textarea { width: 100%; min-height: 150px; margin-top: 10px; padding: 12px 14px;
   border: 1.5px solid var(--line); border-radius: 10px; font-size: 15px; line-height: 1.7;
   font-family: inherit; resize: vertical; outline: none; }
@@ -483,8 +496,7 @@ details.map-fold[open] summary { margin-bottom: 12px; }
 .phrase-table th:nth-child(6) { width: 8%; }
 
 /* ---------- 首页标题行 + 作业筛选 ---------- */
-.home-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; }
-.home-head .page-sub { margin-bottom: 18px; }
+.home-head { display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; }
 .seg { display: inline-flex; align-items: center; background: var(--soft);
   border-radius: 999px; padding: 3px; flex-shrink: 0; }
 .seg-btn { border: none; background: transparent; padding: 6px 16px; border-radius: 999px;

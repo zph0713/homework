@@ -35,7 +35,8 @@ SELF_GRADED_SKILLS = {"vocabulary"}
 GRAMMAR_SKILLS = {"grammar"}
 
 # 雅思专项四栏目 + 词汇短语作业 —— 常备栏目（时刻保持每栏 ≥1 张未做作业，见 topup_gaps）
-IELTS_TOPUP_SKILLS = ("ielts_reading", "ielts_stem", "ielts_essay", "ielts_speaking")
+# ielts_listening = 听力精听（文稿+真题格式题目）；旧 ielts_stem（题干英译汉）已废弃
+IELTS_TOPUP_SKILLS = ("ielts_reading", "ielts_listening", "ielts_essay", "ielts_speaking")
 VOCAB_TOPUP_SKILLS = ("vocabulary",)
 # 常备检查总顺序（cli.py vocab status / ielts status / scripts/topup_status.py 共用）
 TOPUP_SKILLS = VOCAB_TOPUP_SKILLS + IELTS_TOPUP_SKILLS
@@ -792,7 +793,7 @@ def _column_unattempted_exists(conn, skill):
 def ielts_gaps(conn):
     """雅思四栏目常备检查：返回缺「未做作业卡」的 skill 列表。
 
-    目标：ielts_reading / ielts_stem / ielts_essay / ielts_speaking 每栏
+    目标：ielts_reading / ielts_listening / ielts_essay / ielts_speaking 每栏
     时刻保持 ≥1 张未做作业。学生做完 / 删掉卡片后，
     会话内老师即时补齐，会话外由定时巡检（scripts/topup_status.py）兜底。
     """

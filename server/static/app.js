@@ -84,7 +84,7 @@ function applyTheme(t) {
 
 const SKILL = {
   grammar: "语法", vocabulary: "词汇", reading: "阅读", writing: "写作", listening: "听力", mixed: "综合",
-  ielts_reading: "阅读节选小题", ielts_stem: "英译汉", ielts_essay: "作文中译英", ielts_speaking: "口语话题",
+  ielts_reading: "阅读节选小题", ielts_listening: "听力精听", ielts_essay: "作文中译英", ielts_speaking: "口语话题",
 };
 const TYPE = {
   choice: "单选", fill: "填空", cloze: "语法填空", tfng: "判断 TFNG",
@@ -107,16 +107,16 @@ const LANES = [
   },
   {
     key: "ielts", icon: "🎯", title: "雅思专项",
-    desc: "阅读节选小题 · 听力阅读英译汉 · 作文长句中译英 · 口语随机话题（文字训练，贴近剑桥真题）。",
-    skills: ["ielts_reading", "ielts_stem", "ielts_essay", "ielts_speaking"],
+    desc: "阅读节选小题 · 听力精听（文稿+题目）· 作文长句中译英 · 口语随机话题（文字训练，仿真剑桥真题格式）。",
+    skills: ["ielts_reading", "ielts_listening", "ielts_essay", "ielts_speaking"],
   },
 ];
 const LANE_BY_KEY = Object.fromEntries(LANES.map((l) => [l.key, l]));
 const SUB_LANES = {
   "ielts-reading": { icon: "📰", title: "阅读节选小题训练", skills: ["ielts_reading"],
     desc: "剑桥真题风格的阅读节选 + 各类小题（选择 / TFNG / 填空 / 配对）。批改由老师完成并附答案讲解。" },
-  "ielts-stem": { icon: "🔤", title: "听力阅读英译汉练习", skills: ["ielts_stem"],
-    desc: "剑桥真题节选：听力 / 阅读题干英译汉（附语法和单词提示），练考试时快速理解题意、扫清审题障碍。老师批改译文。" },
+  "ielts-listening": { icon: "🎧", title: "听力精听训练", skills: ["ielts_listening"],
+    desc: "仿真剑桥听力的精听卡：先通读🎧听力文稿，再按真题格式作答（单选 / 表格填空等），交卷自动批改；填空错漏由老师复核并讲定位句。" },
   "ielts-essay": { icon: "✒️", title: "作文长句中译英", skills: ["ielts_essay"],
     desc: "大作文各题型模版句 + 小作文图表描述例句的中译英训练。老师纠正语法问题。" },
   "ielts-speaking": { icon: "🎤", title: "口语随机话题", skills: ["ielts_speaking"],
@@ -125,7 +125,7 @@ const SUB_LANES = {
 /* 子栏目 / 辅助页归属到哪个主栏目（导航高亮用） */
 const NAV_PARENT = {
   words: "lane-vocabulary", phrases: "lane-vocabulary", review: "lane-grammar",
-  "ielts-reading": "lane-ielts", "ielts-stem": "lane-ielts",
+  "ielts-reading": "lane-ielts", "ielts-listening": "lane-ielts",
   "ielts-essay": "lane-ielts", "ielts-speaking": "lane-ielts",
 };
 
@@ -219,10 +219,7 @@ async function viewHome() {
 
   app.innerHTML = `
     <div class="home-head">
-      <div>
-        <h1 class="page-title">我的作业</h1>
-        <p class="page-sub">作业分为三个栏目：词汇短语作业（交卷自动批改、自行验证）、语法作业（老师批改+讲解）、雅思专项训练（文字训练，口语只出题不批改、练完点「完成练习」记为已做过）。<span style="color:var(--faint)">淡蓝=未做 · 淡绿=已写</span></p>
-      </div>
+      <h1 class="page-title" style="margin:0">我的作业</h1>
       <div class="seg">
         <button class="seg-btn ${HW_FILTER === "all" ? "on" : ""}" data-hwf="all">全部</button>
         <button class="seg-btn ${HW_FILTER === "todo" ? "on" : ""}" data-hwf="todo">未做</button>
@@ -364,6 +361,8 @@ async function viewPaper(id) {
 
   const vocabNote = h.skill === "vocabulary"
     ? `<div class="waiting" style="margin-top:10px">💡 词汇练习：交卷即自动批改，无需等老师。做完点「交卷」后直接在结果页对照答案自行验证。</div>` : "";
+  const listenNote = h.skill === "ielts_listening"
+    ? `<div class="waiting" style="margin-top:10px">💡 听力精听：先浏览题目 → 再通读下方「🎧 听力文稿」（答案都在文稿里）→ 按真题格式作答。交卷自动批改，填空错 / 漏会由老师复核并讲定位句。</div>` : "";
   const head = `
     <div class="paper-head">
       <h1>${esc(h.title)}</h1>
@@ -374,21 +373,55 @@ async function viewPaper(id) {
       </div>
       ${h.goal ? `<div class="goal">🎯 ${esc(h.goal)}</div>` : ""}
       ${vocabNote}
+      ${listenNote}
     </div>`;
-  // 阅读材料只在试卷开头展示一次（按题目引用顺序去重），题目卡片不再重复整篇文章
+  // 阅读材料 / 听力文稿只在试卷开头展示一次（按题目引用顺序去重），题目卡片不再重复整篇
   const used = new Set();
+  const pIcon = h.skill === "ielts_listening" ? "🎧" : "📄";
   const passageBlocks = qs
     .map((q) => (q.passage_id ? passages.get(q.passage_id) : null))
     .filter((p) => p && !used.has(p.id) && (used.add(p.id), true))
-    .map((p) => `<div class="q-passage"><div class="p-title">📄 ${esc(p.title || "阅读材料")}</div><p>${esc(p.body)}</p></div>`)
+    .map((p) => `<div class="q-passage"><div class="p-title">${pIcon} ${esc(p.title || (h.skill === "ielts_listening" ? "听力文稿" : "阅读材料"))}</div><p>${esc(p.body)}</p></div>`)
     .join("");
-  const body = qs.map((q, i) => renderQuestion(q, i)).join("");
+  // 真题格式：同一题目区只在第一题前展示一次题区标题（如 Questions 11–15）
+  let lastHead = "";
+  const body = qs.map((q, i) => {
+    const hd = ((q.extra || {}).head || "").trim();
+    let s = "";
+    if (hd && hd !== lastHead) s += `<div class="exam-head">${esc(hd)}</div>`;
+    if (hd) lastHead = hd;
+    return s + renderQuestion(q, i);
+  }).join("");
   app.innerHTML = `${head}${passageBlocks}${body}${submitBarHTML()}`;
   bindPaperEvents(qs, id);
 }
 
+/* 真题题号：题目 JSON 可带 extra.qno（考试题号，如 11）或 cloze 表格的 qno+qno_end（如 16–20），缺省用顺序号 */
+function qNum(q, i) {
+  const ex = q.extra || {};
+  if (ex.qno) return ex.qno_end ? `${ex.qno}–${ex.qno_end}` : ex.qno;
+  return i + 1;
+}
+
+/* 表格完成题（雅思听力/阅读真题格式）：extra.table = {cols:[..], rows:[[..]]}，
+   单元格文本里用 __N__ 标记空格 → 渲染成真正的表格 + 填空输入框 */
+function clozeTableHTML(q, t) {
+  const cell = (s) => {
+    if (s == null || String(s).trim() === "") return "<td></td>";
+    const html = esc(String(s)).replace(/__(\d+)__/g, (m, n) =>
+      `<span class="q-fill"><input type="text" data-q="${q.id}" data-blank="${n}" size="9" placeholder="空 ${n}"></span>`);
+    return `<td class="tcell">${html}</td>`;
+  };
+  const headRow = (t.cols || []).length
+    ? `<tr>${(t.cols || []).map((c) => `<th>${esc(c)}</th>`).join("")}</tr>` : "";
+  const bodyRows = (t.rows || []).map((r) =>
+    `<tr>${(r || []).map((c) => cell(c)).join("")}</tr>`).join("");
+  return `<table class="exam-table"><thead>${headRow}</thead><tbody>${bodyRows}</tbody></table>`;
+}
+
 function renderQuestion(q, i) {
   let main = "";
+  const ex = q.extra || {};
   if (q.type === "choice") {
     main = `<div class="q-prompt">${esc(q.prompt)}</div>
       <div class="q-options">${(q.options || []).map((opt, oi) => {
@@ -411,10 +444,14 @@ function renderQuestion(q, i) {
     const input = `<span class="q-fill"><input type="text" data-q="${q.id}" data-blank="1" placeholder="填写答案"></span>`;
     main = `<div class="q-prompt">${parts.join(input)}</div>`;
   } else if (q.type === "cloze") {
-    const html = esc(q.passage).replace(/__(\d+)__/g,
-      (m, n) => `<span class="q-fill"><input type="text" data-q="${q.id}" data-blank="${n}" size="10"></span>`);
-    main = `${q.prompt ? `<div class="q-prompt" style="margin-bottom:8px">${esc(q.prompt)}</div>` : ""}
+    if (ex.table && (ex.table.cols || ex.table.rows)) {
+      main = `${q.prompt ? `<div class="q-prompt" style="margin-bottom:8px">${esc(q.prompt)}</div>` : ""}${clozeTableHTML(q, ex.table)}`;
+    } else {
+      const html = esc(q.passage).replace(/__(\d+)__/g,
+        (m, n) => `<span class="q-fill"><input type="text" data-q="${q.id}" data-blank="${n}" size="10"></span>`);
+      main = `${q.prompt ? `<div class="q-prompt" style="margin-bottom:8px">${esc(q.prompt)}</div>` : ""}
       <div class="q-cloze-text">${html}</div>`;
+    }
   } else if (q.type === "writing" || q.type === "translate") {
     const ph = q.type === "translate" ? "在这里写下你的译文…" : "在这里写下你的作文…";
     main = `<div class="q-prompt">${esc(q.prompt)}</div>
@@ -426,10 +463,11 @@ function renderQuestion(q, i) {
   } else if (q.type === "speaking") {
     main = `<div class="q-prompt">${esc(q.prompt)}</div>`;
   }
+  const typeLabel = q.type === "cloze" && ex.table ? "表格填空" : TYPE[q.type] || q.type;
   return `
     <div class="q-card" id="qc-${q.id}">
-      <div class="q-top"><span class="q-num">${i + 1}.</span>
-        <span class="q-type">${TYPE[q.type] || q.type}</span>
+      <div class="q-top"><span class="q-num">${qNum(q, i)}.</span>
+        <span class="q-type">${typeLabel}</span>
         ${q.knowledge_point ? `<span class="badge">${esc(q.knowledge_point)}</span>` : ""}
         ${q.score !== 1 ? `<span class="badge">${q.score} 分</span>` : ""}
       </div>
@@ -530,7 +568,7 @@ function bindPaperEvents(qs, hwId) {
 
   $("#btn-submit").addEventListener("click", () => {
     const answers = collectAnswers(qs);
-    const unanswered = answerable.filter((q) => !answers[q.id]).map((q) => answerable.indexOf(q) + 1);
+    const unanswered = answerable.filter((q) => !answers[q.id]).map((q) => qNum(q, answerable.indexOf(q)));
     const doSubmit = async () => {
       const btn = $("#btn-submit");
       btn.disabled = true;
@@ -1350,7 +1388,7 @@ async function viewMe() {
       <div class="field"><label>词汇短语作业要求</label>
         <textarea id="pf-vreq" rows="2" placeholder="例如：雅思答案词+单词本词汇随机汉英互译/拼写/词性，短语由老师讲解展示。">${esc(vReq)}</textarea></div>
       <div class="field"><label>雅思专项要求</label>
-        <textarea id="pf-ireq" rows="2" placeholder="例如：贴近剑桥雅思真题：阅读节选小题、题干英译汉（多用真题节选，附语法和单词提示，练快速理解题意）、作文长句中译英、口语随机话题。">${esc(iReq)}</textarea></div>
+        <textarea id="pf-ireq" rows="2" placeholder="例如：贴近剑桥雅思真题：阅读节选小题（原文+标准题组）、听力精听（文稿+真题格式单选/表格填空）、作文长句中译英、口语随机话题。">${esc(iReq)}</textarea></div>
     </div>
 
     <div class="card" style="margin-bottom:18px">
