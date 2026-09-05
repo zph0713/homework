@@ -161,6 +161,7 @@ function route() {
   document.body.classList.toggle("wide", navKey === "words" || navKey === "phrases");
   $$("nav [data-nav]").forEach((a) => a.classList.toggle("active", a.dataset.nav === navKey));
   app.innerHTML = '<div class="loading">加载中…</div>';
+  document.body.classList.remove("ps-active"); // 阅读分栏专用：离开试卷页即恢复页面滚动
   const mPaper = hash.match(/^#\/paper\/(\d+)/);
   const mResult = hash.match(/^#\/result\/(\d+)/);
   const mLane = hash.match(/^#\/lane\/([a-z-]+)/);
@@ -378,15 +379,14 @@ async function viewPaper(id) {
   // 阅读材料 / 听力文稿只在试卷开头展示一次（按题目引用顺序去重），题目卡片不再重复整篇
   const used = new Set();
   const pIcon = h.skill === "ielts_listening" ? "🎧" : "📄";
-  const passageBlocks = qs
+  const refPassages = qs
     .map((q) => (q.passage_id ? passages.get(q.passage_id) : null))
-    .filter((p) => p && !used.has(p.id) && (used.add(p.id), true))
-    .map((p) => {
-      const audio = p.audio && p.audio.file ? p.audio : null;
-      const tpl = audio ? passageAudioHTML(audio, false) : `<p>${esc(p.body || "")}</p>`;
-      return `<div class="q-passage"><div class="p-title">${pIcon} ${esc(p.title || (h.skill === "ielts_listening" ? "听力文稿" : "阅读材料"))}</div>${tpl}</div>`;
-    })
-    .join("");
+    .filter((p) => p && !used.has(p.id) && (used.add(p.id), true));
+  const stackedBlocks = refPassages.map((p) => {
+    const audio = p.audio && p.audio.file ? p.audio : null;
+    const tpl = audio ? passageAudioHTML(audio, false) : `<p>${esc(p.body || "")}</p>`;
+    return `<div class="q-passage"><div class="p-title">${pIcon} ${esc(p.title || (h.skill === "ielts_listening" ? "听力文稿" : "阅读材料"))}</div>${tpl}</div>`;
+  }).join("");
   // 真题格式：同一题目区只在第一题前展示一次题区标题（如 Questions 11–15）
   let lastHead = "";
   const body = qs.map((q, i) => {
@@ -396,9 +396,41 @@ async function viewPaper(id) {
     if (hd) lastHead = hd;
     return s + renderQuestion(q, i);
   }).join("");
-  app.innerHTML = `${head}${passageBlocks}${body}${submitBarHTML()}`;
+  // 阅读节选小题：宽屏下左右分栏 —— 左=阅读材料、右=题目，两栏各自独立滚动
+  const split = h.skill === "ielts_reading" && refPassages.length > 0 && window.innerWidth >= 900;
+  let mainHTML;
+  if (split) {
+    const mats = refPassages.map((p) =>
+      `<div class="ps-mat"><div class="ps-mat-title">📄 ${esc(p.title || "阅读材料")}</div><div class="ps-mat-body">${esc(p.body || "")}</div></div>`).join("");
+    mainHTML = `<div class="paper-split" id="paper-split">
+      <div class="ps-left">${mats}</div>
+      <div class="ps-right">${body}</div>
+    </div>`;
+  } else {
+    mainHTML = stackedBlocks + body;
+  }
+  app.innerHTML = `${head}${mainHTML}${submitBarHTML()}`;
+  document.body.classList.toggle("ps-active", !!split);
   bindPaperEvents(qs, id);
   bindListenAudio();
+  if (split) layoutSplitPanes();
+}
+
+/* 阅读分栏：两栏高度撑满「页头下方 ~ 底部交卷栏上方」，互不干扰地各自滚动 */
+function layoutSplitPanes() {
+  const ps = $("#paper-split");
+  if (!ps) return;
+  const fit = () => {
+    if (!$("#paper-split")) return;
+    const sb = $(".submit-bar");
+    const bottom = sb ? sb.getBoundingClientRect().top : window.innerHeight - 60;
+    const top = ps.getBoundingClientRect().top;
+    ps.style.height = Math.max(260, bottom - top - 12) + "px";
+  };
+  if (window.__psFit) window.removeEventListener("resize", window.__psFit);
+  window.__psFit = fit;
+  window.addEventListener("resize", fit);
+  fit();
 }
 
 /* 真题题号：题目 JSON 可带 extra.qno（考试题号，如 11）或 cloze 表格的 qno+qno_end（如 16–20），缺省用顺序号 */

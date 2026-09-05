@@ -149,6 +149,18 @@ main { max-width: 1180px; margin: 0 auto; padding: 24px 20px 120px; }
 .status-tag.bad { background: var(--bad-soft); color: var(--bad); }
 .status-tag.new { background: var(--soft); color: var(--faint); }
 
+/* ---------- 阅读节选分栏页：左=材料 右=题目，两栏独立滚动 ---------- */
+html.ps-active, body.ps-active { overflow: hidden; }
+.paper-split { display: flex; gap: 18px; align-items: stretch; }
+.ps-left { flex: 0 0 46%; max-width: 640px; min-width: 0; overflow-y: auto;
+  overscroll-behavior: contain; background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius); box-shadow: var(--shadow); padding: 18px 20px 26px; }
+.ps-left .ps-mat + .ps-mat { margin-top: 20px; padding-top: 16px; border-top: 1px dashed var(--line); }
+.ps-mat-title { font-weight: 700; margin-bottom: 8px; }
+.ps-mat-body { font-size: 14.5px; line-height: 2; white-space: pre-wrap; color: var(--ink); }
+.ps-right { flex: 1 1 auto; min-width: 0; overflow-y: auto; overscroll-behavior: contain;
+  padding: 2px 4px 70px 2px; }
+
 /* ---------- 试卷 ---------- */
 .paper-head { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
   box-shadow: var(--shadow); padding: 22px 24px; margin-bottom: 18px; }
