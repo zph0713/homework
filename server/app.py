@@ -38,6 +38,11 @@ MIME = {
     ".svg": "image/svg+xml",
     ".png": "image/png",
     ".ico": "image/x-icon",
+    ".mp3": "audio/mpeg",
+    ".m4a": "audio/mp4",
+    ".ogg": "audio/ogg",
+    ".webm": "audio/webm",
+    ".wav": "audio/wav",
 }
 
 
@@ -142,6 +147,9 @@ class Handler(BaseHTTPRequestHandler):
                 for it in wrongs:
                     by_kp.setdefault(it["knowledge_point"] or "未标注", []).append(it)
                 return self._send_json(200, {"knowledge": kps, "wrongs_by_kp": by_kp})
+            m = re.fullmatch(r"/audio/([A-Za-z0-9][A-Za-z0-9._\-]*)", path)
+            if m:
+                return self._serve_audio(m.group(1))
             return self._serve_static(path)
         except Exception as e:  # noqa: BLE001
             return self._send_error_json(500, f"服务器错误: {e}")
@@ -408,6 +416,55 @@ class Handler(BaseHTTPRequestHandler):
             print(f"重启失败: {e}")
             return
         threading.Timer(0.6, lambda: os._exit(0)).start()
+
+    # ---------------- 听力音频 ----------------
+    def _serve_audio(self, name):
+        """伺服 data/audio/ 下的音频文件（支持 HTTP Range，供 <audio> 拖动/跳转）。"""
+        base = db.audio_dir().resolve()
+        target = (base / name).resolve()
+        if base not in target.parents or not target.is_file():
+            self._send_error_json(404, "音频不存在")
+            return
+        size = target.stat().st_size
+        ctype = MIME.get(target.suffix.lower()) or mimetypes.guess_type(str(target))[0] \
+            or "application/octet-stream"
+        # 解析 Range: bytes=start-end / bytes=start- / bytes=-suffix
+        start, end = 0, size - 1
+        partial = False
+        rng = self.headers.get("Range")
+        if rng:
+            m = re.fullmatch(r"bytes=(\d*)-(\d*)", rng.strip())
+            if m and (m.group(1) or m.group(2)):
+                partial = True
+                if not m.group(1):  # 后缀范围
+                    suffix = int(m.group(2))
+                    start = max(0, size - suffix)
+                else:
+                    start = int(m.group(1))
+                    end = int(m.group(2)) if m.group(2) else size - 1
+                if start >= size:
+                    self.send_response(416)
+                    self.send_header("Content-Range", f"bytes */{size}")
+                    self.end_headers()
+                    return
+                end = min(end, size - 1)
+        self.send_response(206 if partial else 200)
+        self.send_header("Content-Type", ctype)
+        self.send_header("Accept-Ranges", "bytes")
+        self.send_header("Content-Length", str(end - start + 1))
+        if partial:
+            self.send_header("Content-Range", f"bytes {start}-{end}/{size}")
+        self.send_header("Cache-Control", "max-age=3600")
+        self.end_headers()
+        with open(target, "rb") as f:
+            f.seek(start)
+            left = end - start + 1
+            while left > 0:
+                chunk = f.read(min(65536, left))
+                if not chunk:
+                    break
+                self.wfile.write(chunk)
+                left -= len(chunk)
 
     # ---------------- 静态文件 ----------------
     def _serve_static(self, path):

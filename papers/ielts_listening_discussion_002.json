@@ -1,0 +1,218 @@
+{
+  "title": "雅思听力精听 #2 · 环保课题讨论（Section 3 三人对话）",
+  "skill": "ielts_listening",
+  "topic": "教育 · 环保 · 仿真剑桥 Section 3",
+  "goal": "仿真剑桥真题（自编）：Section 3 导师+两名学生的项目讨论（三人三音色对话）。流程：① 先浏览 Questions 21–26 → ② 播放音频作答（文稿默认折叠，先听！做完/对答案再展开）→ ③ 21–23 单选；24–26 笔记填空，每空 ≤2 词。交卷自动批改，错题看解析里的定位句。",
+  "passages": [
+    {
+      "ref": "l1",
+      "title": "精听对话 · 环保课题项目讨论（Tutor + Mia + Jack）",
+      "audio": {
+        "file": "ielts_listening_discussion_002_p1.mp3",
+        "duration": 96.864,
+        "segments": [
+          {
+            "label": "Tutor · 导师",
+            "voice": "en-GB-RyanNeural",
+            "text": "Right, let's go over your project outline. Mia, you first. How did you choose your topic?",
+            "file": "ielts_listening_discussion_002_p1_1.mp3",
+            "start": 0.0,
+            "end": 8.28
+          },
+          {
+            "label": "Mia · 学生",
+            "voice": "en-GB-SoniaNeural",
+            "text": "I wanted something local, so I looked at recycling habits in our neighbourhood. We put questionnaires in three hundred letterboxes and got about two hundred replies, which is a really good response rate.",
+            "file": "ielts_listening_discussion_002_p1_2.mp3",
+            "start": 8.28,
+            "end": 20.664
+          },
+          {
+            "label": "Tutor · 导师",
+            "voice": "en-GB-RyanNeural",
+            "text": "Indeed it is. And Jack, what's your part of the project?",
+            "file": "ielts_listening_discussion_002_p1_3.mp3",
+            "start": 20.664,
+            "end": 25.848
+          },
+          {
+            "label": "Jack · 学生",
+            "voice": "en-GB-ThomasNeural",
+            "text": "I'm comparing our figures with the national average. The most surprising finding so far is that only about a third of people rinse their plastic containers before putting them out for recycling.",
+            "file": "ielts_listening_discussion_002_p1_4.mp3",
+            "start": 25.848,
+            "end": 37.488
+          },
+          {
+            "label": "Tutor · 导师",
+            "voice": "en-GB-RyanNeural",
+            "text": "That is surprisingly low. So what do you think the main recommendation should be?",
+            "file": "ielts_listening_discussion_002_p1_5.mp3",
+            "start": 37.488,
+            "end": 43.32
+          },
+          {
+            "label": "Mia · 学生",
+            "voice": "en-GB-SoniaNeural",
+            "text": "Better labelling on the bins themselves — most people told us they simply weren't sure what could be recycled and what couldn't.",
+            "file": "ielts_listening_discussion_002_p1_6.mp3",
+            "start": 43.32,
+            "end": 50.304
+          },
+          {
+            "label": "Jack · 学生",
+            "voice": "en-GB-ThomasNeural",
+            "text": "And I'd add clearer information from the council about collection days, because a lot of the confusion starts there.",
+            "file": "ielts_listening_discussion_002_p1_7.mp3",
+            "start": 50.304,
+            "end": 57.072
+          },
+          {
+            "label": "Tutor · 导师",
+            "voice": "en-GB-RyanNeural",
+            "text": "Good, both of those are practical. Now, have you thought about how you'll present your results? You know the assessment rewards visual material.",
+            "file": "ielts_listening_discussion_002_p1_8.mp3",
+            "start": 57.072,
+            "end": 67.416
+          },
+          {
+            "label": "Mia · 学生",
+            "voice": "en-GB-SoniaNeural",
+            "text": "We were thinking of a poster showing the numbers, with photos we took at the recycling centre.",
+            "file": "ielts_listening_discussion_002_p1_9.mp3",
+            "start": 67.416,
+            "end": 73.08
+          },
+          {
+            "label": "Jack · 学生",
+            "voice": "en-GB-ThomasNeural",
+            "text": "And a short leaflet the council could actually print and send out.",
+            "file": "ielts_listening_discussion_002_p1_10.mp3",
+            "start": 73.08,
+            "end": 77.328
+          },
+          {
+            "label": "Tutor · 导师",
+            "voice": "en-GB-RyanNeural",
+            "text": "That sounds like a solid plan. Make sure you leave time to rehearse your five-minute presentation — I'd like to see a first draft of the poster by Friday, if that's realistic.",
+            "file": "ielts_listening_discussion_002_p1_11.mp3",
+            "start": 77.328,
+            "end": 88.68
+          },
+          {
+            "label": "Mia · 学生",
+            "voice": "en-GB-SoniaNeural",
+            "text": "Friday's fine. We'll email it to you by the end of the day.",
+            "file": "ielts_listening_discussion_002_p1_12.mp3",
+            "start": 88.68,
+            "end": 93.144
+          },
+          {
+            "label": "Tutor · 导师",
+            "voice": "en-GB-RyanNeural",
+            "text": "Excellent. I'll look forward to it.",
+            "file": "ielts_listening_discussion_002_p1_13.mp3",
+            "start": 93.144,
+            "end": 96.864
+          }
+        ]
+      },
+      "body": "Tutor · 导师：Right, let's go over your project outline. Mia, you first. How did you choose your topic?\nMia · 学生：I wanted something local, so I looked at recycling habits in our neighbourhood. We put questionnaires in three hundred letterboxes and got about two hundred replies, which is a really good response rate.\nTutor · 导师：Indeed it is. And Jack, what's your part of the project?\nJack · 学生：I'm comparing our figures with the national average. The most surprising finding so far is that only about a third of people rinse their plastic containers before putting them out for recycling.\nTutor · 导师：That is surprisingly low. So what do you think the main recommendation should be?\nMia · 学生：Better labelling on the bins themselves — most people told us they simply weren't sure what could be recycled and what couldn't.\nJack · 学生：And I'd add clearer information from the council about collection days, because a lot of the confusion starts there.\nTutor · 导师：Good, both of those are practical. Now, have you thought about how you'll present your results? You know the assessment rewards visual material.\nMia · 学生：We were thinking of a poster showing the numbers, with photos we took at the recycling centre.\nJack · 学生：And a short leaflet the council could actually print and send out.\nTutor · 导师：That sounds like a solid plan. Make sure you leave time to rehearse your five-minute presentation — I'd like to see a first draft of the poster by Friday, if that's realistic.\nMia · 学生：Friday's fine. We'll email it to you by the end of the day.\nTutor · 导师：Excellent. I'll look forward to it."
+    }
+  ],
+  "questions": [
+    {
+      "type": "choice",
+      "passage_ref": "l1",
+      "prompt": "Why did Mia choose her project topic?",
+      "options": [
+        "A. She wanted to investigate a local issue.",
+        "B. A tutor suggested it to her.",
+        "C. She had read about it in the news."
+      ],
+      "answer": "A",
+      "explanation": "定位句（Mia）：I wanted something local, so I looked at recycling habits in our neighbourhood。她想研究身边/本地的问题 → A。B、C 在对话中完全没出现——听力单选里没提到的选项直接排除，别脑补。",
+      "knowledge_point": "听力-单选",
+      "extra": {
+        "qno": 21,
+        "head": "Questions 21–23\nChoose the correct letter, A, B or C."
+      }
+    },
+    {
+      "type": "choice",
+      "passage_ref": "l1",
+      "prompt": "What is Jack responsible for in the project?",
+      "options": [
+        "A. Delivering the questionnaires.",
+        "B. Comparing their data with national figures.",
+        "C. Taking photographs at the recycling centre."
+      ],
+      "answer": "B",
+      "explanation": "定位句（Jack）：I'm comparing our figures with the national average → B。C 是干扰：photos we took at the recycling centre 是 Mia 说的（用于 poster）；A：问卷是两人一起发的（We put questionnaires…），不是 Jack 一个人的分工。多人对话题要盯住 each speaker 说了什么。",
+      "knowledge_point": "听力-单选",
+      "extra": {
+        "qno": 22
+      }
+    },
+    {
+      "type": "choice",
+      "passage_ref": "l1",
+      "prompt": "What does the tutor remind them about the assessment?",
+      "options": [
+        "A. It rewards the use of visual material.",
+        "B. It is based mainly on the leaflet.",
+        "C. It includes a written report."
+      ],
+      "answer": "A",
+      "explanation": "定位句（Tutor）：You know the assessment rewards visual material。导师提醒评分看重视觉材料 → A。B：leaflet 只是 Jack 提的交付物，不是评分主体；C 未提及。注意导师问句里的暗示（have you thought about…presentation?）往往是考点信号。",
+      "knowledge_point": "听力-单选",
+      "extra": {
+        "qno": 23
+      }
+    },
+    {
+      "type": "cloze",
+      "passage_ref": "l1",
+      "prompt": "Questions 24–26\nComplete the notes below.\nWrite NO MORE THAN TWO WORDS for each answer.",
+      "passage": "Section 3 项目笔记（24–26 空格）：survey — questionnaires in 300 letterboxes, about __24__ replies；main finding — only __25__ of people rinse plastic containers；presentation — first draft of the poster due by __26__。",
+      "answer": {
+        "24": [
+          "two hundred"
+        ],
+        "25": [
+          "a third"
+        ],
+        "26": [
+          "Friday"
+        ]
+      },
+      "explanation": "① 24 = two hundred（两个词）：Mia: got about two hundred replies。② 25 = a third：Jack: only about a third of people rinse their plastic containers（数词 a third 只算两个词）。③ 26 = Friday：Tutor: I'd like to see a first draft of the poster by Friday。技巧：笔记题先扫空位旁的名词预判填什么（数字？比例？星期？），听的时候答案几乎照读。",
+      "knowledge_point": "听力-表格填空",
+      "score": 3,
+      "extra": {
+        "qno": 24,
+        "qno_end": 26,
+        "table": {
+          "cols": [
+            "Item",
+            "Detail"
+          ],
+          "rows": [
+            [
+              "survey",
+              "questionnaires in 300 letterboxes — about __24__ replies"
+            ],
+            [
+              "main finding",
+              "only __25__ of people rinse plastic containers"
+            ],
+            [
+              "presentation",
+              "first draft of the poster due by __26__"
+            ]
+          ]
+        }
+      }
+    }
+  ]
+}

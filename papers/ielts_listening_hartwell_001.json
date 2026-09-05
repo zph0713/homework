@@ -2,11 +2,25 @@
   "title": "雅思听力精听 #1 · Hartwell Mill 水磨坊（单选 + 表格填空）",
   "skill": "ielts_listening",
   "topic": "景点参观 · 仿真剑桥 Section 2",
-  "goal": "仿真剑桥真题（自编）：Section 2 游客导览。流程：① 先浏览 Questions 11–20（圈关键词、预判答案类型）→ ② 通读下方 🎧 精听文稿（答案都在原文里）→ ③ 作答：11–15 单选；16–20 表格每空 ≤2 词。交卷自动批改，错题看解析里的定位句。",
+  "goal": "仿真剑桥真题（自编）：Section 2 游客导览。流程：① 先浏览 Questions 11–20（圈关键词、预判答案类型）→ ② 播放上方音频作答（文稿默认折叠，先听！做完/对答案再展开）→ ③ 11–15 单选；16–20 表格每空 ≤2 词。交卷自动批改，错题看解析里的定位句。",
   "passages": [
     {
       "ref": "l1",
       "title": "精听文稿 · Hartwell Mill 导览（Tour guide talk）",
+      "audio": {
+        "file": "ielts_listening_hartwell_001_p1.mp3",
+        "duration": 182.52,
+        "segments": [
+          {
+            "label": "Ruth · 导览员",
+            "voice": "en-GB-SoniaNeural",
+            "text": "Good morning, everyone, and welcome to Hartwell Mill. My name's Ruth, and I'll be your guide for the next hour. Before we set off, I'd like to give you a little background.\n\nThe mill stands on the River Hart, and that's no accident. From the sixteenth century, farmers brought their grain here by boat, and the miller could lift the sacks straight from the river into his storeroom — a far easier job than carrying them along the muddy lanes. You may wonder why it was not built on higher ground, away from flood water — the answer is simple: a mill needs moving water to turn its wheel.\n\nDuring the nineteenth century the mill grew rapidly. As Hartwell expanded into a busy manufacturing town, thousands of mill workers needed cheap bread, and demand for flour rose year after year. The railway reached Hartwell in 1851, but it was the town's growing population, not the trains, that kept the mill's order books full. At its peak the mill employed forty people.\n\nThe mill closed in 1924. It was not that the building had fallen into disrepair, or that the miller's children had lost interest in the trade — the simple truth was money. Cheaper flour was now arriving from overseas by the shipload, and local flour simply could not compete on price.\n\nFor the next sixty years the building was used as a warehouse — first for cloth, later for farm machinery — which is why the walls have survived so well. In 1984 the mill stood empty and came very close to being pulled down.\n\nHappily, a local trust stepped in and saved it. The mill has been fully restored, and the great wheel turns again, exactly as it did a hundred years ago. Our next project is an education centre, where school groups will be able to bake bread and learn about water power — we are raising money for it now and hope to open it in two years' time. The tearoom, by the way, is run by the trust and raises money for the museum. It is already full every weekend, but we have no plans to enlarge it, as the building is protected.\n\nRight, let's begin our tour. Through this door is the mill itself. The wooden machinery you can see is completely original, and it is still driven by the great water wheel outside — you'll feel the floor shake when it turns. One word of warning: the staircase up to the grain floor is very steep, so please hold your children's hands and keep to the right.\n\nThe bakehouse is next door, and it's my favourite room in the whole mill. Every morning the bakers shape sourdough loaves by hand, just as their predecessors did a century ago, and the smell is wonderful. If you're visiting with children, they'll love the free bread samples on the big table near the door — help yourselves, they're there until noon.\n\nAnd finally, when you've seen everything, the tearoom in the old stables serves pies and cakes baked in the brick oven downstairs — I can recommend the apple pie. It's busiest between twelve and two, so you might prefer to come back later in the afternoon. Enjoy your visit!",
+            "file": "ielts_listening_hartwell_001_p1_1.mp3",
+            "start": 0.0,
+            "end": 182.52
+          }
+        ]
+      },
       "body": "Good morning, everyone, and welcome to Hartwell Mill. My name's Ruth, and I'll be your guide for the next hour. Before we set off, I'd like to give you a little background.\n\nThe mill stands on the River Hart, and that's no accident. From the sixteenth century, farmers brought their grain here by boat, and the miller could lift the sacks straight from the river into his storeroom — a far easier job than carrying them along the muddy lanes. You may wonder why it was not built on higher ground, away from flood water — the answer is simple: a mill needs moving water to turn its wheel.\n\nDuring the nineteenth century the mill grew rapidly. As Hartwell expanded into a busy manufacturing town, thousands of mill workers needed cheap bread, and demand for flour rose year after year. The railway reached Hartwell in 1851, but it was the town's growing population, not the trains, that kept the mill's order books full. At its peak the mill employed forty people.\n\nThe mill closed in 1924. It was not that the building had fallen into disrepair, or that the miller's children had lost interest in the trade — the simple truth was money. Cheaper flour was now arriving from overseas by the shipload, and local flour simply could not compete on price.\n\nFor the next sixty years the building was used as a warehouse — first for cloth, later for farm machinery — which is why the walls have survived so well. In 1984 the mill stood empty and came very close to being pulled down.\n\nHappily, a local trust stepped in and saved it. The mill has been fully restored, and the great wheel turns again, exactly as it did a hundred years ago. Our next project is an education centre, where school groups will be able to bake bread and learn about water power — we are raising money for it now and hope to open it in two years' time. The tearoom, by the way, is run by the trust and raises money for the museum. It is already full every weekend, but we have no plans to enlarge it, as the building is protected.\n\nRight, let's begin our tour. Through this door is the mill itself. The wooden machinery you can see is completely original, and it is still driven by the great water wheel outside — you'll feel the floor shake when it turns. One word of warning: the staircase up to the grain floor is very steep, so please hold your children's hands and keep to the right.\n\nThe bakehouse is next door, and it's my favourite room in the whole mill. Every morning the bakers shape sourdough loaves by hand, just as their predecessors did a century ago, and the smell is wonderful. If you're visiting with children, they'll love the free bread samples on the big table near the door — help yourselves, they're there until noon.\n\nAnd finally, when you've seen everything, the tearoom in the old stables serves pies and cakes baked in the brick oven downstairs — I can recommend the apple pie. It's busiest between twelve and two, so you might prefer to come back later in the afternoon. Enjoy your visit!"
     }
   ],
@@ -15,51 +29,82 @@
       "type": "choice",
       "passage_ref": "l1",
       "prompt": "Why was the mill originally built beside the River Hart?",
-      "options": ["A. Grain could be brought to it by boat.", "B. It was close to the main road into town.", "C. Higher ground protected it from flooding."],
+      "options": [
+        "A. Grain could be brought to it by boat.",
+        "B. It was close to the main road into town.",
+        "C. Higher ground protected it from flooding."
+      ],
       "answer": "A",
       "explanation": "定位句：farmers brought their grain here by boat… a far easier job than carrying them along the muddy lanes。运粮船直接靠岸装卸 → 选 A。B 错：原文说走 muddy lanes（泥泞小路）很费劲；C 错：导览员特意解释为什么没建在高处——磨坊需要流动的水推动水轮，不是因为防洪。",
       "knowledge_point": "听力-单选",
-      "extra": { "qno": 11, "head": "Questions 11–15\nChoose the correct letter, A, B or C." }
+      "extra": {
+        "qno": 11,
+        "head": "Questions 11–15\nChoose the correct letter, A, B or C."
+      }
     },
     {
       "type": "choice",
       "passage_ref": "l1",
       "prompt": "What caused the mill to expand in the nineteenth century?",
-      "options": ["A. The introduction of new milling machinery.", "B. Growing demand for flour from the town's workers.", "C. The arrival of the railway in 1851."],
+      "options": [
+        "A. The introduction of new milling machinery.",
+        "B. Growing demand for flour from the town's workers.",
+        "C. The arrival of the railway in 1851."
+      ],
       "answer": "B",
       "explanation": "定位句：As Hartwell expanded into a busy manufacturing town, thousands of mill workers needed cheap bread, and demand for flour rose year after year。工人增多 → 面粉需求上升 → 磨坊扩张，选 B。A 错：原文说机械 completely original，从没提换新机器；C 是干扰：铁路 1851 年确实到了，但原文明确说靠的是 growing population, not the trains。",
       "knowledge_point": "听力-单选",
-      "extra": { "qno": 12 }
+      "extra": {
+        "qno": 12
+      }
     },
     {
       "type": "choice",
       "passage_ref": "l1",
       "prompt": "Why did the mill close in 1924?",
-      "options": ["A. Imported flour was much cheaper.", "B. The building had fallen into disrepair.", "C. The miller's children lost interest in the trade."],
+      "options": [
+        "A. Imported flour was much cheaper.",
+        "B. The building had fallen into disrepair.",
+        "C. The miller's children lost interest in the trade."
+      ],
       "answer": "A",
       "explanation": "定位句：Cheaper flour was now arriving from overseas… local flour simply could not compete on price。海外面粉更便宜，本地面粉价格打不过 → 选 A。B、C 都是原文先提出再否定的诱饵：It was not that the building had fallen into disrepair, or that the miller's children had lost interest… the simple truth was money。",
       "knowledge_point": "听力-单选",
-      "extra": { "qno": 13 }
+      "extra": {
+        "qno": 13
+      }
     },
     {
       "type": "choice",
       "passage_ref": "l1",
       "prompt": "What happened to the mill building after it closed?",
-      "options": ["A. It was used for storing goods.", "B. It was demolished and rebuilt.", "C. It became a private family home."],
+      "options": [
+        "A. It was used for storing goods.",
+        "B. It was demolished and rebuilt.",
+        "C. It became a private family home."
+      ],
       "answer": "A",
       "explanation": "定位句：For the next sixty years the building was used as a warehouse — first for cloth, later for farm machinery。仓库 = 存放货物 → 选 A。B 错：1984 年只是 came very close to being pulled down（差一点被拆），并没拆；C 在原文完全没提到（听力单选题里没提到的选项直接排除）。",
       "knowledge_point": "听力-单选",
-      "extra": { "qno": 14 }
+      "extra": {
+        "qno": 14
+      }
     },
     {
       "type": "choice",
       "passage_ref": "l1",
       "prompt": "What is the trust's next project?",
-      "options": ["A. Rebuilding the original water wheel.", "B. Opening an education centre.", "C. Enlarging the tearoom."],
+      "options": [
+        "A. Rebuilding the original water wheel.",
+        "B. Opening an education centre.",
+        "C. Enlarging the tearoom."
+      ],
       "answer": "B",
       "explanation": "定位句：Our next project is an education centre, where school groups will be able to bake bread and learn about water power。选 B。A 错：水轮已经 restored 并重新转动，无需重建；C 错：导览员明说 we have no plans to enlarge it（茶室受保护建筑）。",
       "knowledge_point": "听力-单选",
-      "extra": { "qno": 15 }
+      "extra": {
+        "qno": 15
+      }
     },
     {
       "type": "cloze",
@@ -67,11 +112,21 @@
       "prompt": "Questions 16–20\nComplete the table below.\nWrite NO MORE THAN TWO WORDS for each answer.",
       "passage": "Hartwell Mill 游客信息表（16–20 空格）：Place | What you can see or do | Advice —— the watermill：original wooden machinery, still driven by the great __16__；hold children's hands on the __17__。the bakehouse：watch the bakers shape __18__ by hand；free __19__ for children until noon。the tearoom：pies and cakes baked in the __20__；busiest 12–2 pm。",
       "answer": {
-        "16": ["water wheel"],
-        "17": ["steep staircase"],
-        "18": ["sourdough loaves"],
-        "19": ["bread samples"],
-        "20": ["brick oven"]
+        "16": [
+          "water wheel"
+        ],
+        "17": [
+          "steep staircase"
+        ],
+        "18": [
+          "sourdough loaves"
+        ],
+        "19": [
+          "bread samples"
+        ],
+        "20": [
+          "brick oven"
+        ]
       },
       "explanation": "① 16 = water wheel：it is still driven by the great water wheel outside。② 17 = steep staircase：the staircase up to the grain floor is very steep, so please hold your children's hands。③ 18 = sourdough loaves：the bakers shape sourdough loaves by hand。④ 19 = bread samples：they'll love the free bread samples… they're there until noon（注意复数 samples）。⑤ 20 = brick oven：pies and cakes baked in the brick oven downstairs。做题技巧：表格题先横向扫「地点→活动→建议」的对应关系，听的时候答案几乎照抄原文，只改词形不变。",
       "knowledge_point": "听力-表格填空",
@@ -80,11 +135,27 @@
         "qno": 16,
         "qno_end": 20,
         "table": {
-          "cols": ["Place", "What you can see or do", "Advice"],
+          "cols": [
+            "Place",
+            "What you can see or do",
+            "Advice"
+          ],
           "rows": [
-            ["the watermill", "original wooden machinery, still driven by the great __16__", "hold children's hands on the __17__"],
-            ["the bakehouse", "watch the bakers shape __18__ by hand", "free __19__ for children until noon"],
-            ["the tearoom", "pies and cakes baked in the __20__", "busiest 12–2 pm — visit later in the afternoon"]
+            [
+              "the watermill",
+              "original wooden machinery, still driven by the great __16__",
+              "hold children's hands on the __17__"
+            ],
+            [
+              "the bakehouse",
+              "watch the bakers shape __18__ by hand",
+              "free __19__ for children until noon"
+            ],
+            [
+              "the tearoom",
+              "pies and cakes baked in the __20__",
+              "busiest 12–2 pm — visit later in the afternoon"
+            ]
           ]
         }
       }

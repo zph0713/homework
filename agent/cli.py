@@ -777,6 +777,48 @@ def cmd_delete(args):
     print(f"已删除试卷《{h['title']}》#{args.hw_id}（含全部提交与批改记录）")
 
 
+def cmd_tts(args):
+    """听力音频合成：按试卷 JSON 的 passage.audio 规格生成（edge-tts 多音色）。
+
+    用法：python3 agent/cli.py tts papers/ielts_listening_xxx.json [--hw <id>] [--force]
+    生成到 <数据库同目录>/audio/（data/audio/，不入 git），并把清单回写进试卷 JSON
+    （--hw 时同步回写数据库该卷的 passages.audio）。
+    试卷 JSON 规格见 docs/QUESTION_TYPES.md「真题格式卷」passage.audio 一节。
+    """
+    from agent import audio_gen
+
+    with open(args.paper_json, encoding="utf-8") as f:
+        data = json.load(f)
+    stem = Path(args.paper_json).stem
+    audio_dir = db.audio_dir()
+    todo = [(i, p) for i, p in enumerate(data.get("passages") or [])
+            if audio_gen.needs_synth(p.get("audio"))]
+    if not todo:
+        print("没有需要合成的音频（passage.audio 需为合成规格 {mode:'tts', segments:[...]} 且尚未生成）")
+        return
+    total_sec = 0.0
+    for idx, p in todo:
+        print(f"🎧 合成《{p.get('title', '') or 'passage'}》(p{idx + 1})…")
+        manifest = audio_gen.synthesize(p["audio"], stem, idx + 1, audio_dir,
+                                        force=args.force)
+        p["audio"] = manifest
+        total_sec += manifest["duration"]
+        if args.hw:
+            with db.connect() as conn:
+                rows = conn.execute(
+                    "SELECT id FROM passages WHERE homework_id=? ORDER BY sort_order, id",
+                    (args.hw,)).fetchall()
+                if idx >= len(rows):
+                    raise ValueError(f"homework #{args.hw} 没有第 {idx + 1} 个 passage")
+                conn.execute("UPDATE passages SET audio=? WHERE id=?",
+                             (json.dumps(manifest, ensure_ascii=False), rows[idx]["id"]))
+            print(f"  ✓ 清单已回写 DB：homework #{args.hw} · passage #{rows[idx]['id']}")
+    with open(args.paper_json, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+        f.write("\n")
+    print(f"✅ 完成：{len(todo)} 个 passage，共 {total_sec:.0f} 秒音频 → {audio_dir}")
+
+
 def main(argv=None):
     db.ensure_db()
     p = argparse.ArgumentParser(
@@ -938,6 +980,12 @@ def main(argv=None):
     pdel = sub.add_parser("delete", help="删除试卷（级联删除提交与批改）")
     pdel.add_argument("hw_id", type=int)
 
+    ptts = sub.add_parser("tts", help="听力音频合成：按试卷 JSON 里 passage.audio 规格生成（edge-tts 多音色）")
+    ptts.add_argument("paper_json", help="试卷 JSON（papers/*.json）")
+    ptts.add_argument("--hw", type=int, default=None,
+                      help="已发布的 homework id：合成后把音频清单回写进数据库该卷")
+    ptts.add_argument("--force", action="store_true", help="强制重新合成（默认文件已存在则跳过）")
+
     args = p.parse_args(argv)
     handlers = {
         "init": cmd_init, "setup": cmd_setup, "config": cmd_config,
@@ -952,7 +1000,7 @@ def main(argv=None):
         else cmd_weekly_record(a),
         "vocab": cmd_vocab, "profile": cmd_profile, "kmap": cmd_kmap,
         "phrase": cmd_phrase, "ielts": cmd_ielts,
-        "delete": cmd_delete,
+        "delete": cmd_delete, "tts": cmd_tts,
     }
     try:
         handlers[args.cmd](args)

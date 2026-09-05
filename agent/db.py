@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS passages (
   homework_id INTEGER NOT NULL REFERENCES homeworks(id) ON DELETE CASCADE,
   title       TEXT NOT NULL DEFAULT '',
   body        TEXT NOT NULL,
+  audio       TEXT,                          -- JSON：听力音频清单 {file,duration,segments:[{label,voice,text,file,start,end}]}
   sort_order  INTEGER NOT NULL DEFAULT 0
 );
 CREATE TABLE IF NOT EXISTS questions (
@@ -201,6 +202,13 @@ def get_db_path() -> Path:
     return settings.get_db_path()
 
 
+def audio_dir() -> Path:
+    """听力音频目录：与数据库同目录下的 audio/（data/ 永不入 git）。"""
+    d = get_db_path().parent / "audio"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
 def connect(path=None):
     p = Path(path) if path else get_db_path()
     p.parent.mkdir(parents=True, exist_ok=True)
@@ -240,6 +248,12 @@ def _migrate(conn):
         qcols = [r["name"] for r in conn.execute("PRAGMA table_info(questions)")]
         if qcols and "extra" not in qcols:
             conn.execute("ALTER TABLE questions ADD COLUMN extra TEXT")
+    except sqlite3.OperationalError:
+        pass
+    try:
+        pcols = [r["name"] for r in conn.execute("PRAGMA table_info(passages)")]
+        if pcols and "audio" not in pcols:
+            conn.execute("ALTER TABLE passages ADD COLUMN audio TEXT")
     except sqlite3.OperationalError:
         pass
     # 旧 skill 语义归一：mixed/writing/listening 在本系统中都是语法练习 → grammar
@@ -490,9 +504,11 @@ def create_paper(conn, data, status="published"):
     hw_id = cur.lastrowid
     ref_to_pid = {}
     for i, p in enumerate(data.get("passages") or []):
+        audio = p.get("audio")
         cur = conn.execute(
-            "INSERT INTO passages (homework_id, title, body, sort_order) VALUES (?,?,?,?)",
-            (hw_id, p.get("title", ""), p.get("body", ""), i),
+            "INSERT INTO passages (homework_id, title, body, audio, sort_order) VALUES (?,?,?,?,?)",
+            (hw_id, p.get("title", ""), p.get("body", ""),
+             json.dumps(audio, ensure_ascii=False) if audio is not None else None, i),
         )
         if p.get("ref"):
             ref_to_pid[p["ref"]] = cur.lastrowid
@@ -738,11 +754,19 @@ def paper_full(conn, hw_id):
     h = conn.execute("SELECT * FROM homeworks WHERE id=?", (hw_id,)).fetchone()
     if not h:
         return None
-    ps = conn.execute("SELECT * FROM passages WHERE homework_id=? ORDER BY sort_order, id",
-                      (hw_id,)).fetchall()
+    ps = []
+    for row in conn.execute("SELECT * FROM passages WHERE homework_id=? ORDER BY sort_order, id",
+                            (hw_id,)).fetchall():
+        p = dict(row)
+        if isinstance(p.get("audio"), str) and p["audio"]:
+            try:
+                p["audio"] = json.loads(p["audio"])
+            except ValueError:
+                pass
+        ps.append(p)
     qs = conn.execute("SELECT * FROM questions WHERE homework_id=? ORDER BY sort_order, id",
                       (hw_id,)).fetchall()
-    return {"homework": dict(h), "passages": [dict(p) for p in ps],
+    return {"homework": dict(h), "passages": ps,
             "questions": [_q_dict(q) for q in qs]}
 
 
@@ -827,8 +851,14 @@ def submission_detail(conn, sub_id):
         g = gs.get(q["id"])
         passage = None
         if q["passage_id"]:
-            p = conn.execute("SELECT title, body FROM passages WHERE id=?", (q["passage_id"],)).fetchone()
+            p = conn.execute("SELECT id, title, body, audio FROM passages WHERE id=?",
+                             (q["passage_id"],)).fetchone()
             passage = dict(p) if p else None
+            if passage and isinstance(passage.get("audio"), str) and passage["audio"]:
+                try:
+                    passage["audio"] = json.loads(passage["audio"])
+                except ValueError:
+                    pass
         items.append({
             "question_id": q["id"], "type": q["type"], "prompt": q["prompt"],
             "passage": q["passage"], "options": qd.get("options"),

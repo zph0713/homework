@@ -362,7 +362,7 @@ async function viewPaper(id) {
   const vocabNote = h.skill === "vocabulary"
     ? `<div class="waiting" style="margin-top:10px">💡 词汇练习：交卷即自动批改，无需等老师。做完点「交卷」后直接在结果页对照答案自行验证。</div>` : "";
   const listenNote = h.skill === "ielts_listening"
-    ? `<div class="waiting" style="margin-top:10px">💡 听力精听：先浏览题目 → 再通读下方「🎧 听力文稿」（答案都在文稿里）→ 按真题格式作答。交卷自动批改，填空错 / 漏会由老师复核并讲定位句。</div>` : "";
+    ? `<div class="waiting" style="margin-top:10px">💡 听力精听：先浏览题目 → 播放上方音频作答（文稿默认折叠，先听！对答案时可展开对照，点任一句可回听）。交卷自动批改，填空错 / 漏会由老师复核并讲定位句。</div>` : "";
   const head = `
     <div class="paper-head">
       <h1>${esc(h.title)}</h1>
@@ -381,7 +381,11 @@ async function viewPaper(id) {
   const passageBlocks = qs
     .map((q) => (q.passage_id ? passages.get(q.passage_id) : null))
     .filter((p) => p && !used.has(p.id) && (used.add(p.id), true))
-    .map((p) => `<div class="q-passage"><div class="p-title">${pIcon} ${esc(p.title || (h.skill === "ielts_listening" ? "听力文稿" : "阅读材料"))}</div><p>${esc(p.body)}</p></div>`)
+    .map((p) => {
+      const audio = p.audio && p.audio.file ? p.audio : null;
+      const tpl = audio ? passageAudioHTML(audio, false) : `<p>${esc(p.body || "")}</p>`;
+      return `<div class="q-passage"><div class="p-title">${pIcon} ${esc(p.title || (h.skill === "ielts_listening" ? "听力文稿" : "阅读材料"))}</div>${tpl}</div>`;
+    })
     .join("");
   // 真题格式：同一题目区只在第一题前展示一次题区标题（如 Questions 11–15）
   let lastHead = "";
@@ -394,6 +398,7 @@ async function viewPaper(id) {
   }).join("");
   app.innerHTML = `${head}${passageBlocks}${body}${submitBarHTML()}`;
   bindPaperEvents(qs, id);
+  bindListenAudio();
 }
 
 /* 真题题号：题目 JSON 可带 extra.qno（考试题号，如 11）或 cloze 表格的 qno+qno_end（如 16–20），缺省用顺序号 */
@@ -401,6 +406,85 @@ function qNum(q, i) {
   const ex = q.extra || {};
   if (ex.qno) return ex.qno_end ? `${ex.qno}–${ex.qno_end}` : ex.qno;
   return i + 1;
+}
+
+/* ---------------- 听力音频播放（edge-tts 多音色；整段 + 分句高亮/点击回听） ---------------- */
+const SPK_COLORS = ["a", "b", "c", "d"];
+
+function passageAudioHTML(a, open) {
+  const segs = (a.segments || []).filter((s) => s && s.text);
+  const colorOf = {};
+  (segs.map((s) => s.label)).forEach((lb, i) => {
+    if (lb && colorOf[lb] === undefined) colorOf[lb] = SPK_COLORS[Object.keys(colorOf).length % SPK_COLORS.length];
+  });
+  const inner = segs.length
+    ? segs.map((s) => {
+      const text = esc(s.text).replace(/\n+/g, "<br>");
+      const lbl = esc(s.label || "");
+      return `<div class="seg-line lz-${colorOf[s.label] || "a"}" data-start="${s.start}" data-end="${s.end}" title="点击从此句回听">
+        ${lbl ? `<span class="seg-spk">${lbl}</span>` : ""}<span class="seg-txt">${text}</span></div>`;
+    }).join("")
+    : `<p class="lz-body">${esc(a._body || "")}</p>`;
+  const panelHidden = open ? "" : " hidden";
+  const toggleTxt = open ? "隐藏文稿" : "显示文稿（对答案用）";
+  return `
+    <div class="listen-zone">
+      <div class="listen-bar">
+        <audio class="lz-audio" src="/audio/${encodeURIComponent(a.file)}" controls preload="metadata"></audio>
+        <div class="seg lz-speed">
+          <button type="button" class="seg-btn" data-rate="0.75">0.75×</button>
+          <button type="button" class="seg-btn on" data-rate="1">1×</button>
+          <button type="button" class="seg-btn" data-rate="1.25">1.25×</button>
+        </div>
+        <button type="button" class="btn ghost small lz-toggle">${toggleTxt}</button>
+      </div>
+      <div class="lz-panel"${panelHidden}>${inner}</div>
+    </div>`;
+}
+
+function bindListenAudio(root) {
+  const scope = root || document;
+  $$(".listen-zone", scope).forEach((zone) => {
+    const au = zone.querySelector(".lz-audio");
+    if (!au) return;
+    const toggle = zone.querySelector(".lz-toggle");
+    const panel = zone.querySelector(".lz-panel");
+    const lines = Array.from(zone.querySelectorAll(".seg-line"));
+    if (toggle && panel) {
+      toggle.addEventListener("click", () => {
+        panel.hidden = !panel.hidden;
+        toggle.textContent = panel.hidden ? "显示文稿（对答案用）" : "隐藏文稿";
+      });
+    }
+    if (au && lines.length) {
+      au.addEventListener("timeupdate", () => {
+        if (panel && panel.hidden) return;
+        const t = au.currentTime;
+        lines.forEach((l) => {
+          const on = t >= +l.dataset.start && t < +l.dataset.end;
+          l.classList.toggle("on", on);
+        });
+      });
+      lines.forEach((l) => l.addEventListener("click", () => {
+        au.currentTime = +l.dataset.start;
+        const p = au.play();
+        if (p) p.catch(() => {});
+      }));
+    }
+    const rates = Array.from(zone.querySelectorAll("[data-rate]"));
+    rates.forEach((b) => b.addEventListener("click", () => {
+      au.playbackRate = +b.dataset.rate;
+      rates.forEach((x) => x.classList.toggle("on", x === b));
+    }));
+  });
+}
+
+/* 材料回顾块（结果页）：文稿/文章 + 音频回听，一份材料只展示一次 */
+function materialReviewHTML(pi) {
+  const audio = pi.audio && pi.audio.file ? pi.audio : null;
+  const inner = audio ? passageAudioHTML(audio, true)
+    : `<p>${esc(pi.body || "")}</p>`;
+  return `<div class="q-passage mat-review"><div class="p-title">${audio ? "🎧" : "📄"} ${esc(pi.title || "材料")}</div>${inner}</div>`;
 }
 
 /* 表格完成题（雅思听力/阅读真题格式）：extra.table = {cols:[..], rows:[[..]]}，
@@ -789,10 +873,18 @@ async function viewResult(sid) {
       </div>
       ${d.overall_feedback ? `<div class="score-note">💬 ${esc(d.overall_feedback)}</div>` : ""}
     </div>`;
-  const items = d.items.map(renderResultItem).join("");
-  app.innerHTML = `${hero}${waiting}${vocabNote}${items}<div style="text-align:center;margin-top:18px">
+  // 材料回顾：同一份文稿/文章只展示一次（听力音频可回听），每题卡片不再重复整篇材料
+  const seen = new Set();
+  const matBlocks = (d.items || [])
+    .map((it) => it.passage_info)
+    .filter((pi) => pi && pi.id != null && !seen.has(pi.id) && (seen.add(pi.id), true) && (pi.audio || pi.body))
+    .map(materialReviewHTML).join("");
+  const suppressPassage = !!matBlocks;
+  const items = d.items.map((it) => renderResultItem(it, suppressPassage)).join("");
+  app.innerHTML = `${hero}${waiting}${vocabNote}${matBlocks}${items}<div style="text-align:center;margin-top:18px">
     <a class="btn ghost" href="#/">← 返回首页</a></div>`;
   bindPhraseButtons();
+  bindListenAudio();
 }
 
 /* 口语练习记录页（完成即记录，无得分、不批改，只回顾练过的话题） */
@@ -836,7 +928,7 @@ function clozePerBlank(it) {
   }).join("");
 }
 
-function renderResultItem(it) {
+function renderResultItem(it, suppressPassage) {
   if (it.type === "phrase") {
     // 短语讲解卡：结果页只做展示，无对错
     const ex = it.extra || {};
@@ -876,7 +968,7 @@ function renderResultItem(it) {
         ${it.knowledge_point ? `<span class="badge">${esc(it.knowledge_point)}</span>` : ""}
       </div>
       <div class="q-prompt">${esc(it.prompt)}</div>
-      ${it.passage_info ? `<div class="q-passage"><div class="p-title">📄 ${esc(it.passage_info.title)}</div><p>${esc(it.passage_info.body)}</p></div>` : ""}
+      ${!suppressPassage && it.passage_info && (it.passage_info.audio || it.passage_info.body) ? `<div class="q-passage"><div class="p-title">📄 ${esc(it.passage_info.title || "材料")}</div><p>${esc(it.passage_info.body || "")}</p></div>` : ""}
       ${answerHTML}
       ${feedback}
       ${explain}

@@ -97,7 +97,7 @@ python3 agent/cli.py weekly record --sampled "kp1,kp2" --wrong "kp1" --hw <id>
 6. 错题本重练申请（`requests`）→ 下次语法作业额外增加对应知识点题目
 7. 写作路线推进（`docs/WRITING_CURRICULUM.md`）或画像勾选的翻译/阅读训练
 8. 词汇短语作业 → `python3 agent/cli.py vocab homework --ielts 20 --wordbook 5 --phrases 5`（一键生成，勿手写 JSON；交卷自批改，老师不批）
-9. 雅思专项训练：按学生指定子栏目出卷（阅读节选小题 / 听力精听「文稿+真题格式题目」/ 作文中译英 / 口语话题），口语卷参考画像当季话题（Part3 老师自行出题）；听力/阅读卷照 docs/QUESTION_TYPES.md「真题格式卷」规范：题区说明行（extra.head）+ 真题题号（extra.qno）+ 表格用 cloze+extra.table 标准化
+9. 雅思专项训练：按学生指定子栏目出卷（阅读节选小题 / 听力精听「文稿+真题格式题目」/ 作文中译英 / 口语话题），口语卷参考画像当季话题（Part3 老师自行出题）；听力/阅读卷照 docs/QUESTION_TYPES.md「真题格式卷」规范：题区说明行（extra.head）+ 真题题号（extra.qno）+ 表格用 cloze+extra.table 标准化；**听力卷加 passage.audio 合成规格（多人对话按人分配音色）→ create 发布后跑 `cli.py tts papers/x.json --hw <id>` 生成音频**
 10. 学生要求默写 → `python3 agent/cli.py vocab dictation --limit 10`（一键生成，勿手写）
 11. 抽查单词 → `python3 agent/cli.py vocab check --limit 3`（随机抽池中词；可整卷发布，也可把 questions 并入任何作业混考）
 
@@ -117,7 +117,7 @@ python3 agent/cli.py weekly record --sampled "kp1,kp2" --wrong "kp1" --hw <id>
 
 ## 前端能力（出题时对齐，勿超纲）
 
-- 题型：choice / fill / cloze / tfng / writing / translate / speaking（口语，只出题不批改）/ phrase（短语讲解卡，不答题）；默写 = fill + skill=vocabulary + 知识点「词汇-默写」；抽查 = fill + 知识点「词汇-抽查」（用 CLI 生成，勿手写）。雅思听力精听卷（skill=ielts_listening）为**纯文字版**：文稿放 passages、题目用 choice/cloze(+extra.table 表格)，题区说明行与真题题号用 extra.head / extra.qno（规范见 docs/QUESTION_TYPES.md「真题格式卷」）。**带音频的 listening 题型未实现，不要出**（预留见 docs/ROADMAP.md）
+- 题型：choice / fill / cloze / tfng / writing / translate / speaking（口语，只出题不批改）/ phrase（短语讲解卡，不答题）；默写 = fill + skill=vocabulary + 知识点「词汇-默写」；抽查 = fill + 知识点「词汇-抽查」（用 CLI 生成，勿手写）。雅思听力精听卷（skill=ielts_listening）=**文稿+音频**：passage.audio 合成规格（mode:tts + segments，多人对话每段可指定音色）→ `create` 后用 `cli.py tts <paper.json> --hw <id>` 合成到 data/audio（不入 git）；前端作答页播放器（整段+倍速+分句高亮+点句回听）、**文稿默认折叠**，结果页文稿展开对照（规范见 docs/QUESTION_TYPES.md「真题格式卷」）。**带音频的 listening 题型未实现，不要出**（预留见 docs/ROADMAP.md）
 - **作业三栏目（skill 决定归属）**：grammar=语法作业；vocabulary=词汇短语作业；ielts_reading / ielts_listening / ielts_essay / ielts_speaking=雅思专项训练四栏目（旧 ielts_stem「题干英译汉」已废弃，勿再出）。**掌握度/图谱/错题本/近期正确率只统计 skill=grammar**
 - 口语卷（ielts_speaking）：`type=speaking` + `extra={"part":1|2|3, "suggestions":[...]}`，`answer=""`；Part2 的 prompt 用多行写「Describe.../You should say:...and explain...」，前端渲染真题卡（准备 1 分钟·陈述 1-2 分钟）；学生点「下一题」逐题练，全部练完点「完成练习」→ 记录为已做过（submission status=`done`，不进待批改、不批改），卡片显示「已练完」，可「再来一轮」反复练；**每题 extra.suggestions 配 6~10 条该话题地道表达（{en,zh}）**，练完点「完成」后按话题展示参考表达、可收藏进短语本（旧口语卷可用 scripts/backfill_speaking_suggestions.py 回写补配）
 - 学生在网页可：划词加入单词本、单词本页填中文/词性（多选下拉）并确认、改画像（「我的」页：三类作业要求+口语当季话题）、错题本申请重练（下次语法作业额外加题）、短语卡收藏进短语本、删除作业卡、设置页改库路径/端口

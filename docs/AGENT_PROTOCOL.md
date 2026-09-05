@@ -59,8 +59,11 @@ CLI 会自动建库，无需手工初始化。
                              //   （reading/writing/listening/mixed 为旧值，新卷不要用）
   "topic": "IELTS 写作 Task 1 语境",               // 可选
   "goal": "本次考察目标（显示给学生看）",            // 可选
-  "passages": [               // 可选：阅读材料，题里用 passage_ref 引用
-    { "ref": "p1", "title": "Bike-sharing", "body": "Many cities ..." }
+  "passages": [               // 可选：阅读材料/听力文稿（题里用 passage_ref 引用）
+    { "ref": "p1", "title": "Bike-sharing", "body": "Many cities ...",
+      // 听力卷可加合成规格（多音色对话见 docs/QUESTION_TYPES.md）：
+      // "audio": { "mode": "tts", "voice": "en-GB-SoniaNeural", "segments": [...] }
+    }
   ],
   "questions": [ /* 见下 */ ]
 }
@@ -218,7 +221,8 @@ CLI 会自动建库，无需手工初始化。
 | 命令 | 用途 |
 |---|---|
 | `init` | 初始化数据库 |
-| `create <paper.json> [--status draft]` | 发布试卷（默认 published，学生立即可见） |
+| `create <paper.json> [--status draft]` | 发布试卷（默认 published，学生立即可见；听力卷的 passage.audio 合成规格会一并入库） |
+| `tts <paper.json> [--hw <id>] [--force]` | 听力音频合成（edge-tts 多音色）：按 passage.audio 规格生成到 `<库同目录>/audio/` 并把清单回写试卷 JSON（--hw 时同步回写数据库） |
 | `list` | 试卷列表 + 最新提交状态 |
 | `paper <hw_id>` | 查看试卷（含答案，agent 专用） |
 | `pending` | 待批改提交 + 需要 AI 处理的题目详情 |

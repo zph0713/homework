@@ -165,6 +165,31 @@ main { max-width: 1180px; margin: 0 auto; padding: 24px 20px 120px; }
   padding: 14px 16px; margin: 12px 0; font-size: 14px; line-height: 1.8; }
 .q-passage .p-title { font-weight: 700; margin-bottom: 6px; }
 .q-passage p { white-space: pre-wrap; }
+.q-passage.mat-review { margin: 14px 0 20px; }
+
+/* ---------- 听力音频播放区（edge-tts 多音色 + 分句高亮/回听） ---------- */
+.listen-zone { margin-top: 6px; }
+.listen-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.lz-audio { height: 40px; min-width: 260px; flex: 1 1 280px; }
+.lz-speed { flex-shrink: 0; }
+.lz-speed .seg-btn { padding: 4px 10px; font-size: 12.5px; }
+.lz-toggle { flex-shrink: 0; }
+.lz-panel { border-top: 1px dashed var(--line); padding-top: 10px; }
+.lz-panel[hidden] { display: none; }
+.seg-line { display: flex; gap: 10px; padding: 8px 10px; border-left: 3px solid transparent;
+  border-radius: 6px; cursor: pointer; line-height: 1.75; font-size: 14.5px; }
+.seg-line:hover { background: var(--soft); }
+.seg-line .seg-spk { flex-shrink: 0; font-weight: 700; font-size: 12.5px; color: var(--muted);
+  background: var(--soft); padding: 2px 8px; border-radius: 999px; height: fit-content; margin-top: 2px; }
+.seg-line.lz-a.on { background: var(--accent-soft); border-left-color: var(--accent); }
+.seg-line.lz-a.on .seg-spk { background: var(--accent); color: var(--card); }
+.seg-line.lz-b.on { background: var(--ok-soft); border-left-color: var(--ok); }
+.seg-line.lz-b.on .seg-spk { background: var(--ok); color: var(--card); }
+.seg-line.lz-c.on { background: var(--warn-soft, var(--soft)); border-left-color: var(--warn); }
+.seg-line.lz-c.on .seg-spk { background: var(--warn); color: var(--card); }
+.seg-line.lz-d.on { background: var(--bad-soft, var(--soft)); border-left-color: var(--bad); }
+.seg-line.lz-d.on .seg-spk { background: var(--bad); color: var(--card); }
+.seg-line .seg-txt { white-space: pre-wrap; }
 
 .q-options { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
 .q-opt { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border: 1.5px solid var(--line);
